@@ -350,7 +350,7 @@ class Vtiger_Functions {
 				if ($module == 'Groups') {
 					$metainfo = array('tablename' => 'vtiger_groups','entityidfield' => 'groupid','fieldname' => 'groupname');
 				} else if ($module == 'DocumentFolders') {
-					$metainfo = array('tablename' => 'vtiger_attachmentsfolder','entityidfield' => 'folderid','fieldname' => 'foldername'); 
+					$metainfo = array('tablename' => 'vtiger_attachmentsfolder','entityidfield' => 'folderid','fieldname' => 'foldername');
 				} else {
 					$metainfo = self::getEntityModuleInfo($module);
 				}
@@ -561,7 +561,7 @@ class Vtiger_Functions {
 
 		if (!is_dir($filepath . $year . "/" . $month)) {
 			//create new folder
-			$monthFilePath = "$year/$month"; 
+			$monthFilePath = "$year/$month";
 			$monthPath = $filepath.$monthFilePath;
 			mkdir($filepath . $monthFilePath);
 			exec("chown -R $permissions  $monthPath");
@@ -598,7 +598,7 @@ class Vtiger_Functions {
 				if (!$ok) return false;
 			}
 		} else {
-			if (stripos($data, $short ? "<?" : "<?php") !== false) { // suspicious dynamic content 
+			if (stripos($data, $short ? "<?" : "<?php") !== false) { // suspicious dynamic content
 				return false;
 			}
 		}
@@ -1028,8 +1028,8 @@ class Vtiger_Functions {
 		return $result;
 	}
 
-	/** 
-	* Function to determine mime type of file. 
+	/**
+	* Function to determine mime type of file.
 	* Compatible with mime_magic or fileinfo php extension.
 	*/
 	static function mime_content_type($filename) {
@@ -1054,7 +1054,7 @@ class Vtiger_Functions {
 	static function verifyClaimedMIME($targetFile,$claimedMime) {
 		$fileMimeContentType= self::mime_content_type($targetFile);
 		if (in_array(strtolower($fileMimeContentType), $claimedMime)) {
-			return false; 
+			return false;
 		}
 		return true;
 	}
@@ -1100,9 +1100,9 @@ class Vtiger_Functions {
 		return array('Invoice', 'Quotes', 'PurchaseOrder', 'SalesOrder', 'Products', 'Services');
 	}
 
-	/** 
+	/**
 	 * Function to encode an array to json with all the options
-	 * @param <Array> $array 
+	 * @param <Array> $array
 	 * @return <sting> Json String
 	 */
 	static function jsonEncode($array) {
@@ -1324,14 +1324,17 @@ class Vtiger_Functions {
 		if ($moduleName == "events") {
 			$moduleName = "calendar";
 		}
+                else{
+                    return false;
+                }
 		return "vtiger_".$moduleName.'_user_field';
 	}
 
 	/**
 	 * Function which will determine whether the table contains user specific field
-	 * @param type $tableName -- name of the table 
+	 * @param type $tableName -- name of the table
 	 * @param type $moduleName -- moduleName
-	 * @return boolean 
+	 * @return boolean
 	 */
 	public static function isUserSpecificFieldTable($tableName, $moduleName) {
 		$moduleName = strtolower($moduleName);
@@ -1356,7 +1359,7 @@ class Vtiger_Functions {
 	static function jwtDecode($id_token) {
 		$token_parts = explode(".", $id_token);
 
-		// First, in case it is url-encoded, fix the characters to be 
+		// First, in case it is url-encoded, fix the characters to be
 		// valid base64
 		$encoded_token = str_replace('-', '+', $token_parts[1]);
 		$encoded_token = str_replace('_', '/', $encoded_token);
