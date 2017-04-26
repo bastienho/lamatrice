@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -31,7 +31,8 @@ $languageStrings = array(
 	'LBL_DUPLICATES_EXIST' => 'Rapportnamn finns redan',
 	'LBL_FOLDERS_LIST' => 'Mappningslista',
 	'LBL_DENIED_REPORTS' => 'Nekade Rapporter',
-	'LBL_NO_OF_RECORDS' => 'Antal Poster',
+	'LBL_NO_OF_RECORDS' => 'Totala Records',
+	'LBL_MORE_RECORDS_TXT'=>'Endast 500 poster visas nedan. Vänligen exportera för att se alla uppgifter',
 	//ListView Actions
 	'LBL_ADD_RECORD' => 'Lägg till Rapport',
 	'LBL_ADD_FOLDER' => 'Lägg till Mappning',
@@ -68,7 +69,7 @@ $languageStrings = array(
 	'LBL_HIGHEST_VALUE' => 'Högsta Belopp',
 
 	//Step3 Strings
-	'LBL_GENERATE_REPORT' => 'Generera Rapport',
+	'LBL_GENERATE_REPORT' => 'Spara & Skapa rapport',
 
 	//DetailView
 	'LBL_SUM' => 'SUM',
@@ -144,8 +145,105 @@ $languageStrings = array(
 	'LBL_TOP' => 'Topp',
 	'LBL_ALL_REPORTS' => 'Alla Rapporter',
 	'LBL_CALCULATION_CONVERSION_MESSAGE' => 'Beräkning baseras på basvalutan i ditt CRM',
+
+    //Schedule Reports
+    'LBL_CREATING_REPORT'	=>	'Skapa Rapportera',
+	'LBL_EDITING_REPORT'	=>	'Redigering Rapportera',
+	'LBL_SCHEDULE_REPORTS'	=>	'Schema Rapporter',
+	'LBL_AT_TIME'	=>	'Vid Tid',
+	'LBL_DAILY'	=>	'Dagligen',
+	'LBL_WEEKLY'	=>	'Varje vecka',
+	'LBL_MONTHLY_BY_DATE'	=>	'Månadsvis efter Datum',
+	'LBL_YEARLY'	=>	'Årlig',
+	'LBL_SPECIFIC_DATE'	=>	'På Specifik datum',
+	'LBL_CHOOSE_DATE'	=>	'Välj datum',
+	'LBL_ON_THESE_DAYS'	=>	'På dessa dagar',
+	'LBL_SELECT_MONTH_AND_DAY'	=>	'Välj månad och datum',
+	'LBL_SELECTED_DATES'	=>	'Valda datum',
+	'LBL_EXCEEDING_MAXIMUM_LIMIT'	=>	'Högsta gräns överskridits',
+	'LBL_NEXT_TRIGGER_TIME'	=>	'Nästa trigger tid på',
+	'LBL_RUN_REPORT'	=>	'Kör rapport',
+	'LBL_SELECT_RECIEPIENTS'	=>	'Välj mottagare',
+	'LBL_SPECIFIC_EMAIL_ADDRESS'	=>	'Skicka till specifik e-post',
+
+    //Summary/Pivot Reports
+    'LBL_CREATING_PIVOT_REPORT' => 'Skapa Pivot Rapportera',
+    'LBL_EDITING_PIVOT_REPORT' => 'Redigera Pivot Rapportera',
+    'LBL_SELECT_PIVOT_FIELDS' => 'Välj Pivot Fields',
+    'LBL_SELECT_ROWS' => 'Markera rader',
+    'LBL_SELECT_DATA_FIELDS' => 'Välj Datafält',
+    'LBL_ADD_ROWS' => 'Lägg till rader',
+    'LBL_ADD_COLUMNS' => 'Lägg kolumner',
+    'LBL_ADD_DATA_FIELDS' => 'Lägg till Datafält',
+    'LBL_PIVOT_FIELDS' => 'Selected Pivot Fields',
+    'LBL_RECORD_COUNT' => 'Record Count',
+    'LBL_SELECT_PIVOT_FIELDS_WARNING' => 'Varning: Välj minst en rad fält, fältet Kolumn och datafält',
+    'LBL_PIVOT_DATA_FIELDS_WARNING' => 'Varning: I Data Column - aggregeringsfunktionerna (sum, avg, min och max) bör inte upprepa.',
+    'LBL_MODIFY_CONDITIONS' => 'Modifiera Förhållanden',
+    'LBL_PIVOT_PREVIEW_EX' => 'Pivot Report Preview (exempel)',
+
+	//charts labels
+	'LBL_SELECT_CHART_TYPE'	=>'Välj diagramtyp',
+	'LBL_CLICK_THROUGH_NOT_AVAILABLE'=>	'Klicka vidare inte som du har valt mer än en modul',
+	'LBL_TOTAL_SUM_OF'=>	'Totalt Summa av',
+	'LBL_AVG_OF'	=>'Genomsnitt av',
+	'LBL_MIN_OF'=>	'Minst',
+	'LBL_MAX_OF'	=>'Max',
+	'LBL_RECORD_COUNT'	=>'Record Count',
+	'LBL_PIE_CHART'=>	'Pie Chart',
+	'LBL_VERTICAL_BAR_CHART'=>	'Vertikal stapeldiagram',
+	'LBL_HORIZONTAL_BAR_CHART'	=>'Horisontell Stapeldiagram',
+	'LBL_LINE_CHART'	=>'Linjediagram',
+	'LBL_SELECT_CHART'=>	'Välj Diagram',
+	'LBL_CREATING_CHART_REPORT'=>	'Skapa diagramrapport',
+	'LBL_EDITING_CHART_REPORT'=>	'Redigera diagram Rapportera',
+	'LBL_GENERATE_CHART'	=>'Generera tabell',
+	'LBL_SELECT_GROUP_BY_FIELD'	=>'Välj Grupp av Field',
+	'LBL_SELECT_DATA_FIELD'=>	'Välj Datafält',
+	'LBL_MODIFY_CONDITION'	=>'Modifiera Förhållanden',
+	'LBL_PLEASE_SELECT_ATLEAST_ONE_GROUP_FIELD_AND_DATA_FIELD'=>	'Välj minst en Groupby fält och ett datafält.',
+	'LBL_FOR_BAR_GRAPH_AND_LINE_GRAPH_SELECT_3_MAX_DATA_FIELDS'=>	'För Bar och Linjediagram kan du välja max 3 Datafält.',
+	'LBL_DETAIL_REPORT' =>'Detaljrapport',
+	'LBL_PIVOT_REPORT' => 'Pivot Rapportera',
+	'LBL_CHARTS' => 'Topplista',
+    //Schedule Reports - Mail Content
+    'LBL_AUTO_GENERATED_REPORT_EMAIL' => 'Detta är ett automatiskt genererat mail som skickas på uppdrag av en schemalagd rapport.',
+    'LBL_PIN_CHART_TO_DASHBOARD' => 'Pin Diagram Till Dashboard',
+    'LBL_FILE_FORMAT' => 'Filformat',
+    
+    'Report Type' => 'Rapporttyp',
+    'tabular' => 'Detalj',
+    'summary' => 'Detalj',
+    'pivot' => 'Pivot',
+    'chart' => 'Diagram',
+    'LBL_REPORTS_MOVED_SUCCESSFULLY'=>'Rapporter Flyttade framgångsrikt.',
+    'LBL_SAME_SOURCE_AND_TARGET_FOLDER'=>'Target Folder är samma som källmapp.',
+	'LBL_SEARCH_FOR_FOLDERS' => 'Sök efter mappar',
+	'LBL_CHART_REPORT' => 'Diagramrapport',
+	'LBL_UNPIN_CHART_FROM_DASHBOARD' => 'Lossa diagram från instrumentbrädan',
+
+  'LBL_SAME_LEVEL_ROLES' => 'Samma Nivå Roller',
+  'LBL_SUBORDINATE_ROLES' => 'Underordnade Roller',
+  'LBL_SHARE_REPORT' => 'Dela Rapport',
+  'LBL_SHARED_REPORTS' => 'Delade Med Mig',
+  'LBL_PINNED' => 'Nålas',
+  'LBL_UNPINNED' => 'UnPinned',
+
+
+  'LBL_REPORTS_DELETED_SUCCESSFULLY' => 'Rapporter Som Har Tagits Bort',
+
 );
 $jsLanguageStrings = array(
 	'JS_DUPLICATE_RECORD' => 'Duplicera Rapport',
 	'JS_CALCULATION_LINE_ITEM_FIELDS_SELECTION_LIMITATION' => 'Begränsning: Artikeln fält (Listpris, Rabatt & Kvantitet) kan endast användas när andra beräkningsfält inte är valda.',
+    'JS_CHART_PINNED_TO_DASHBOARD' => 'Diagram fästs på Dashboard',
+    'JS_CHART_ALREADY_PINNED_TO_DASHBOARD' => 'Diagram Redan fästs på Dashboard',
+	'JS_MOVE_REPORTS'=>'Flytta Rapporter',
+    'JS_SCHEDULED_DATE_TIME_ERROR' => 'Planerat datum och tid bör vara större än aktuellt datum och tid',
+	'JSLBL_PIN_CHART_TO_DASHBOARD' => 'Pin diagram Till Dashboard',
+	'JSLBL_UNPIN_CHART_FROM_DASHBOARD' => 'Uvoľniť غراف ض palubnej دوسكي',
+	'JS_CHART_REMOVED_FROM_DASHBOARD' => 'Diagram bort från instrumentbrädan',
+
+  'JS_NO_CHART_DATA_AVAILABLE' => 'Data inte är tillgängligt, ställ in den valda fält',
+
 );

@@ -24,7 +24,7 @@
 		</div>
 		<hr>
 
-		<form class="form-horizontal" name="step1" method="get" action="index.php">
+		<form class="form-horizontal" name="step1" method="post" action="index.php">
 			<input type=hidden name="module" value="Install" />
 			<input type=hidden name="view" value="Index" />
 			<input type=hidden name="mode" value="Step2" />
@@ -37,6 +37,17 @@
 						<h3>{vtranslate('LBL_WELCOME_TO_VTIGER6_SETUP_WIZARD', 'Install')}</h3>
 						{vtranslate('LBL_VTIGER6_SETUP_WIZARD_DESCRIPTION','Install')}
 					</div>
+					{if $LANGUAGES|@count > 1}
+					<div>
+						<label>{vtranslate('LBL_CHOOSE_LANGUAGE', 'Install')}
+							<select name="lang" id="lang">
+							{foreach key=header item=language from=$LANGUAGES}
+								<option value="{$header}" {if $header eq $CURRENT_LANGUAGE}selected{/if}>{vtranslate("$language",'Install')}</option>
+							{/foreach}
+							</select>
+						</label>
+					</div>
+					{/if}
 				</div>
 			</div>
 			<div class="row-fluid">

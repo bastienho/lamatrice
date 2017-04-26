@@ -74,12 +74,11 @@ Vtiger_RelatedList_Js("Campaigns_RelatedList_Js",{
 	 */
 	
 	registerChangeCustomFilterEvent : function(){
-		
-		/* ED141222 : trop dangereux : ajoute tous les éléments correspondant à la recherche */
-		return;
-		
 		var filterSelectElement = jQuery('#recordsFilter');
 		filterSelectElement.change(function(e){
+             var message = app.vtranslate('JS_LBL_ARE_YOU_SURE_YOU_WANT_TO_ADD_THIS_FILTER');
+             Vtiger_Helper_Js.showConfirmationBox({'message' : message}).then(     
+             	function() {
 			var element = jQuery(e.currentTarget);
 			var cvId = element.find('option:selected').data('id');
 			var relatedModuleName = jQuery('.relatedModuleName').val();
@@ -118,7 +117,11 @@ Vtiger_RelatedList_Js("Campaigns_RelatedList_Js",{
 				function(textStatus, errorThrown){
 				}
 			);
-		})
+            },
+           function(error, err){
+                       }
+       );
+		});
 		
 	},
 	

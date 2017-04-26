@@ -28,30 +28,17 @@ class Settings_Picklist_Index_View extends Settings_Vtiger_Index_View {
         //TODO: see if you needs to optimize this , since its will gets all the fields and filter picklist fields
         $pickListFields = $moduleModel->getFieldsByType(array('picklist','multipicklist'));
         if(count($pickListFields) > 0) {
-            $selectedPickListFieldModel = reset($pickListFields);
-
-            /* ED141127
-			* Ajout des données supplémentaires (uicolor, uiicon, ...)
-			*/
-			$selectedFieldAllPickListData = array();
-			$selectedFieldAllPickListValues = Vtiger_Util_Helper::getPickListValues($selectedPickListFieldModel->getName(), $selectedFieldAllPickListData);
-			$viewer->assign('PICKLIST_FIELDS',$pickListFields);
-			$viewer->assign('SELECTED_PICKLIST_FIELDMODEL',$selectedPickListFieldModel);
-			$viewer->assign('SELECTED_PICKLISTFIELD_ALL_VALUES',$selectedFieldAllPickListValues);
-			$viewer->assign('SELECTED_PICKLISTFIELD_ALL_DATA',$selectedFieldAllPickListData);
+            $defaultField = $request->get('fieldname');
+            if(!empty($defaultField)) {
+                $selectedPickListFieldModel = $pickListFields[$defaultField];
+            } else {
+                $selectedPickListFieldModel = reset($pickListFields);
+            }
+            $selectedFieldAllPickListValues = Vtiger_Util_Helper::getPickListValues($selectedPickListFieldModel->getName());
 			
-			$properties = getPicklistProperties($selectedPickListFieldModel);
-			if($properties){
-			   $viewer->assign('PROPERTIES_UICOLOR', $properties["uicolor"]);
-			   $viewer->assign('PROPERTIES_UIICON', $properties["uiicon"]);
-			}
-			
-			$settingFieldModels = $selectedPickListFieldModel->getSettingFieldModels($sourceModule);
-			if($settingFieldModels){
-			   //var_dump($settingFieldModels);
-			   $viewer->assign('SETTING_TABLE_FIELDS_MODELS', $settingFieldModels);
-			}
-	    
+            $viewer->assign('PICKLIST_FIELDS',$pickListFields);
+            $viewer->assign('SELECTED_PICKLIST_FIELDMODEL',$selectedPickListFieldModel);
+            $viewer->assign('SELECTED_PICKLISTFIELD_ALL_VALUES',$selectedFieldAllPickListValues);
             $viewer->assign('ROLES_LIST', Settings_Roles_Record_Model::getAll());
         }else{
             $viewer->assign('NO_PICKLIST_FIELDS',true);
@@ -68,22 +55,10 @@ class Settings_Picklist_Index_View extends Settings_Vtiger_Index_View {
         }
         $viewer->assign('SELECTED_MODULE_NAME', $sourceModule);
         $viewer->assign('QUALIFIED_NAME',$qualifiedName);
+        $viewer->assign('DEFAULT_FIELD', $defaultField);
         
 		$viewer->view('Index.tpl',$qualifiedName);
     }
-	
-	function getHeaderCSS(Vtiger_Request $request) {
-		$headerCssInstances = parent::getHeaderCss($request);
-		$moduleName = $request->getModule();
-
-		$cssFileNames = array(
-			"~/layouts/vlayout/modules/Settings/$moduleName/resources/$moduleName.css",
-		);
-		$cssInstances = $this->checkAndConvertCssStyles($cssFileNames);
-		$headerCssInstances = array_merge($headerCssInstances, $cssInstances);
-		
-		return $headerCssInstances;
-	}
 	
 	function getHeaderScripts(Vtiger_Request $request) {
 		$headerScriptInstances = parent::getHeaderScripts($request);
@@ -91,10 +66,25 @@ class Settings_Picklist_Index_View extends Settings_Vtiger_Index_View {
 
 		$jsFileNames = array(
 			"modules.$moduleName.resources.$moduleName",
+            "~/libraries/jquery/colorpicker/js/colorpicker.js",
 		);
 
 		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
 		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
 		return $headerScriptInstances;
+	}
+    
+    public function getHeaderCss(Vtiger_Request $request) {
+		$headerCssInstances = parent::getHeaderCss($request);
+
+
+		$cssFileNames = array(
+			'~/libraries/jquery/colorpicker/css/colorpicker.css'
+		);
+        
+		$cssInstances = $this->checkAndConvertCssStyles($cssFileNames);
+        $headerCssInstances = array_merge($headerCssInstances, $cssInstances);
+
+		return $headerCssInstances;
 	}
 }

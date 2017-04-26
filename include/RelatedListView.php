@@ -44,7 +44,7 @@ if(!function_exists('GetHistory')) {
 
 function GetRelatedListBase($module,$relatedmodule,$focus,$query,$button,$returnset,$id='',$edit_val='',$del_val='',$skipActions=false)
 {
-
+   return array('query' => $query);
 }
 
 /** Function to get related list entries in detailed array format
@@ -195,9 +195,9 @@ function CheckFieldPermission($fieldname,$module) {
 function CheckColumnPermission($tablename, $columnname, $module)
 {
 	global $adb;
-
+	
 	static $cache = array();
-
+	
 	$cachekey = $module . ":" . $tablename . ":" . $columnname;
 	if (!array_key_exists($cachekey, $cache)) {
 		$res = $adb->pquery("select fieldname from vtiger_field where tablename=? and columnname=? and vtiger_field.presence in (0,2)", array($tablename, $columnname));

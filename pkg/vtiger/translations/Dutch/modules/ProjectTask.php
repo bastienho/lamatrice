@@ -14,6 +14,7 @@ $languageStrings = array(
 	'LBL_PROJECT_TASK_INFORMATION' => 'Projecttaak Informatie'      , 
 	'LBL_PROJECTS_LIST'            => 'Projects List'               , // TODO: Review
 	'LBL_TASKS_LIST'               => 'Tasks List'                  , // TODO: Review
+    'LBL_MILESTONES_LIST'          => 'Mijlpalen Lijst'             ,
 	
 	//Field Labels
 	'Project Task Name' => 'Project Task Name',
@@ -26,13 +27,13 @@ $languageStrings = array(
     'Worked Hours'=>'Worked Hours',
     'Start Date'=>'Start Date',
     'End Date'=>'End Date',
-    'Related To' => 'Related To',
-    'administrative' => 'administrative',
-    'operative' => 'operative',
-    'other' => 'other',
-    'low' => 'low',
-    'normal' => 'normal',
-    'high' => 'high',
+    'Related to' => 'Related To',
+    'administrative' => 'Administratief',
+    'operative' => 'Arbeider',
+    'other' => 'Ander',
+    'low' => 'Laag',
+    'normal' => 'Normaal',
+    'high' => 'Hoog',
     'Created Time' => 'Created Time',
     'Modified Time' => 'Modified Time',
     'description' => 'Description',
@@ -42,4 +43,5 @@ $languageStrings = array(
 	'Completed' => 'Completed',
 	'Deferred' => 'Deferred',
 	'Canceled ' => 'Canceled',
+        'LBL_NO_DATE_VALUE_MSG' => 'of Projecttaken heb geen Start en / of Einddatum',
 );

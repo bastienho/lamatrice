@@ -15,6 +15,7 @@ class Vtiger_DependencyPicklist {
 
 	static function getDependentPicklistFields($module='') {
 		global $adb;
+
 		if(empty($module)) {
 			$result = $adb->pquery('SELECT DISTINCT sourcefield, targetfield, tabid FROM vtiger_picklist_dependency', array());
 		} else {
@@ -35,10 +36,10 @@ class Vtiger_DependencyPicklist {
 					continue;
 				}
 
-				$fieldResult = $adb->pquery('SELECT fieldlabel FROM vtiger_field WHERE fieldname = ?', array($sourceField));
+				$fieldResult = $adb->pquery('SELECT fieldlabel FROM vtiger_field WHERE fieldname = ? AND tabid = ?', array($sourceField, $fieldTabId));
 				$sourceFieldLabel = $adb->query_result($fieldResult,0,'fieldlabel');
 
-				$fieldResult = $adb->pquery('SELECT fieldlabel FROM vtiger_field WHERE fieldname = ?', array($targetField));
+				$fieldResult = $adb->pquery('SELECT fieldlabel FROM vtiger_field WHERE fieldname = ? AND tabid = ?', array($targetField, $fieldTabId));
 				$targetFieldLabel = $adb->query_result($fieldResult,0,'fieldlabel');
 
 				$dependentPicklists[] = array('sourcefield'=>$sourceField, 'sourcefieldlabel'=>$sourceFieldLabel,
@@ -55,7 +56,7 @@ class Vtiger_DependencyPicklist {
 
 		$query="select vtiger_field.fieldlabel,vtiger_field.fieldname" .
 				" FROM vtiger_field inner join vtiger_picklist on vtiger_field.fieldname = vtiger_picklist.name" .
-				" where displaytype=1 and vtiger_field.tabid=? and vtiger_field.uitype in ('15','16','33') " .
+				" where displaytype=1 and vtiger_field.tabid=? and vtiger_field.uitype in ('15','16') " .
 				" and vtiger_field.presence in (0,2) ORDER BY vtiger_picklist.picklistid ASC";
 
 		$result = $adb->pquery($query, array($tabId));
@@ -122,12 +123,13 @@ class Vtiger_DependencyPicklist {
 
 	static function getPickListDependency($module, $sourceField, $targetField) {
 		global $adb;
+
 		$tabId = getTabid($module);
 		$dependencyMap = array();
 		$dependencyMap['sourcefield'] = $sourceField;
 		$dependencyMap['targetfield'] = $targetField;
 
-		$result = $adb->pquery('SELECT * FROM vtiger_picklist_dependency WHERE tabid=? AND sourcefield=? AND targetfield=?',
+		$result = $adb->pquery('SELECT sourcevalue,targetvalues FROM vtiger_picklist_dependency WHERE tabid=? AND sourcefield=? AND targetfield=?',
 				array($tabId,$sourceField,$targetField));
 		$noOfMapping = $adb->num_rows($result);
 
@@ -136,7 +138,7 @@ class Vtiger_DependencyPicklist {
 		for($i=0; $i<$noOfMapping; ++$i) {
 			$sourceValue = $adb->query_result($result, $i, 'sourcevalue');
 			$targetValues = $adb->query_result($result, $i, 'targetvalues');
-			$unserializedTargetValues = Zend_Json::decode(html_entity_decode($targetValues));
+			$unserializedTargetValues = Zend_Json::decode(decode_html(html_entity_decode($targetValues)));
 
 			$mapping = array();
 			$mapping['sourcevalue'] = $sourceValue;
@@ -153,11 +155,13 @@ class Vtiger_DependencyPicklist {
 		global $adb;
 
 		$tabId = getTabid($module);
-
-		$result = $adb->pquery('SELECT * FROM vtiger_picklist_dependency WHERE tabid=?', array($tabId));
+		$picklistDependencyDatasource = array();
+		$moduleModel = Vtiger_Module_Model::getInstance($module);
+		$picklistDependencyDatasource = $moduleModel->getCustomPicklistDependency();
+		
+		$result = $adb->pquery('SELECT sourcefield,targetfield,sourcevalue,targetvalues,criteria FROM vtiger_picklist_dependency WHERE tabid=?', array($tabId));
 		$noofrows = $adb->num_rows($result);
 
-		$picklistDependencyDatasource = array();
 		for($i=0; $i<$noofrows; ++$i) {
 			$pickArray = array();
 			$sourceField = $adb->query_result($result, $i, 'sourcefield');
@@ -227,6 +231,18 @@ class Vtiger_DependencyPicklist {
 		ksort($modules);
 		return $modules;
 	}
+    
+    static function getPicklistSourceField($module, $sourceField, $targetField) {
+        $adb = PearDatabase::getInstance();
+
+		// If another parent field exists for the same target field - 2 parent fields should not be allowed for a target field
+		$result = $adb->pquery('SELECT sourcefield FROM vtiger_picklist_dependency
+									WHERE tabid = ? AND targetfield = ? AND sourcefield != ?',
+				array(getTabid($module), $targetField, $sourceField));
+		if($adb->num_rows($result) > 0) {
+			return $adb->query_result($result, 0, 'sourcefield');
+		}
+    }
 
 }
 ?>

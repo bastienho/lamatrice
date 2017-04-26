@@ -6,15 +6,12 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013     
  ************************************************************************************/
 $languageStrings = array(
 	'Vendors'                      => 'Fournisseurs'                , 
 	'SINGLE_Vendors'               => 'Fournisseur'                 , 
-	'LBL_ADD_RECORD'               => 'Ajouter un fournisseur'                  , 
-	'LBL_RECORDS_LIST'             => 'Liste des fournisseurs'                , 
+	'LBL_ADD_RECORD'               => 'Add Vendor'                  , 
+	'LBL_RECORDS_LIST'             => 'Vendors List'                , 
 	'LBL_VENDOR_INFORMATION'       => 'Détail fournisseur'         , 
 	'LBL_VENDOR_ADDRESS_INFORMATION' => 'Adresse'                     , 
 	'Vendor Name'                  => 'Nom fournisseur'             , 
@@ -30,9 +27,13 @@ $languageStrings = array(
 	'306-Internet Sales'           => '306-Internet Sales'          , 
 	'307-Service-Hardware Labor'   => '307-Service-Hardware Labor'  , 
 	'308-Sales-Books'              => '308-Sales-Books'             , 
+
+  'Phone' => 'Téléphone Principal',
+  'Email' => 'E-Mail Principale',
+
 );
 $jsLanguageStrings = array(
-	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Confirmer la suppression?', 
-	'LBL_DELETE_CONFIRMATION'      => 'Supprimer ce fournisseur supprimera les commandes fournisseurs liés. Confirmer la suppression?', 
-	'LBL_MASS_DELETE_CONFIRMATION' => 'Supprimer ce fournisseur supprimera les commandes fournisseurs liés. Confirmer la suppression?', 
+	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Are you sure you want to delete?', 
+	'LBL_DELETE_CONFIRMATION'      => 'Deleting this Vendor will remove its related PurchaseOrders. Are you sure you want to delete this Vendor?', 
+	'LBL_MASS_DELETE_CONFIRMATION' => 'Deleting this vendor(s) will remove its related Purchase Orders. Are you sure you want to delete the selected Records?', 
 );

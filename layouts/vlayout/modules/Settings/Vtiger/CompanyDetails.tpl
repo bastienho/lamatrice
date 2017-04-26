@@ -11,48 +11,50 @@
 {strip}
 	<input type="hidden" id="supportedImageFormats" value='{ZEND_JSON::encode(Settings_Vtiger_CompanyDetails_Model::$logoSupportedFormats)}' />
 	<div class="padding-left1per">
-		<div class="row-fluid settingsHeader">
-			{vtranslate('LBL_COMPANY_DETAILS', $QUALIFIED_MODULE)}{if $DESCRIPTION}<span style="font-size:12px;color: black;"> - &nbsp;{vtranslate({$DESCRIPTION}, $QUALIFIED_MODULE)}</span>{/if}
+		<div class="row-fluid widget_header">
+			<div class="span8">
+				<h3>{vtranslate('LBL_COMPANY_DETAILS', $QUALIFIED_MODULE)}</h3>
+				{if $DESCRIPTION}<span style="font-size:12px;color: black;"> - &nbsp;{vtranslate({$DESCRIPTION}, $QUALIFIED_MODULE)}</span>{/if}
+			</div>
+			<div class="span4">
 			<button id="updateCompanyDetails" class="btn pull-right">{vtranslate('LBL_EDIT',$QUALIFIED_MODULE)}</button>
-			<hr>
+			</div>
 		</div>
+		<hr>
+		{assign var=WIDTHTYPE value=$CURRENT_USER_MODEL->get('rowheight')}
 		<div  id="CompanyDetailsContainer" class="{if !empty($ERROR_MESSAGE)}hide{/if}">
 			<div class="row-fluid">
 				<table class="table table-bordered">
 					<thead>
 						<tr class="blockHeader">
-							<th colspan="2"><strong>{vtranslate('LBL_COMPANY_LOGO',$QUALIFIED_MODULE)}</strong></th>
+							<th colspan="2" class="{$WIDTHTYPE}"><strong>{vtranslate('LBL_COMPANY_LOGO',$QUALIFIED_MODULE)}</strong></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<td>
+							<td class="{$WIDTHTYPE}">
 								<div class="companyLogo">
-									<img src="{$MODULE_MODEL->getLogoPath()}" class="padding10 alignMiddle" />
+									<img src="{$MODULE_MODEL->getLogoPath()}" class="alignMiddle" />
 								</div>
 							</td>
 						</tr>
 					</tbody>
 				</table>
+				<br>
 				<table class="table table-bordered">
 					<thead>
 						<tr class="blockHeader">
-							<th colspan="2"><strong>{vtranslate('LBL_COMPANY_INFORMATION',$QUALIFIED_MODULE)}</strong></th>
+							<th colspan="2" class="{$WIDTHTYPE}"><strong>{vtranslate('LBL_COMPANY_INFORMATION',$QUALIFIED_MODULE)}</strong></th>
 						</tr>
 					</thead>
 					<tbody>
 						{foreach from=$MODULE_MODEL->getFields() item=FIELD_TYPE key=FIELD}
-							{if $FIELD neq 'logoname' && $FIELD neq 'logo' && $FIELD neq 'print_logoname' && $FIELD neq 'print_logo' }
-								{if strpos($FIELD, '::') !== false && strpos($FIELD, $CONTEXT|cat:'::') !== 0}
-									{assign var=PARTS value=explode('::', $FIELD)}
-									{assign var=CONTEXT value=$PARTS[0]}
-									<tr class="blockHeader">
-										<th colspan="2"><strong>{vtranslate($CONTEXT,$QUALIFIED_MODULE)}</strong></th>
-									</tr>
-								{/if}
+							{if $FIELD neq 'logoname' && $FIELD neq 'logo' }
 								<tr>
-									<td>{vtranslate($FIELD,$QUALIFIED_MODULE)}</td>
-									<td>{$MODULE_MODEL->get($FIELD)}</td>
+									<td class="{$WIDTHTYPE}" style="width:25%"><label class="pull-right">{vtranslate($FIELD,$QUALIFIED_MODULE)}</label></td>
+									<td class="{$WIDTHTYPE}">
+										{if $FIELD eq 'address'} {$MODULE_MODEL->get($FIELD)|nl2br} {else} {$MODULE_MODEL->get($FIELD)} {/if}
+									</td>
 								</tr>
 							{/if}
 						{/foreach}
@@ -82,42 +84,17 @@
 				{/if}
 			</div>
 		</div>
-		<div class="control-group">
-			<div class="control-label">{vtranslate('LBL_COMPANY_PRINT_LOGO',$QUALIFIED_MODULE)}</div>
-			<div class="controls">
-				<div class="companyLogo">
-					<img src="{$MODULE_MODEL->getLogoPath('print_')}" class="alignMiddle" />
-				</div>
-				<input type="file" name="print_logo" id="print_logoFile" />&nbsp;&nbsp;
-				<span class="alert alert-info">
-					{vtranslate('LBL_PRINT_LOGO_RECOMMENDED_MESSAGE',$QUALIFIED_MODULE)}
-				</span>
-				{if !empty($ERROR_MESSAGE)}
-					<br><br><div class="marginLeftZero span9 alert alert-error">
-						{vtranslate($ERROR_MESSAGE,$QUALIFIED_MODULE)}
-					</div>
-				{/if}
-			</div>
-		</div>
 		{foreach from=$MODULE_MODEL->getFields() item=FIELD_TYPE key=FIELD}
-			{if $FIELD neq 'logoname' && $FIELD neq 'logo' && $FIELD neq 'print_logoname' && $FIELD neq 'print_logo' }
-				{if strpos($FIELD, '::') !== false && strpos($FIELD, $CONTEXT|cat:'::') !== 0}
-					{assign var=PARTS value=explode('::', $FIELD)}
-					{assign var=CONTEXT value=$PARTS[0]}
-					
-					<div class="control-group">
-						<div class="blockHeader"><strong>&nbsp;{vtranslate($CONTEXT,$QUALIFIED_MODULE)}</strong></div>
-					</div>
-				{/if}
+			{if $FIELD neq 'logoname' && $FIELD neq 'logo' }
 				<div class="control-group">
 					<div class="control-label">
 						{vtranslate($FIELD,$QUALIFIED_MODULE)}{if $FIELD eq 'organizationname'}<span class="redColor">*</span>{/if}
 					</div>
 					<div class="controls">
-						{if $FIELD_TYPE eq 'textarea'}
-							<textarea name="{$FIELD}" style="width: 40.5%" rows="3">{$MODULE_MODEL->get($FIELD)}</textarea>
+						{if $FIELD eq 'address'}
+							<textarea name="{$FIELD}" style="width: 40%">{$MODULE_MODEL->get($FIELD)}</textarea>
 						{else}
-							<input type="text" {if $FIELD eq 'organizationname'} data-validation-engine="validate[required]" {/if} style="width: 40.5%" name="{$FIELD}" value="{$MODULE_MODEL->get($FIELD)}"/>
+							<input type="text" {if $FIELD eq 'organizationname'} data-validation-engine="validate[required]" {/if} class="input-xlarge" name="{$FIELD}" value="{$MODULE_MODEL->get($FIELD)}"/>
 						{/if}
 					</div>
 				</div>

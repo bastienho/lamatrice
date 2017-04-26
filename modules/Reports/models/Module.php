@@ -33,7 +33,9 @@ class Reports_Module_Model extends Vtiger_Module_Model {
 
 			$db->pquery('DELETE FROM vtiger_report WHERE reportid = ?', array($reportId));
 
-			$db->pquery('DELETE FROM vtiger_scheduled_reports WHERE reportid = ?', array($reportId));
+			$db->pquery('DELETE FROM vtiger_schedulereports WHERE reportid = ?', array($reportId));
+
+                        $db->pquery('DELETE FROM vtiger_reporttype WHERE reportid = ?', array($reportId));
 
 			$result = $db->pquery('SELECT * FROM vtiger_homereportchart WHERE reportid = ?',array($reportId));
 			$numOfRows = $db->num_rows($result);
@@ -44,6 +46,10 @@ class Reports_Module_Model extends Vtiger_Module_Model {
 				$deleteQuery = 'DELETE FROM vtiger_homestuff WHERE stuffid IN (' . implode(",", $homePageChartIdsList) . ')';
 				$db->pquery($deleteQuery, array());
 			}
+                        
+                        if($reportModel->get('reporttype') == 'chart'){
+                            Vtiger_Widget_Model::deleteChartReportWidgets($reportId);
+                        }
 			return true;
 		}
 		return false;
@@ -89,7 +95,10 @@ class Reports_Module_Model extends Vtiger_Module_Model {
 	function getRecentRecords($limit = 10) {
 		$db = PearDatabase::getInstance();
 
-		$result = $db->pquery('SELECT * FROM vtiger_report ORDER BY reportid DESC LIMIT ?', array($limit));
+		$result = $db->pquery('SELECT * FROM vtiger_report 
+						INNER JOIN vtiger_reportmodules ON vtiger_reportmodules.reportmodulesid = vtiger_report.reportid
+						INNER JOIN vtiger_tab ON vtiger_tab.name = vtiger_reportmodules.primarymodule AND presence = 0
+						ORDER BY reportid DESC LIMIT ?', array($limit));
 		$rows = $db->num_rows($result);
 
 		$recentRecords = array();
@@ -115,4 +124,29 @@ class Reports_Module_Model extends Vtiger_Module_Model {
 	function getAddFolderUrl() {
 		return 'index.php?module='.$this->get('name').'&view=EditFolder';
 	}
+    
+    /**
+     * Function to check if the extension module is permitted for utility action
+     * @return <boolean> true
+     */
+    public function isUtilityActionEnabled() {
+        return true;
+    }
+
+	/**
+	 * Function is a callback from Vtiger_Link model to check permission for the links
+	 * @param type $linkData
+	 */
+	public function checkLinkAccess($linkData) {
+		$privileges = Users_Privileges_Model::getCurrentUserPrivilegesModel();
+		$reportModuleModel = Vtiger_Module_Model::getInstance('Reports');
+		return $privileges->hasModulePermission($reportModuleModel->getId());
+	}
+    
+    /*
+     * Function to get supported utility actions for a module
+     */
+    function getUtilityActionsNames() {
+        return array('Export');
+    }
 }

@@ -7,7 +7,6 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  ************************************************************************************/
-error_reporting(E_ALL & ~E_NOTICE);
 
 chdir( dirname(__FILE__). '/../../');
 
@@ -51,6 +50,7 @@ class Mobile_ICAL {
 		if($authsuccess) {
 			if(!isset($this->userfocus->id)) {
 				$this->userfocus->id = $this->userfocus->retrieve_user_id($username);
+				$this->userfocus->retrieveCurrentUserInfoFromFile($this->userfocus->id);
 			}
 		}
 
@@ -82,16 +82,14 @@ class Mobile_ICAL {
 
 		if(empty($time)) $time = "00:00:00";
 
-		// Hous not padded?
-        if(preg_match("/([0-9]):([0-9][0-9])$/", $time, $m)) {
-        	$time = sprintf("0%s:%s", $m[1], $m[2]);
-        }
-        // Minutes not padded?
-        if(preg_match("/([0-9][0-9]):([0-9])$/", $time, $m)) {
-        	$time = sprintf("%s:0%s", $m[1], $m[2]);
-        }
 		if(strlen($time) == 5) $time = "{$time}:00";
 
+		$dateTime = DateTimeField::convertToUserTimeZone($date.' '.$time, $this->userfocus);
+
+		if(is_object($dateTime)) {
+			$dateTimeValue = $dateTime->format('Y-m-d H:i:s');
+			list($date, $time) = explode(' ', $dateTimeValue);
+		}
 		return sprintf("%sT%sZ", $this->formatDate($date), str_replace(':','',$time));
 	}
 
@@ -150,7 +148,7 @@ class Mobile_ICAL {
 			$properties['uid']         = $resultrow['activityid'];
 			$properties['summary']     = $this->formatValue(decode_html($resultrow['subject']));
 			$properties['description'] = $this->formatValue(decode_html($resultrow['description']));
-			$properties['class']       = 'PRIVATE';
+			$properties['class']       = 'PUBLIC';
 			$properties['dtstart']     = $this->formatDateTime( $resultrow['date_start'], $resultrow['time_start']);
 			$properties['dtend']       = $this->formatDateTime( $resultrow['due_date'], $resultrow['time_end']);
 			$properties['dtstamp']     = $this->formatDateTimestamp($resultrow['modifiedtime']);
@@ -201,18 +199,19 @@ class Mobile_ICAL {
 }
 
 // To make it easier for subscribing to Calendar via applications we support the
-// url format: http://localhost:81/modules/Mobile/ical.php/username@password
+
+// url format: http://localhost:81/modules/Mobile/ical.php/username@mail.com/password
 
 // Retrieve username and password from the URL
 $pathinfo = $_SERVER['PATH_INFO'];
-if(empty($pathinfo)) $pathinfo = "/ @ ";
+if(empty($pathinfo)) $pathinfo = "/";
 
 
 // Extract username and password
-$parts = explode('@', $pathinfo);
+$parts = explode('/', $pathinfo);
 $matches = array();
 $matches[2] = array_pop($parts);
-$matches[1] = ltrim(implode('@', $parts), '/');
+$matches[1] = array_pop($parts);
 
 // Process the request
 if (vtlib_isModuleActive('Mobile')) {

@@ -18,6 +18,7 @@ if (file_exists('config_override.php')) {
 }
 
 include_once 'vtlib/Vtiger/Module.php';
+include_once 'vtlib/Vtiger/Functions.php';
 include_once 'includes/main/WebUI.php';
 
 require_once('libraries/nusoap/nusoap.php');
@@ -35,7 +36,7 @@ $user = new Users();
 $current_user = $user->retrieveCurrentUserInfoFromFile($userid);
 
 
-$log = &LoggerManager::getLogger('customerportal');
+$log = LoggerManager::getLogger('customerportal');
 
 error_reporting(0);
 
@@ -436,7 +437,7 @@ function _getTicketModComments($ticketId) {
 			$output[$i]['owner'] = getOwnerName($owner);
 		}
 
-		$output[$i]['comments'] = decode_html(nl2br($adb->query_result($result, $i, 'commentcontent')));
+		$output[$i]['comments'] = nl2br($adb->query_result($result, $i, 'commentcontent'));
 		$output[$i]['createdtime'] = $adb->query_result($result, $i, 'createdtime');
 	}
 	return $output;
@@ -515,10 +516,10 @@ function get_combo_values($input_array)
 		$params = array($id);
 		$showAll = show_all('HelpDesk');
 		if($showAll == 'true') {
-			$servicequery .= ' OR vtiger_servicecontracts.sc_related_to = (SELECT accountid FROM vtiger_contactdetails WHERE contactid=?)
+			$servicequery .= ' OR vtiger_servicecontracts.sc_related_to = (SELECT accountid FROM vtiger_contactdetails WHERE contactid=? AND accountid <> 0)
 								OR vtiger_servicecontracts.sc_related_to IN
 											(SELECT contactid FROM vtiger_contactdetails WHERE accountid =
-													(SELECT accountid FROM vtiger_contactdetails WHERE contactid=?))
+													(SELECT accountid FROM vtiger_contactdetails WHERE contactid=? AND accountid <> 0))
 							';
 			array_push($params, $id);
 			array_push($params, $id);
@@ -863,6 +864,8 @@ function create_ticket($input_array)
 
 	$ticket->column_fields['assigned_user_id']=$defaultAssignee;
 	$ticket->column_fields['from_portal'] = 1;
+	// New field added to show source of the Record 
+	$ticket->column_fields['source'] = 'CUSTOMER PORTAL';
 
 	$accountResult = $adb->pquery('SELECT accountid FROM vtiger_contactdetails WHERE contactid = ?', array($parent_id));
 	$accountId = $adb->query_result($accountResult, 0, 'accountid');
@@ -909,7 +912,8 @@ function create_ticket($input_array)
 	*/
 function update_ticket_comment($input_array)
 {
-	global $adb,$mod_strings,$current_user;
+	global $adb,$mod_strings,$current_language; 
+        $mod_strings = return_module_language($current_language, 'HelpDesk');
 	$adb->println("Inside customer portal function update_ticket_comment");
 	$adb->println($input_array);
 
@@ -928,7 +932,7 @@ function update_ticket_comment($input_array)
 
 	if(trim($comments) != '') {
 		$modComments = CRMEntity::getInstance('ModComments');
-		$modComments->column_fields['commentcontent'] = vtlib_purify($comments);
+		$modComments->column_fields['commentcontent'] = $comments;
 		$modComments->column_fields['assigned_user_id'] =  $current_user->id;
 		$modComments->column_fields['customer'] = $ownerid;
 		$modComments->column_fields['related_to'] = $ticketid;
@@ -970,6 +974,7 @@ function close_current_ticket($input_array)
 	$focus->column_fields['ticketstatus'] ='Closed';
 	// Blank out the comments information to avoid un-necessary duplication
 	$focus->column_fields['comments'] = '';
+    $focus->column_fields['from_portal'] = 1;
 	// END
 	$focus->save("HelpDesk");
 	return "closed";
@@ -994,30 +999,40 @@ function authenticate_user($username,$password,$version,$login = 'true')
 	$password = $adb->sql_escape_string($password);
 
 	$current_date = date("Y-m-d");
-	$sql = "select id, user_name, user_password,last_login_time, support_start_date, support_end_date
+	$sql = "select id, user_name, user_password,last_login_time, support_start_date, support_end_date, cryptmode
 				from vtiger_portalinfo
 					inner join vtiger_customerdetails on vtiger_portalinfo.id=vtiger_customerdetails.customerid
 					inner join vtiger_crmentity on vtiger_crmentity.crmid=vtiger_portalinfo.id
-				where vtiger_crmentity.deleted=0 and user_name=? and user_password = ?
+				where vtiger_crmentity.deleted=0 and user_name=?
 					and isactive=1 and vtiger_customerdetails.portal=1
 					and vtiger_customerdetails.support_start_date <= ? and vtiger_customerdetails.support_end_date >= ?";
-	$result = $adb->pquery($sql, array($username, $password, $current_date, $current_date));
+	$result = $adb->pquery($sql, array($username, $current_date, $current_date));
 	$err[0]['err1'] = "MORE_THAN_ONE_USER";
 	$err[1]['err1'] = "INVALID_USERNAME_OR_PASSWORD";
 
 	$num_rows = $adb->num_rows($result);
 
-	if($num_rows > 1)		return $err[0];//More than one user
-	elseif($num_rows <= 0)		return $err[1];//No user
+	if($num_rows <= 0)		return $err[1];//No user
 
-	$customerid = $adb->query_result($result,0,'id');
+	// Match password against multiple user and decide.
+	$customerid = null;
+	for ($i = 0; $i < $num_rows; ++$i) {
+		$customerid = $adb->query_result($result, $i,'id');
+		if (Vtiger_Functions::compareEncryptedPassword($password, $adb->query_result($result, $i, 'user_password'), $adb->query_result($result, $i, 'cryptmode'))) {
+			break;
+		} else {
+			$customerid = null;
+		}
+	}
+
+	if (!$customerid) return $err[1];//No user again.
 
 	$list[0]['id'] = $customerid;
-	$list[0]['user_name'] = $adb->query_result($result,0,'user_name');
-	$list[0]['user_password'] = $adb->query_result($result,0,'user_password');
-	$list[0]['last_login_time'] = $adb->query_result($result,0,'last_login_time');
-	$list[0]['support_start_date'] = $adb->query_result($result,0,'support_start_date');
-	$list[0]['support_end_date'] = $adb->query_result($result,0,'support_end_date');
+	$list[0]['user_name'] = $adb->query_result($result,$i,'user_name');
+	$list[0]['user_password'] = $password;
+	$list[0]['last_login_time'] = $adb->query_result($result,$i,'last_login_time');
+	$list[0]['support_start_date'] = $adb->query_result($result,$i,'support_start_date');
+	$list[0]['support_end_date'] = $adb->query_result($result,$i,'support_end_date');
 
 	//During login process we will pass the value true. Other times (change password) we will pass false
 	if($login != 'false')
@@ -1059,11 +1074,11 @@ function change_password($input_array)
 		return null;
 
 	$list = authenticate_user($username,$password,$version ,'false');
-	if(!empty($list[0]['id'])){
-		return array('MORE_THAN_ONE_USER');
+	if(!empty($list[0]['id']) && $id != $list[0]['id']){
+		return array('MORE_THAN_ONE_USER'); /* compatability with portal app */
 	}
-	$sql = "update vtiger_portalinfo set user_password=? where id=? and user_name=?";
-	$result = $adb->pquery($sql, array($password, $id, $username));
+	$sql = "update vtiger_portalinfo set user_password=?, cryptmode=? where id=? and user_name=?";
+	$result = $adb->pquery($sql, array(Vtiger_Functions::generateEncryptedPassword($password), 'CRYPT', $id, $username));
 
 	$log->debug("Exiting customer portal function change_password");
 	return $list;
@@ -1121,18 +1136,25 @@ function send_mail_for_password($mailid)
 	$password = $adb->query_result($res,0,'user_password');
 	$isactive = $adb->query_result($res,0,'isactive');
 
+	// We no longer have the original password!
+	if (!empty($adb->query_result($res, 0, 'cryptmode'))) {
+		$password = '*****';
+		// TODO - we need to send link to reset the password
+		// For now CRM user can do the same.
+	}
+
 	$fromquery = "select vtiger_users.user_name, vtiger_users.email1 from vtiger_users inner join vtiger_crmentity on vtiger_users.id = vtiger_crmentity.smownerid inner join vtiger_contactdetails on vtiger_contactdetails.contactid=vtiger_crmentity.crmid where vtiger_contactdetails.email =?";
 	$from_res = $adb->pquery($fromquery, array($mailid));
 	$initialfrom = $adb->query_result($from_res,0,'user_name');
 	$from = $adb->query_result($from_res,0,'email1');
 
-	$contents = $mod_strings['LBL_LOGIN_DETAILS'];
-	$contents .= "<br><br>".$mod_strings['LBL_USERNAME']." ".$user_name;
-	$contents .= "<br>".$mod_strings['LBL_PASSWORD']." ".$password;
+	$contents = getTranslatedString('LBL_LOGIN_DETAILS');
+	$contents .= "<br><br>".getTranslatedString('LBL_USERNAME')." ".$user_name;
+	$contents .= "<br>".getTranslatedString('LBL_PASSWORD')." ".$password;
 
 	$mail = new PHPMailer();
 
-	$mail->Subject = $mod_strings['LBL_SUBJECT_PORTAL_LOGIN_DETAILS'];
+	$mail->Subject =  getTranslatedString('LBL_SUBJECT_PORTAL_LOGIN_DETAILS');
 	$mail->Body    = $contents;
 	$mail->IsSMTP();
 
@@ -1143,7 +1165,7 @@ function send_mail_for_password($mailid)
 	$smtp_auth = $adb->query_result($mailserverresult,0,'smtp_auth');
 
 	$mail->Host = $mail_server;
-	if($smtp_auth == 'true')
+	if($smtp_auth) 
 	$mail->SMTPAuth = 'true';
 	$mail->Username = $mail_server_username;
 	$mail->Password = $mail_server_password;
@@ -1428,6 +1450,7 @@ function add_ticket_attachment($input_array)
 	$focus->column_fields['filestatus'] = 1;
 	$focus->column_fields['assigned_user_id'] = $user_id;
 	$focus->column_fields['folderid'] = 1;
+	$focus->column_fields['source'] = 'CUSTOMER PORTAL';
 	$focus->parent_id = $ticketid;
 	$focus->save('Documents');
 
@@ -2277,11 +2300,11 @@ function get_details($id,$module,$customerid,$sessionid)
 		$query =  "SELECT
 			vtiger_notes.*,vtiger_crmentity.*,vtiger_attachmentsfolder.foldername,vtiger_notescf.*
 			FROM vtiger_notes
-			INNER JOIN vtiger_crmentity on vtiger_crmentity.crmid = vtiger_notes.notesid
+			INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = vtiger_notes.notesid
 			LEFT JOIN vtiger_attachmentsfolder
 				ON vtiger_notes.folderid = vtiger_attachmentsfolder.folderid
 			LEFT JOIN vtiger_notescf ON vtiger_notescf.notesid = vtiger_notes.notesid
-			where vtiger_notes.notesid=(". generateQuestionMarks($id) .") AND vtiger_crmentity.deleted=0";
+			WHERE vtiger_notes.notesid=(". generateQuestionMarks($id) .") AND vtiger_crmentity.deleted=0";
 	}
 	else if($module == 'HelpDesk'){
 		$query ="SELECT
@@ -2392,6 +2415,7 @@ function get_details($id,$module,$customerid,$sessionid)
 		$fieldlabel = getTranslatedString($adb->query_result($fieldres,$i,'fieldlabel'));
 		$fieldvalue = $adb->query_result($res,0,$columnname);
 
+		$output[0][$module][$i]['fieldname'] = $fieldname;
 		$output[0][$module][$i]['fieldlabel'] = $fieldlabel ;
 		$output[0][$module][$i]['blockname'] = $blockname;
 		if($columnname == 'title' || $columnname == 'description') {
@@ -2507,13 +2531,32 @@ function get_details($id,$module,$customerid,$sessionid)
 			}
 		}
 		if($module == 'HelpDesk' && $fieldname == 'ticketstatus'){
-			$parentid = $adb->query_result($res,0,'contact_id');
-			$status = $adb->query_result($res,0,'status');
-			if($customerid != $parentid ){ //allow only the owner to close the ticket
-				$fieldvalue = '';
-			}else{
-				$fieldvalue = $status;
-			}
+                $parentid = $adb->query_result($res,0,'parent_id');
+ 		        $contactid = $adb->query_result($res,0,'contact_id');
+ 		        $status = $adb->query_result($res,0,'status');
+
+ 		        if($parentid!=0) {//allow contacts related to organization to close the ticket
+                        $focus = CRMEntity::getInstance('Accounts');
+                        $focus->id = $parentid;
+                        $entityIds = $focus->getRelatedContactsIds();
+                        if($contactid != 0 ) {
+                                if(in_array($customerid, $entityIds) && in_array($contactid, $entityIds))
+                                        $fieldvalue = $status;
+                                else if($customerid == $contactid)
+                                        $fieldvalue = $status;
+                                else
+                                        $fieldvalue = '';
+                        } else {
+                                if(in_array($customerid, $entityIds))
+                                        $fieldvalue = $status;
+                                else
+                                        $fieldvalue = '';
+                        }
+                } else if($customerid != $contactid ) {//allow only the owner to close the ticket
+                        $fieldvalue = '';
+                } else {
+                        $fieldvalue = $status;
+                }
 		}
 		if($fieldname == 'unit_price'){
 			$sym = getCurrencySymbol($res,0,'currency_id');

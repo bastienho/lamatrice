@@ -6,24 +6,21 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013     
  ************************************************************************************/
 $languageStrings = array(
 	'Products'                     => 'Produits'                    , 
 	'SINGLE_Products'              => 'Produit'                     , 
 	'LBL_ADD_RECORD'               => 'Ajouter un produit'          , 
-	'LBL_RECORDS_LIST'             => 'Liste des Produits'               , 
+	'LBL_RECORDS_LIST'             => 'Products List'               , 
 	'LBL_PRODUCT_INFORMATION'      => 'Informations'                , 
-	'LBL_IMAGE_INFORMATION'        => 'Image produit'  , 
+	'LBL_IMAGE_INFORMATION'        => 'Commentaires image produit'  , 
 	'LBL_STOCK_INFORMATION'        => 'Stock :'                     , 
 	'LBL_MORE_CURRENCIES'          => 'Plus de devises'             , 
 	'LBL_PRICES'                   => 'Prix des produits'           , 
 	'LBL_PRICE'                    => 'Prix'                        , 
 	'LBL_RESET_PRICE'              => 'Prix remisé'                , 
 	'LBL_RESET'                    => 'Remise'                      , 
-	'LBL_ADD_TO_PRICEBOOKS'        => 'Ajouter à la grille tarifaire'           , 
+	'LBL_ADD_TO_PRICEBOOKS'        => 'Add to PriceBooks'           , 
 	'Product No'                   => 'Produit N°'                 , 
 	'Part Number'                  => 'Ref'                         , 
 	'Product Active'               => 'Actif'                       , 
@@ -74,5 +71,20 @@ $languageStrings = array(
 	'Sheet'                        => 'Fiche'                       , 
 	'Spiral Binder'                => 'Cahier à spiral'            , 
 	'Sq Ft'                        => 'm²'                         , 
-	'LBL_CONVERSION_RATE'          => 'Taux de conversion'             , // TODO: Review
+	'LBL_CONVERSION_RATE'          => 'Conversion Rate'             , // TODO: Review
+    'LBL_PRODUCTSMOD_DISABLED' => 'Activer Module Produits pour voir les produits',
+	'LBL_SHOW_BUNDLE_IN_INVENTORY' => 'Voir les articles faisceau de facture/devis/commande client/Commande',
+	'LBL_BUNDLE_TOTAL_COST' => 'Le coût total de Bundle',
+	'LBL_UPDATE_BUNDLE_PRICE' => 'Mise à jour Bundle Prix',
+
+  'LBL_PRODUCT_NAME' => 'Nom Du Produit',
+  'LBL_PRICE_QUANTITY' => 'Prix x Quantité',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SUB_PRODUCTS_WILL_BE_SHOWN_IN_INVENTORY' => 'Produits secondaires seront présentés dans l"Inventaire',
+	'JS_SUB_PRODUCTS_WILL_NOT_BE_SHOWN_IN_INVENTORY' => 'Produits sous ne seront pas affichées dans l"inventaire',
+	'JS_SUCCESSFULLY_CHANGED_BUNDLE_COST' => 'Coût total réussi à changer de forfait',
+	'JS_DELETION_OR_IN_ACTIVATION_CHILD_PRODUCT_MESSAGE' => "Ce produit fait partie d'un faisceau de produit. Le prix du faisceau restent inchangés lorsqu'un élément de faisceau est supprimé ou inactivé. Etes-vous sûr de vouloir continuer?",
 );

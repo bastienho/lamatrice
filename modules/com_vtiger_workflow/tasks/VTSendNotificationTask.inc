@@ -33,30 +33,28 @@ class VTSendNotificationTask extends VTEmailTask {
 		$moduleName = 'Emails';
 		$userId = $current_user->id;
 		$emailFocus = CRMEntity::getInstance($moduleName);
-        $dateTime = new DateTimeField(null);
-		$emailFieldValues = array(
-				'assigned_user_id' => $userId,
-				'subject' => $subject,
-				'description' => $content,
-				'from_email' => $fromEmail,
-				'saved_toid' => $toEmail,
-				'ccmail' => $cc,
-				'bccmail' => $bcc,
-				'parent_id' => $entityId."@$userId|",
-				'email_flag' => 'SENT',
-				'activitytype' => $moduleName,
-				'date_start' => date($dateTime->getDisplayDate($current_user)),
-				'time_start' => date($dateTime->getDisplayTime($current_user)),
-				'mode' => '',
-				'id' => ''
-		);
-		$emailFocus->column_fields = $emailFieldValues;
+		$dateTime = new DateTimeField(null);
+
+		$emailFocus->column_fields['assigned_user_id'] = $userId;
+		$emailFocus->column_fields['subject'] = $subject;
+		$emailFocus->column_fields['description'] = $content;
+		$emailFocus->column_fields['from_email'] = $fromEmail;
+		$emailFocus->column_fields['saved_toid'] = $toEmail;
+		$emailFocus->column_fields['ccmail'] = $cc;
+		$emailFocus->column_fields['bccmail'] = $bcc;
+		$emailFocus->column_fields['parent_id'] = $entityId."@$userId|";
+		$emailFocus->column_fields['email_flag'] = 'SENT';
+		$emailFocus->column_fields['activitytype'] = $moduleName;
+		$emailFocus->column_fields['date_start'] = date($dateTime->getDisplayDate($current_user));
+		$emailFocus->column_fields['time_start'] = date($dateTime->getDisplayTime($current_user));
+		$emailFocus->column_fields['mode'] = '';
+		$emailFocus->column_fields['id'] = '';
 		$emailFocus->save($moduleName);
 
 		//Including email tracking details
 		global $site_URL, $application_unique_key;
 		$emailId = $emailFocus->id;
-		$trackURL = "$site_URL/modules/Emails/TrackAccess.php?record=$entityId&mailid=$emailId&app_key=$application_unique_key";
+		$trackURL = "$site_URL/modules/Emails/actions/TrackAccess.php?record=$entityId&mailid=$emailId&app_key=$application_unique_key";
 		$content = "<img src='$trackURL' alt='' width='1' height='1'>$content";
 
 		if (stripos($content, '<img src="cid:logo" />')) {
@@ -99,6 +97,9 @@ class VTSendNotificationTask extends VTEmailTask {
 
 				$groupModel = new GetGroupUsers();
 				$groupModel->getAllUsersInGroup($ownerId);
+
+				//Clearing static cache for sub groups
+				GetGroupUsers::$groupIdsList = array();
 				$usersList = $groupModel->group_users;
 				if ($usersList) {
 					$ownerId = $usersList[0];

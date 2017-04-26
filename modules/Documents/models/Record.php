@@ -15,8 +15,7 @@ class Documents_Record_Model extends Vtiger_Record_Model {
 	 * @return <String> - Entity Display Name for the record
 	 */
 	function getDisplayName() {
-		//Since vtiger_entityname name field is made as title instead of notes_title
-		return $this->get('notes_title');
+		return Vtiger_Util_Helper::getRecordName($this->getId());
 	}
 
 	function getDownloadFileURL() {
@@ -42,7 +41,7 @@ class Documents_Record_Model extends Vtiger_Record_Model {
 			if (!empty ($fileDetails)) {
 				$filePath = $fileDetails['path'];
 
-				$savedFile = $fileDetails['attachmentsid']."_".$this->get('filename');
+				$savedFile = $fileDetails['attachmentsid']."_".decode_html($this->get('filename'));
 
 				if(fopen($filePath.$savedFile, "r")) {
 					$returnValue = true;
@@ -78,6 +77,9 @@ class Documents_Record_Model extends Vtiger_Record_Model {
 				$fileName = html_entity_decode($fileName, ENT_QUOTES, vglobal('default_charset'));
 				$savedFile = $fileDetails['attachmentsid']."_".$fileName;
 
+				while(ob_get_level()) {
+					ob_end_clean();
+				}
 				$fileSize = filesize($filePath.$savedFile);
 				$fileSize = $fileSize + ($fileSize % 1024);
 
@@ -87,8 +89,9 @@ class Documents_Record_Model extends Vtiger_Record_Model {
 					header("Content-type: ".$fileDetails['type']);
 					header("Pragma: public");
 					header("Cache-Control: private");
-					header("Content-Disposition: attachment; filename=$fileName");
+					header("Content-Disposition: attachment; filename=\"$fileName\"");
 					header("Content-Description: PHP Generated Data");
+                    header("Content-Encoding: none");
 				}
 			}
 		}
@@ -122,144 +125,5 @@ class Documents_Record_Model extends Vtiger_Record_Model {
 		}
 		return $value;
 	}
-
-
-	function getRelatedCampaigns($codeAffaire = false){
-		$pagingModel = new Vtiger_Paging_Model();
-		$pagingModel->set('page', 1);
-		
-		$relatedModuleName = 'Campaigns';
-		$relationListView = Vtiger_RelationListView_Model::getInstance($this, $relatedModuleName, '');
-		/* no use
-		$relationListView->set('orderby', 'createdtime');
-		$relationListView->set('sortorder', 'desc');*/
-		if($codeAffaire){ //TODO non testé
-			$relationListView->set('searchkey', 'code_affaire');
-			$relationListView->set('searchvalue', $codeAffaire);
-		}
-		return $relationListView->getEntries($pagingModel);
-	}
-	
-	/** ED150708
-	 * Function to get List of Fields which are related from Documents to Inventory Record
-	 * @return <array>
-	 */
-	public function getInventoryMappingFields() {
-		$mapping = array();
-		$campaigns = $this->getRelatedCampaigns();
-		foreach($campaigns as $campaign){
-			$mapping[] = array('inventoryField'=>'campaign_no', 'defaultValue'=>$campaign->getId());
-			break;
-		}
-		return $mapping;
-	}
-	
-	/** ED150708
-	 *
-	 */
-	function getRelatedProductsAndServices(){
-		$pagingModel = new Vtiger_Paging_Model();
-		$pagingModel->set('page', 1);
-		
-		$relatedModuleName = 'Products';
-		$relationListView = Vtiger_RelationListView_Model::getInstance($this, $relatedModuleName, '');
-		$entries = $relationListView->getEntries($pagingModel);
-		
-		$relatedModuleName = 'Services';
-		$relationListView = Vtiger_RelationListView_Model::getInstance($this, $relatedModuleName, '');
-		
-		$entries = array_merge($entries, $relationListView->getEntries($pagingModel));
-		
-		return $entries;
-	}
-	
-	/** ED150708
-	 * Retourne le tableau des tous les produits et services associés au coupon
-	 * Affecte les quantités à 0
-	 * Utilisé pour initialiser une nouvelle facture à partir d'un coupon
-	 */
-	public function getRelatedProductsDetailsForInventoryModule($inventory) {
-		$products = $this->getRelatedProductsAndServices();
-		$index = 1;
-		$relatedProducts = array();
-		
-		//Mise en cache des priceBookDetails
-		$productIds = array();
-		foreach($products as $product)
-			$productIds[] = $product->getId();
-		getPriceBookDetailsForProduct($productIds);
-		
-		foreach($products as $product){
-			$productDetails = $product->getDetailsForInventoryModule($inventory);
-			if($productDetails){
-				$productDetails[1]['qty1'] = 0;
-				if($index === 1){
-					$relatedProducts = $productDetails;
-				}
-				else {
-					//rename labels ending with '1'
-					foreach($productDetails[1] as $detailIndex => $detail){
-						if($detailIndex[strlen($detailIndex)-1] === '1'){
-							unset($productDetails[1][$detailIndex]);
-							$detailIndex = substr($detailIndex, 0, strlen($detailIndex)-1) . $index;
-							$productDetails[1][$detailIndex] = $detail;
-						}
-					}
-					$relatedProducts[$index] = $productDetails[1];
-				}
-				++$index;
-			}
-		}
-		return $relatedProducts;
-	}
-	
-	/**
-	 * ED151106
-	 * Affecte le prochain n° du compteur de relations
-	 * Par exemple, n° de reçu fiscal
-	 *
-	 */
-	public function getNexRelatedCounterValue(){
-		global $adb;
-		//get num 
-		$query = "SELECT MAX(relatedcounter)
-			FROM vtiger_notes
-			WHERE notesid = ?";
-		$params = array(
-			$this->getId(),
-		);
-		$result = $adb->pquery($query, $params);
-		if(!$result){
-			echo "<pre>$query</pre>";
-			var_dump($params);
-			$adb->echoError();
-			return false;
-		}
-		
-		$relatedCounter = $adb->query_result($result, 0, 0);
-		if(!$relatedCounter)
-			$relatedCounter = 1;
-		else
-			$relatedCounter++;
-		
-		//mise à jour du compteur
-		$query = "UPDATE vtiger_notes
-			SET relatedcounter = ?
-			WHERE notesid = ?";
-		$params = array(
-			$relatedCounter,
-			$this->getId(),
-		);
-		$result = $adb->pquery($query, $params);
-		if(!$result){
-			echo "<pre>$query</pre>";
-			var_dump($params);
-			$adb->echoError();
-			return false;
-		}
-		
-		$this->set('relatedcounter', $relatedCounter);
-		
-		return $relatedCounter;
-	}
+    
 }

@@ -37,6 +37,7 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		$viewer->assign('TASK_TEMPLATE_PATH', $taskTypeModel->getTemplatePath());
 		$recordStructureInstance = Settings_Workflows_RecordStructure_Model::getInstanceForWorkFlowModule($workflowModel,
 																			Settings_Workflows_RecordStructure_Model::RECORD_STRUCTURE_MODE_EDITTASK);
+        $recordStructureInstance->setTaskRecordModel($taskModel);
 
 		$viewer->assign('RECORD_STRUCTURE_MODEL', $recordStructureInstance);
 		$viewer->assign('RECORD_STRUCTURE', $recordStructureInstance->getStructure());
@@ -48,28 +49,36 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		$taskType = get_class($taskObject);
 
 		if ($taskType === 'VTCreateEntityTask') {
-			if ($taskObject->entity_type) {
+			if ($taskObject->entity_type && getTabid($taskObject->entity_type)) {
 				$relationModuleModel = Vtiger_Module_Model::getInstance($taskObject->entity_type);
 				$ownerFieldModels = $relationModuleModel->getFieldsByType('owner');
 
 				$fieldMapping = Zend_Json::decode($taskObject->field_value_mapping);
 				foreach ($fieldMapping as $key => $mappingInfo) {
 					if (array_key_exists($mappingInfo['fieldname'], $ownerFieldModels)) {
-						$userRecordModel = Users_Record_Model::getInstanceByName($mappingInfo['value']);
+                        if(!empty($mappingInfo['value']))
+                            $userRecordModel = Users_Record_Model::getInstanceByName($mappingInfo['value']);
 
 						if ($userRecordModel) {
 							$ownerName = $userRecordModel->getId();
-						} else {
+						} else if(!empty ($mappingInfo['value'])) {
 							$groupRecordModel = Settings_Groups_Record_Model::getInstance($mappingInfo['value']);
 							$ownerName = $groupRecordModel->getId();
 						}
 
-						$fieldMapping[$key]['value'] = $ownerName;
+                        if(!empty($mappingInfo['value']))
+                            $fieldMapping[$key]['value'] = $ownerName;
 					}
 				}
-				$taskObject->field_value_mapping = Zend_Json::encode($fieldMapping);
+				$taskObject->field_value_mapping = json_encode($fieldMapping, JSON_HEX_APOS);
 			}
 		}
+        if ($taskType === 'VTUpdateFieldsTask') {
+            if($moduleModel->getName() =="Documents"){
+                $restrictFields=array('folderid','filename','filelocationtype'); 
+                $viewer->assign('RESTRICTFIELDS',$restrictFields); 
+            }
+        }
 		
 		$viewer->assign('SOURCE_MODULE',$moduleModel->getName());
 		$viewer->assign('MODULE_MODEL', $moduleModel);
@@ -80,7 +89,31 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		$viewer->assign('TASK_TYPES', $taskTypes);
 		$viewer->assign('TASK_MODEL', $taskModel);
 		$viewer->assign('CURRENTDATE', date('Y-n-j'));
-		$viewer->assign('META_VARIABLES', Settings_Workflows_Module_Model::getMetaVariables());
+        $metaVariables = Settings_Workflows_Module_Model::getMetaVariables();
+        if($moduleModel->getName() == 'Invoice' || $moduleModel->getName() == 'Quotes') {
+            $metaVariables['Portal Pdf Url'] = '(general : (__VtigerMeta__) portalpdfurl)';
+        }
+        
+        foreach($metaVariables as $variableName => $variableValue) {
+            if(strpos(strtolower($variableName), 'url') !== false) {
+                $metaVariables[$variableName] = "<a href='$".$variableValue."'>".vtranslate($variableName, $qualifiedModuleName).'</a>';
+            }
+        }
+        // Adding option Line Item block for Individual tax mode
+        $individualTaxBlockLabel = vtranslate("LBL_LINEITEM_BLOCK_GROUP", $qualifiedModuleName);
+        $individualTaxBlockValue = $viewer->view('LineItemsGroupTemplate.tpl', $qualifiedModuleName, $fetch = true);
+
+        // Adding option Line Item block for group tax mode
+        $groupTaxBlockLabel = vtranslate("LBL_LINEITEM_BLOCK_INDIVIDUAL", $qualifiedModuleName);
+        $groupTaxBlockValue = $viewer->view('LineItemsIndividualTemplate.tpl', $qualifiedModuleName, $fetch = true);
+
+        $templateVariables = array(
+            $individualTaxBlockValue => $individualTaxBlockLabel,
+            $groupTaxBlockValue => $groupTaxBlockLabel
+                );
+        
+		$viewer->assign('META_VARIABLES', $metaVariables);
+        $viewer->assign('TEMPLATE_VARIABLES', $templateVariables);
 		$viewer->assign('TASK_OBJECT', $taskObject);
 		$viewer->assign('FIELD_EXPRESSIONS', Settings_Workflows_Module_Model::getExpressions());
 		$repeat_date = $taskModel->getTaskObject()->calendar_repeat_limit_date;
@@ -91,7 +124,7 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		
 		$userModel = Users_Record_Model::getCurrentUserModel();
 		$viewer->assign('dateFormat',$userModel->get('date_format'));
-
+        $viewer->assign('timeFormat', $userModel->get('hour_format'));
 		$viewer->assign('MODULE', $moduleName);
 		$viewer->assign('QUALIFIED_MODULE', $qualifiedModuleName);
 
@@ -101,7 +134,11 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		foreach($emailFields as $metaKey => $emailField) {
 			$emailFieldoptions .= '<option value=",$'.$metaKey.'">'.$emailField->get('workflow_columnlabel').'</option>';
 		}
-
+        
+        $usersModuleModel = Vtiger_Module_Model::getInstance('Users');
+        $emailFieldoptions .= '<option value=",$(general : (__VtigerMeta__) reports_to_id)"> '.
+                                    vtranslate($moduleModel->getField('assigned_user_id')->get('label'),'Users').' : (' . vtranslate('Users','Users') . ') '. vtranslate($usersModuleModel->getField('reports_to_id')->get('label'),'Users') .'</option>';
+        
 		$nameFields = $recordStructureInstance->getNameFields();
 		$fromEmailFieldOptions = '<option value="">'. vtranslate('Optional', $qualifiedModuleName) .'</option>';
 		$fromEmailFieldOptions .= '<option value="$(general : (__VtigerMeta__) supportName)<$(general : (__VtigerMeta__) supportEmailId)>"
@@ -127,19 +164,32 @@ class Settings_Workflows_EditTask_View extends Settings_Vtiger_Index_View {
 		}
 
 		$structure = $recordStructureInstance->getStructure();
-		foreach($structure as $fields) {
-			foreach($fields as $field) {
-				$allFieldoptions .= '<option value="$'.$field->get('workflow_columnname').'">'.
-										$field->get('workflow_columnlabel').'</option>';
-			}
-		}
-
+		foreach ($structure as $fields) {
+            foreach ($fields as $field) {
+                if ($field->get('workflow_pt_lineitem_field')) {
+                    $allFieldoptions .= '<option value="' . $field->get('workflow_columnname') . '">' .
+                            $field->get('workflow_columnlabel') . '</option>';
+                } else {
+                    $allFieldoptions .= '<option value="$' . $field->get('workflow_columnname') . '">' .
+                            $field->get('workflow_columnlabel') . '</option>';
+                }
+            }
+        }
+        
 		$userList = $currentUser->getAccessibleUsers();
 		$groupList = $currentUser->getAccessibleGroups();
 		$assignedToValues = array();
 		$assignedToValues[vtranslate('LBL_USERS', 'Vtiger')] = $userList;
 		$assignedToValues[vtranslate('LBL_GROUPS', 'Vtiger')] = $groupList;
-
+        
+        if($taskType == 'VTEmailTask') {
+            $worflowModuleName = $workflowModel->get('module_name');
+            $emailTemplates = EmailTemplates_Record_Model::getAllForEmailTask($worflowModuleName);
+            if(!empty($emailTemplates)) {
+                $viewer->assign('EMAIL_TEMPLATES',$emailTemplates);
+            }
+        }
+        
 		$viewer->assign('ASSIGNED_TO', $assignedToValues);
 		$viewer->assign('EMAIL_FIELD_OPTION', $emailFieldoptions);
 		$viewer->assign('FROM_EMAIL_FIELD_OPTION', $fromEmailFieldOptions);

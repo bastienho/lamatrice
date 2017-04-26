@@ -10,7 +10,7 @@
 -->*}
 {strip}
 	<div class="container-fluid">
-		<form id="leadsMapping">
+		<form id="leadsMapping" method="POST">
 			<div class="row-fluid settingsHeader padding1per">
 				<span class="span8">
 					<span class="font-x-x-large">{vtranslate('LBL_CONVERT_LEAD_FIELD_MAPPING', $QUALIFIED_MODULE)}</span>
@@ -18,7 +18,7 @@
 				<span class="span4">
 					<span class="pull-right">
 						<button type="submit" class="btn btn-success"><strong>{vtranslate('LBL_SAVE', $QUALIFIED_MODULE)}</strong></button>
-						<a class="cancelLink" type="reset" onclick="javascript:window.history.back();">Cancel</a>
+						<a class="cancelLink" type="reset" onclick="javascript:window.history.back();">{vtranslate('LBL_CANCEL', $QUALIFIED_MODULE)}</a>
 					</span>
 				</span>
 			</div><hr>
@@ -40,6 +40,7 @@
 								<td width="15%">
 									<input type="hidden" name="mapping[{$smarty.foreach.mappingLoop.iteration}][mappingId]" value="{$MAPPING_ID}"/>
 									<select class="leadsFields select2" style="width:180px" name="mapping[{$smarty.foreach.mappingLoop.iteration}][lead]">
+										<option data-type="{vtranslate('LBL_NONE', $QUALIFIED_MODULE)}" value="0" label="{vtranslate('LBL_NONE', $QUALIFIED_MODULE)}">{vtranslate('LBL_NONE', $QUALIFIED_MODULE)}</option>
 										{foreach key=FIELD_TYPE item=FIELDS_INFO from=$LEADS_MODULE_MODEL->getFields()}
 											{foreach key=FIELD_ID item=FIELD_OBJECT from=$FIELDS_INFO}
 												<option data-type="{$FIELD_TYPE}" {if $FIELD_ID eq $MAPPING_ARRAY['Leads']['id']} selected {/if} label="{vtranslate($FIELD_OBJECT->get('label'), $LEADS_MODULE_MODEL->getName())}" value="{$FIELD_ID}">
@@ -167,13 +168,13 @@
 			<div class="row-fluid">
 				<span class="span4">
 					<button id="addMapping" class="btn addButton" type="button">
-						<i class="icon-plus icon-white"></i>&nbsp;<strong>{vtranslate('LBL_ADD_MAPPING', $QUALIFIED_MODULE)}</strong>
+						<i class="icon-plus"></i>&nbsp;<strong>{vtranslate('LBL_ADD_MAPPING', $QUALIFIED_MODULE)}</strong>
 					</button>
 				</span>
 				<span class="span8">
 					<span class="pull-right">
 						<button type="submit" class="btn btn-success"><strong>{vtranslate('LBL_SAVE', $QUALIFIED_MODULE)}</strong></button>
-						<a class="cancelLink" type="reset" onclick="javascript:window.history.back();">Cancel</a>
+						<a class="cancelLink" type="reset" onclick="javascript:window.history.back();">{vtranslate('LBL_CANCEL', $QUALIFIED_MODULE)}</a>
 					</span>
 				</span>
 			</div>

@@ -17,4 +17,5 @@ $languageStrings = array(
 	'Comment'                      => 'Opmerking'                   , 
 	'Creator'                      => 'Gemaakt Door'                , 
 	'Related To Comments'          => 'Gerelateerd Aan'             , 
+	'LBL_COMMENTED_AT'             => 'Commentaar op'               , 
 );

@@ -27,22 +27,52 @@ class VTJsonCondition {
 			$i = 0;
 			foreach ($expr as $cond) {
 				$conditionGroup = $cond['groupid'];
-				if (empty($conditionGroup))
+				if (empty($conditionGroup)) {
 					$conditionGroup = 0;
+				}
 				preg_match('/(\w+) : \((\w+)\) (\w+)/', $cond['fieldname'], $matches);
 				if (count($matches) == 0) {
-					$expressionResults[$conditionGroup][$i]['result'] = $this->checkCondition($entityData, $cond);
+					if ($cond['fieldname'] == '_VT_add_comment' && $cond['isEvaluated']) {
+						$expressionResults[$conditionGroup][$i]['result'] = $cond['isEvaluated'];
+					} else {
+						$expressionResults[$conditionGroup][$i]['result'] = $this->checkCondition($entityData, $cond);
+					}
 				} else {
 					list($full, $referenceField, $referenceModule, $fieldname) = $matches;
 					$referenceFieldId = $data[$referenceField];
-					if ($referenceFieldId != 0) {
-						$entity = $entityCache->forId($data[$referenceField]);
-						if ($entity->getModuleName() == $referenceModule) {
-							$cond['fieldname'] = $fieldname;
-							$expressionResults[$conditionGroup][$i]['result'] = $this->checkCondition($entity, $cond, $entityData);
-						} else {
-							$expressionResults[$conditionGroup][$i]['result'] = FALSE;
+					if (in_array($entityData->getModuleName(), getInventoryModules())) {
+						if(in_array($referenceModule, array('Products','Services'))) {
+							$referenceFieldId = array();
+							foreach ($data['LineItems'] as $key=>$value) {
+								$referenceFieldId[] = $value[$referenceField];
+							}
 						}
+					}
+					if ($referenceFieldId != 0) {
+						if(is_array($referenceFieldId)) {
+							$checkResult = false;
+							foreach ($referenceFieldId as $key=>$value) {
+								$entity = $entityCache->forId($value);
+								if ($entity->getModuleName() == $referenceModule) {
+									$cond['fieldname'] = $fieldname;
+									$returnValue = $this->checkCondition($entity, $cond, $entityData);
+									if($returnValue) {
+										$checkResult = $returnValue;
+									}
+								}
+							}
+							$expressionResults[$conditionGroup][$i]['result'] = $checkResult;
+						} else {
+							$entity = $entityCache->forId($data[$referenceField]);
+							if ($entity->getModuleName() == $referenceModule) {
+								$cond['fieldname'] = $fieldname;
+								$expressionResults[$conditionGroup][$i]['result'] = $this->checkCondition($entity, $cond, $entityData);
+							} else {
+								$expressionResults[$conditionGroup][$i]['result'] = FALSE;
+							}
+						}
+					} elseif($referenceFieldId == '' && $cond['operation'] == 'is empty'){
+						$expressionResults[$conditionGroup][$i]['result'] = TRUE;
 					} else {
 						$expressionResults[$conditionGroup][$i]['result'] = FALSE;
 					}
@@ -117,7 +147,20 @@ class VTJsonCondition {
 		$data = $entityData->getData();
 
 		$condition = $cond['operation'];
-		$fieldValue = $data[$cond['fieldname']];
+		if(empty($condition)) return false;
+
+		if($cond['fieldname'] == 'date_start' || $cond['fieldname'] == 'due_date') {
+			$fieldName = $cond['fieldname'];
+			$dateTimePair = array('date_start' => 'time_start', 'due_date' => 'time_end');
+			if(array_key_exists($dateTimePair[$fieldName], $data)) {
+				$fieldValue = $data[$fieldName]." ".$data[$dateTimePair[$fieldName]];
+			} else {
+				$fieldValue = $data[$fieldName];
+			}
+			$rawFieldValue = $fieldValue;
+		} else {
+			$fieldValue = $data[$cond['fieldname']];
+		}
 		$value = trim(html_entity_decode($cond['value']));
 		$expressionType = $cond['valuetype'];
 
@@ -130,33 +173,68 @@ class VTJsonCondition {
 			$value = $referredData[$value];
 		} elseif ($expressionType == 'expression') {
 			require_once 'modules/com_vtiger_workflow/expression_engine/include.inc';
-
-			$parser = new VTExpressionParser(new VTExpressionSpaceFilter(new VTExpressionTokenizer($value)));
-			$expression = $parser->expression();
-			$exprEvaluater = new VTFieldExpressionEvaluater($expression);
-			if ($referredEntityData != null) {
-				$value = $exprEvaluater->evaluate($referredEntityData);
-			} else {
-				$value = $exprEvaluater->evaluate($entityData);
+			try{
+				$parser = new VTExpressionParser(new VTExpressionSpaceFilter(new VTExpressionTokenizer($value)));
+				$expression = $parser->expression();
+				$exprEvaluater = new VTFieldExpressionEvaluater($expression);
+				if ($referredEntityData != null) {
+					$value = $exprEvaluater->evaluate($referredEntityData);
+				} else {
+					$value = $exprEvaluater->evaluate($entityData);
+				}
+			}catch(Exception $e) {
+				echo $e->getMessage();
+				throw $e;
 			}
 		}
-		
+
 		global $current_user;
 		$handler = vtws_getModuleHandlerFromName($entityData->getModuleName(), $current_user);
 		$moduleFields = $handler->getMeta()->getModuleFields();
 		$fieldInstance = $moduleFields[$cond['fieldname']];
-		
+
 		if($fieldInstance && $fieldInstance->getFieldDataType() == 'datetime') {
 			//Convert the DB Date Time Format to User Date Time Format
+			$rawFieldValue = $fieldValue;
 			$date = new DateTimeField($fieldValue);
 			$fieldValue = $date->getDisplayDateTimeValue();
 			$valueArray = explode(' ', $value);
 			if(count($valueArray) == 1) {
 				$fieldValueArray = explode(' ', $fieldValue);
-				$fieldValue = $fieldValueArray[0];
+				$fieldValue = getValidDBInsertDateValue($fieldValueArray[0]);
 			}
 		}
-		
+		//strtotime condition is added for days before, days after where we give integer values, so strtotime will return 0 for such cases.
+		if($fieldInstance && $fieldInstance->getFieldDataType() == 'date' && $condition != 'between' && strtotime($value)) {
+			//Convert User Date Format filter value to DB date format
+			$value = getValidDBInsertDateValue($value);
+		}
+
+		if($fieldInstance && $fieldInstance->getFieldDataType() == 'time') {
+			if($value){
+				$value = $value.':00';	// time fields will not have seconds appended to it, so we are adding 
+			}
+		}
+
+		if ($fieldInstance && ($fieldInstance->getFieldDataType() == 'owner' || $fieldInstance->getFieldDataType() == 'ownergroup')) {
+			if($condition == 'is' || $condition == 'is not') { 
+				//To avoid again checking whether it is user or not 
+				$idList = array();
+				$idList[] = vtws_getWebserviceEntityId('Users',$value); 
+				$idList[] = vtws_getWebserviceEntityId('Groups',$value);
+				$value = $idList;
+				$condition = ($condition == 'is') ? 'contains' : 'does not contain';
+			}
+		}
+		if($fieldInstance && $fieldInstance->getFieldName() == 'folderid') {
+			$value = vtws_getWebserviceEntityId('DocumentFolders', $value);
+		}
+
+		if(is_numeric($fieldValue) && is_numeric($value)){
+			$fieldValue = round($fieldValue, 8);
+			$value = round($value,8);
+		}
+
 		switch ($condition) {
 			case "equal to":
 				return $fieldValue == $value;
@@ -179,6 +257,9 @@ class VTJsonCondition {
 						return $fieldValue === 'off' || $fieldValue === 0 || $fieldValue === '0' || $fieldValue === '';
 					}
 				} else {
+					if($fieldInstance && $fieldInstance->getFieldDataType() == 'datetime') {
+						$value = getValidDBInsertDateValue($value);
+					} 
 					return $fieldValue == $value;
 				}
 			case "is not":
@@ -190,12 +271,72 @@ class VTJsonCondition {
 						return $fieldValue === 'on' || $fieldValue === 1 || $fieldValue === '1';
 					}
 				} else {
+					if($fieldInstance && $fieldInstance->getFieldDataType() == 'datetime') {
+						$value = getValidDBInsertDateValue($value);
+					}
 					return $fieldValue != $value;
 				}
 			case "contains":
+				if($fieldInstance && $fieldInstance->getFieldDataType() == 'multipicklist'){
+					if(empty($fieldValue) && empty($value)) {
+						return true;
+					} else if(!empty($fieldValue)) {
+						$fieldValue = explode(' |##| ', $fieldValue);
+						if(is_array($fieldValue)) {
+							$conditionMatched = false;
+							$valueExplodedArr = explode(',',$value);
+							foreach ($fieldValue as $arrayValue) {
+								foreach($valueExplodedArr as $val){
+									if(strpos($arrayValue,$val) !== false) {
+									$conditionMatched = true;
+										break;
+									}
+								}
+								if($conditionMatched){
+									break;
+								}
+							}
+							return $conditionMatched;
+						}
+					}
+					return false;
+				}
+				if(is_array($value)){ 
+					return in_array($fieldValue, $value); 
+				}
+				if(empty($fieldValue) && empty($value)) {
+					return true;
+				}
 				return strpos($fieldValue, $value) !== FALSE;
 			case "does not contain":
+				if($fieldInstance && $fieldInstance->getFieldDataType() == 'multipicklist'){
+					if(empty($fieldValue) && empty($value)) {
+						return false;
+					} else if(!empty($fieldValue)) {
+						$fieldValue = explode(' |##| ', $fieldValue);
+						if(is_array($fieldValue)) {
+							$conditionMatched = true;
+							$valueExplodedArr = explode(',',$value);
+							foreach ($fieldValue as $arrayValue) {
+								foreach($valueExplodedArr as $val){
+									if(strpos($arrayValue,$val) !== false) {
+										$conditionMatched = false;
+										break;
+									}
+								}
+								if(!$conditionMatched) {
+									break;
+								}
+							}
+							return $conditionMatched;
+						}
+					}
+					return true;
+				}
 				if(empty($value)) unset($value);
+				if(is_array($value)){ 
+					return !in_array($fieldValue, $value); 
+				} 
 				return strpos($fieldValue, $value) === FALSE;
 			case "starts with":
 				return $this->startsWith($fieldValue, $value);
@@ -203,6 +344,7 @@ class VTJsonCondition {
 				return $this->endsWith($fieldValue, $value);
 			case "matches":
 				return preg_match($value, $fieldValue);
+
 			case "has changed" :
 				$entityDelta = new VTEntityDelta();
 				$idParts = vtws_getIdComponents($entityData->getId());
@@ -226,8 +368,8 @@ class VTJsonCondition {
 				if(empty($fieldValue)) {
 					return false;
 				}
-				$dbValue = getValidDBInsertDateValue($value);
-				if($fieldValue < $dbValue) {
+				$value = getValidDBInsertDateValue($value);
+				if($fieldValue < $value) {
 					return true;
 				}
 				return false;
@@ -235,8 +377,8 @@ class VTJsonCondition {
 				if(empty($fieldValue)) {
 					return false;
 				}
-				$dbValue = getValidDBInsertDateValue($value);
-				if($fieldValue > $dbValue) {
+				$value = getValidDBInsertDateValue($value);
+				if($fieldValue > $value) {
 					return true;
 				}
 				return false;
@@ -252,6 +394,12 @@ class VTJsonCondition {
 				return false;
 			case 'is today':
 				$today = date('Y-m-d');
+				if($cond['fieldname'] == 'birthday') {
+					$fieldValue = date('m-d', strtotime($fieldValue));
+					$today = date('m-d');
+				} else {
+					$fieldValue = date('Y-m-d', strtotime($fieldValue));
+				}
 
 				if($fieldValue == $today) {
 					return true;
@@ -300,6 +448,7 @@ class VTJsonCondition {
 					return false;
 				}
 				$olderDate = date('Y-m-d', strtotime('-'.$value.' days'));
+				$fieldValue = date('Y-m-d', strtotime($fieldValue));
 				if($fieldValue == $olderDate) {
 					return true;
 				}
@@ -309,18 +458,19 @@ class VTJsonCondition {
 					return false;
 				}
 				$futureDate = date('Y-m-d', strtotime('+'.$value.' days'));
+				$fieldValue = date('Y-m-d', strtotime($fieldValue));
 				if($fieldValue == $futureDate) {
 					return true;
 				}
 				return false;
 
 			case 'less than hours before':
-				if(empty($fieldValue) || empty($value)) {
+				if(empty($rawFieldValue) || empty($value)) {
 					return false;
 				}
 				$currentTime = date('Y-m-d H:i:s');
 				$olderDateTime = date('Y-m-d H:i:s', strtotime('-'.$value.' hours'));
-				if($olderDateTime <= $fieldValue && $fieldValue <= $currentTime) {
+				if($olderDateTime <= $rawFieldValue && $rawFieldValue <= $currentTime) {
 					return true;
 				}
 				return false;
@@ -331,26 +481,27 @@ class VTJsonCondition {
 				}
 				$currentTime = date('Y-m-d H:i:s');
 				$futureDateTime = date('Y-m-d H:i:s', strtotime('+'.$value.' hours'));
-				if($currentTime <= $fieldValue && $fieldValue <= $futureDateTime) {
+				if($currentTime <= $rawFieldValue && $rawFieldValue <= $futureDateTime) {
 					return true;
 				}
 				return false;
 
 			case 'more than hours before':
-				if(empty($fieldValue) || empty($value)) {
+				if(empty($rawFieldValue) || empty($value)) {
 					return false;
 				}
 				$olderDateTime = date('Y-m-d H:i:s', strtotime('-'.$value.' hours'));
-				if($fieldValue <= $olderDateTime) {
+				if($rawFieldValue <= $olderDateTime) {
 					return true;
 				}
 				return false;
 			case 'more than hours later':
-				if(empty($fieldValue) || empty($value)) {
+				if(empty($rawFieldValue) || empty($value)) {
 					return false;
 				}
 				$futureDateTime = date('Y-m-d H:i:s', strtotime('+'.$value.' hours'));
-				if($fieldValue >= $futureDateTime) {
+
+				if($rawFieldValue >= $futureDateTime) {
 					return true;
 				}
 				return false;
@@ -358,9 +509,48 @@ class VTJsonCondition {
 				$entityDelta = new VTEntityDelta();
 				$idParts = vtws_getIdComponents($entityData->getId());
 				return $entityDelta->hasChanged($entityData->getModuleName(), $idParts[1], $cond['fieldname'], $value);
+			case 'has changed from' :
+				$entityDelta = new VTEntityDelta();
+				$idParts = vtws_getIdComponents($entityData->getId());
+				return ($entityDelta->hasChanged($entityData->getModuleName(), $idParts[1], $cond['fieldname'])
+					&& (decode_html($value) == decode_html($entityDelta->getOldValue($entityData->getModuleName(), $idParts[1], $cond['fieldname']))));
 			case 'is added':
 				//This condition was used only for comments. It should not execute from not from workflows, So it was always "FALSE"
 				return false;
+			case 'is tomorrow' :
+				$tomorrow = date('Y-m-d', strtotime('+1 days'));
+				$fieldValue = date('Y-m-d', strtotime($fieldValue));
+				if($fieldValue == $tomorrow) {
+					return true;
+				}
+				return false;
+			case 'is yesterday' :
+				$yesterday = date('Y-m-d', strtotime('-1 days'));
+				$fieldValue = date('Y-m-d', strtotime($fieldValue));
+				if($fieldValue == $yesterday) {
+					return true;
+				}
+				return false;
+			case 'less than days later' :
+				if(empty($fieldValue) || empty($value)) {
+					return false;
+				}
+				$currentDate = date('Y-m-d');
+				$futureDate = date('Y-m-d', strtotime('+'.$value.' days'));
+				if($currentDate <= $fieldValue && $fieldValue <= $futureDate) {
+					return true;
+				}
+				return false;
+			case 'more than days later' :
+				if(empty($fieldValue) || empty($value)) {
+					return false;
+				}
+				$futureDate = date('Y-m-d', strtotime('+'.$value.' days'));
+				if($fieldValue >= $futureDate) {
+					return true;
+				}
+				return false;
+
 			default:
 				//Unexpected condition
 				throw new Exception("Found an unexpected condition: " . $condition);

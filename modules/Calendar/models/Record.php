@@ -66,6 +66,10 @@ class Calendar_Record_Model extends Vtiger_Record_Model {
 			$recurringData['recurringcheck'] = 'Yes';
 			$recurringData['repeat_frequency'] = $recurringObject->getRecurringFrequency();
 			$recurringData['eventrecurringtype'] = $recurringObject->getRecurringType();
+			$recurringEndDate = $recurringObject->getRecurringEndDate(); 
+			if(!empty($recurringEndDate)){ 
+				$recurringData['recurringenddate'] = $recurringEndDate->get_formatted_date(); 
+			} 
 			$recurringInfo = $recurringObject->getUserRecurringInfo();
 
 			if ($recurringObject->getRecurringType() == 'Weekly') {
@@ -94,6 +98,40 @@ class Calendar_Record_Model extends Vtiger_Record_Model {
 		$_REQUEST['time_end'] = Vtiger_Time_UIType::getTimeValueWithSeconds($_REQUEST['time_end']);
 		parent::save();
 	}
+	
+	/**
+	 * Function to delete the current Record Model
+	 */
+	public function delete() {
+		$adb = PearDatabase::getInstance();
+		$recurringEditMode = $this->get('recurringEditMode');
+		$deletedRecords = array();
+		if(!empty($recurringEditMode) && $recurringEditMode != 'current') {
+			$recurringRecordsList = $this->getRecurringRecordsList();
+			foreach($recurringRecordsList as $parent=>$childs) {
+				$parentRecurringId = $parent;
+				$childRecords = $childs;
+			}
+			if($recurringEditMode == 'future') {
+				$parentKey = array_keys($childRecords, $this->getId());
+				$childRecords = array_slice($childRecords, $parentKey[0]);
+			}
+			foreach($childRecords as $record) {
+				$recordModel = $this->getInstanceById($record, $this->getModuleName());
+				$adb->pquery("DELETE FROM vtiger_activity_recurring_info WHERE activityid=? AND recurrenceid=?", array($parentRecurringId, $record));
+				$recordModel->getModule()->deleteRecord($recordModel);
+				$deletedRecords[] = $record;
+			}
+		} else {
+			if($recurringEditMode == 'current') {
+				$parentRecurringId = $this->getParentRecurringRecord();
+				$adb->pquery("DELETE FROM vtiger_activity_recurring_info WHERE activityid=? AND recurrenceid=?", array($parentRecurringId, $this->getId()));
+			}
+			$this->getModule()->deleteRecord($this);
+			$deletedRecords[] = $this->getId();
+		}
+		return $deletedRecords;
+	}
 
 	/**
 	 * Function to get recurring information for the current record in detail view
@@ -103,9 +141,13 @@ class Calendar_Record_Model extends Vtiger_Record_Model {
 		$recurringObject = $this->getRecurringObject();
 		if ($recurringObject) {
 			$recurringInfoDisplayData = $recurringObject->getDisplayRecurringInfo();
+			$recurringEndDate = $recurringObject->getRecurringEndDate(); 
 		} else {
 			$recurringInfoDisplayData['recurringcheck'] = vtranslate('LBL_NO', $currentModule);
 			$recurringInfoDisplayData['repeat_str'] = '';
+		}
+		if(!empty($recurringEndDate)){ 
+			$recurringInfoDisplayData['recurringenddate'] = $recurringEndDate->get_formatted_date(); 
 		}
 
 		return $recurringInfoDisplayData;
@@ -135,4 +177,44 @@ class Calendar_Record_Model extends Vtiger_Record_Model {
 		$db->pquery("UPDATE vtiger_activity_reminder_popup set status = ? where recordid = ?", array($status, $this->getId()));
 
 	}
+	/**
+	 * Function to get parent recurring event Id
+	 */
+	public function getParentRecurringRecord() {
+		$adb = PearDatabase::getInstance();
+		$recordId = $this->getId();
+		$result = $adb->pquery("SELECT * FROM vtiger_activity_recurring_info WHERE activityid=? OR activityid = (SELECT activityid FROM vtiger_activity_recurring_info WHERE recurrenceid=?) LIMIT 1", array($recordId, $recordId));
+		$parentRecurringId = $adb->query_result($result, 0,"activityid");
+		return $parentRecurringId;
+	}
+	
+	/**
+	 * Function to get recurring records list
+	 */
+	public function getRecurringRecordsList() {
+		$adb = PearDatabase::getInstance();
+		$recurringRecordsList = array();
+		$recordId = $this->getId();
+		$result = $adb->pquery("SELECT * FROM vtiger_activity_recurring_info WHERE activityid=? OR activityid = (SELECT activityid FROM vtiger_activity_recurring_info WHERE recurrenceid=?)", array($recordId, $recordId));
+		$noofrows = $adb->num_rows($result);
+		$parentRecurringId = $adb->query_result($result, 0,"activityid");
+		$childRecords = array();
+		for($i=0; $i<$noofrows; $i++) {
+			$childRecords[] = $adb->query_result($result, $i,"recurrenceid");
+		}
+		$recurringRecordsList[$parentRecurringId] = $childRecords;
+		return $recurringRecordsList;
+	}
+	
+	/**
+	 * Function to get recurring enabled for record
+	 */
+	public function isRecurringEnabled() {
+		$recurringInfo = $this->getRecurringDetails();
+		if($recurringInfo['recurringcheck'] == 'Yes') {
+			return true;
+		}
+		return false;
+	}
+	
 }

@@ -20,16 +20,6 @@
 				<input type="hidden" name="module" value="{$MODULE_NAME}" />
 				<input type="hidden" name="action" value="Save" />
 				<input type="hidden" name="parent" value="Settings" />
-				<div class="row-fluid">
-					<div class="span2" style="margin-top: 6px;">Pour le rôle&nbsp;&nbsp;</div>
-					<div class="span8"><select id="roleselector" name="roleid">
-						<option value="" {if !$ROLEID }selected="selected"{/if}></option>
-						{if !$CURRENT_ROLE}{assign var=CURRENT_ROLE value='H1'}{/if}
-						{foreach key=ROLEID item=ROLE from=$ALL_ROLES}
-						<option value="{$ROLE->get('roleid')}" {if $ROLEID eq $CURRENT_ROLE}selected="selected"{/if}>{$ROLE->get('rolename')}</option>
-						{/foreach}
-					</select></div>
-				</div>
 				<div class="row-fluid paddingTop20">
 					{assign var=SELECTED_MODULE_IDS value=array()}
 					
@@ -43,35 +33,32 @@
 								{foreach key=MODULE_NAME item=MODULE_MODEL from=$MODULES_LIST}
 									{assign var=TABID value=$MODULE_MODEL->getId()}
 									<option value="{$TABID}" {if in_array($TABID, $SELECTED_MODULE_IDS)} selected {/if}>
-										{vtranslate($MODULE_NAME, $MODULE_NAME)}</option>
+										{vtranslate($MODULE_NAME)}</option>
 								{/foreach}
 							</optgroup>
 						{/foreach}
 					</select>
 				</div>
-				<div class="row-fluid paddingTop20">
-				    <div class=" span6">
-					<button class="btn btn-success pull-right {if !$DUPLICATE_ROLE || ($DUPLICATE_ROLE eq $CURRENT_ROLE)}hide{/if}"
-						type="submit" name="saveMenusList">
-					    <strong>{vtranslate('LBL_SAVE', $QUALIFIED_MODULE)}</strong>
-					</button>
-				    </div>
+			<div class="row-fluid paddingTop20">
+				<div class="notification span12">
+					<div class="alert alert-info">
+						<div class="padding1per"><i class="icon-info-sign" style="margin-top:2px"></i>
+							<span style="margin-left: 2%">{vtranslate('LBL_MENU_EDITOR_MESSAGE', $QUALIFIED_MODULE)}</span>
+						</div>
+					</div>
 				</div>
+			</div>
+					
+                <div class="row-fluid paddingTop20">
+                    <div class=" span6">
+                        <button class="btn btn-success hide pull-right" type="submit" name="saveMenusList">
+                            <strong>{vtranslate('LBL_SAVE', $QUALIFIED_MODULE)}</strong>
+                        </button>
+                    </div>
+                </div>
 				<input type="hidden" name="selectedModulesList" value='' />
 				<input type="hidden" name="topMenuIdsList" value='{ZEND_JSON::encode($SELECTED_MODULE_IDS)}' />
 			</form>
-			
-			{* ED141226 *}
-			<div class="row-fluid paddingTop20">
-				<div class=" span2" style="margin-top: 6px;">Dupliquer <u>depuis</u> le rôle&nbsp;&nbsp;</div>
-				<div class="span8"><select id="duplicateroleselector" name="duplicate-roleid">
-					{if !$DUPLICATE_ROLE}{assign var=DUPLICATE_ROLE value=$CURRENT_ROLE}{/if}
-					{foreach key=ROLEID item=ROLE from=$ALL_ROLES}
-					<option value="{$ROLE->get('roleid')}" {if $ROLEID eq $DUPLICATE_ROLE}selected="selected"{/if}>{$ROLE->get('rolename')}</option>
-					{/foreach}
-				</select>
-				&nbsp;&nbsp;<a id="duplicaterole-reload" class="hide" href="">recharger pour pouvoir enregistrer</a></div>
-			</div>
 		</div>	
 	</div>
 {/strip}

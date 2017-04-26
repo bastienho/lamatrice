@@ -10,7 +10,7 @@
  ********************************************************************************/
 -->*}
 {strip}
-<div id="popupPageContainer" class="popupBackgroundColor">
+<div id="popupPageContainer">
 	<div class="emailTemplatesContainer">
 		<h3>{vtranslate($MODULE,$QUALIFIED_MODULE)}</h3>
 		<hr>
@@ -39,6 +39,6 @@
 			</table>
 		</div>
 	</div>
-		<input type="hidden" class="triggerEventName" value="{$smarty.request.triggerEventName}"/>
+		<input type="hidden" class="triggerEventName" value="{getPurifiedSmartyParameters('triggerEventName')}"/>
 </div>
 {/strip}

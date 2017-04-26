@@ -9,9 +9,9 @@
 *
  ********************************************************************************/
 -->*}
-{strip}{* ED141210 surperflu
+{strip}
 	<div class="summaryWidgetContainer noCommentsMsgContainer">
 		<p class="textAlignCenter"> {vtranslate('LBL_NO_COMMENTS',$MODULE_NAME)}
 		</p>
-	</div>*}
+	</div>
 {/strip}

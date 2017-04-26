@@ -27,12 +27,14 @@ class Settings_MailConverter_ScanNow_Action extends Settings_Vtiger_Index_Action
 		$status = $recordModel->scanNow();
 
 		$response = new Vtiger_Response();
-		if ($status) {
+		if (is_bool($status) && $status) {
 			$result = array('message'=> vtranslate('LBL_SCANNED_SUCCESSFULLY', $qualifiedModuleName));
-            $result['id'] = $recordModel->getId();
+			$result['id'] = $recordModel->getId();
 			$response->setResult($result);
+		} else if ($status) {
+			$response->setError($status);
 		} else {
-			$response->setError(vtranslate($request->getModule(), $qualifiedModuleName). ' ' .vtranslate('LBL_IS_IN_RUNNING_STATE', $qualifiedModuleName));
+			$response->setError(vtranslate($request->getModule(), $qualifiedModuleName).' '.vtranslate('LBL_IS_IN_RUNNING_STATE', $qualifiedModuleName));
 		}
 		$response->emit();
 	}

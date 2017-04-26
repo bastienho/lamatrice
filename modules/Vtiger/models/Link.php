@@ -148,9 +148,9 @@ class Vtiger_Link_Model extends Vtiger_Link {
 		}
 		//Check if the link is not javascript
 		if(!$this->isPageLoadLink()){
-			//To convert single quotes and double quotes
-			$url = Vtiger_Util_Helper::toSafeHTML($url);
-			return $url;
+		   //To convert single quotes and double quotes
+		   $url = Vtiger_Util_Helper::toSafeHTML($url);
+		   return $url;
 		}
 
 		$module = false;
@@ -213,7 +213,7 @@ class Vtiger_Link_Model extends Vtiger_Link {
 		}
 
 		$url = implode('&', $parametersParts);
-	       //To convert single quotes and double quotes
+	   //To convert single quotes and double quotes
 		$url = Vtiger_Util_Helper::toSafeHTML($url);
 		return  $url;
 	}
@@ -265,13 +265,32 @@ class Vtiger_Link_Model extends Vtiger_Link {
 			Vtiger_Cache::set('links-'.$tabid, $type, $links);
 		}
 
+		// child links
+		$childLinks = array();$childLinksIdList = array();
+		foreach($links as $linkType => $linkObjects) {
+			foreach($linkObjects as $linkObject) {
+				if($linkObject->parent_link) {
+					$childLinks[$linkObject->parent_link][] = $linkObject;
+					$childLinksIdList[] = $linkObject->linkid; // needed to exclude the child links from appearing in the main links
+				}
+			}
+		}
+
 		$linkModels = array();
 		foreach($links as $linkType => $linkObjects) {
 			foreach($linkObjects as $linkObject) {
-				$linkModels[$linkType][] = self::getInstanceFromLinkObject($linkObject);
+				$linkModel = self::getInstanceFromLinkObject($linkObject);
+				if(array_key_exists($linkObject->linkid, $childLinks)) {
+					foreach($childLinks[$linkObject->linkid] as $childLinkObject) {
+						$linkModel->addChildLink(self::getInstanceFromLinkObject($childLinkObject));
+					}
+				}
+				if(in_array($linkModel->getId(), $childLinksIdList)) continue; // don't include the child links in the links list
+
+				$linkModels[$linkType][] = $linkModel;
 			}
 		}
-        
+
 		if (!is_array($type)) {
 			$type = array($type);
 		}
@@ -280,8 +299,33 @@ class Vtiger_Link_Model extends Vtiger_Link {
 		foreach ($diffTypes as $linkType) {
 			$linkModels[$linkType] = array();
 		}
-        
+
 		return $linkModels;
 	}
 
+	/**
+	* Function to get the relatedModuleName
+	* @return <String>
+	*/
+	public function getRelatedModuleName() {
+		return $this->relatedModuleName;
+	}
+
+	public function isExtensionAccessible() {
+		$extensionName = $this->get('linklabel');
+		$moduleModel = Vtiger_Module_Model::getInstance($extensionName);
+		if(empty($moduleModel)) {
+			return false;
+		}
+
+		if($moduleModel->isActive() && method_exists($moduleModel, 'isLinkAccessible')) {
+			return $moduleModel->isLinkAccessible($this);
+		}
+		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
+		$permission = $userPrivilegesModel->hasModulePermission($moduleModel->getId());
+		if($permission) {
+			return true;
+		}
+		return false;
+	}
 }

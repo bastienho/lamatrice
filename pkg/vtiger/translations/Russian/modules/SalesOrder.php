@@ -8,10 +8,11 @@
  * All Rights Reserved.
  ************************************************************************************/
 $languageStrings = array(
-	'SINGLE_SalesOrder'            => 'Заказ на Продажу', 
+    'SalesOrder'            => 'Заказы на продажу', 
+	'SINGLE_SalesOrder'            => 'Заказ на продажу', 
 	'LBL_EXPORT_TO_PDF'            => 'Экспорт в PDF'       , 
-	'LBL_SEND_MAIL_PDF'            => 'Send Email with PDF'         , // TODO: Review
-	'LBL_ADD_RECORD'               => 'Add Sales Order'             , // TODO: Review
+	'LBL_SEND_MAIL_PDF'            => 'Отправить на e-mail с PDF'         , 
+	'LBL_ADD_RECORD'               => 'Добавить заказа клиента'             , 
 	'LBL_RECORDS_LIST'             => 'Список Заказов' , // KEY 5.x: LBL_LIST_SO_FORM_TITLE
 	'LBL_SO_INFORMATION'           => 'Заказ на Продажу', 
 	'SalesOrder No'                => 'Заказ №'              , 
@@ -34,4 +35,9 @@ $languageStrings = array(
 	'Sent'                         => 'Отправлен'          , 
 	'Credit Invoice'               => 'Кредит'                , 
 	'Paid'                         => 'Оплачен'              , 
+
+  'LBL_THIS' => 'Это',
+  'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'будет удален из системы.просьба удалить или заменить этот пункт',
+  'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'Эта позиция удаляется из системы,пожалуйста, удалите эту строку элементов',
+
 );

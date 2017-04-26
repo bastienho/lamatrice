@@ -21,4 +21,9 @@ $languageStrings = array(
 	'LTFAQ'                        => 'My Recent FAQs'              , 
 	'UA'                           => 'Upcoming Activities'         , 
 	'PA'                           => 'Pending Activities'          , 
+        'Home'                         => 'Home'                        ,  
+
+  'LBL_SAVE_ORDER' => 'Save Order',
+  'LBL_ADD_NEW_DASHBOARD' => 'Add new dashboard',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'Maximum 30 characters are allowed for dashboard name.',
 );

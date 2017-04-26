@@ -12,7 +12,7 @@
  *  Version      : 6.0.0
  *  Created Date : 2012-10-25
  *  Author       : JPL TSolucio, S. L. Joe Bordes
- *  Last change  : 2013-11-10
+ *  Last change  : 2013-05-03
  *  Author       : JPL TSolucio, S. L. Joe Bordes
  ************************************************************************************/
 $languageStrings = array(
@@ -28,8 +28,9 @@ $languageStrings = array(
 	'Recurrence'                   => 'Eventos Recurrentes',
 	'Send Notification'            => 'Enviar notificación',
 	'Location'                     => 'Localización',
-	'Send Reminder'                => 'Enviar Email de Recordatorio antes',
+	'Send Reminder'                => 'Enviar Recordatorio',
 	'End Date & Time'              => 'Fecha y Hora de Fin',
+    'End Date'                     => 'Fecha y Hora de Fin',
 	'Activity Type'                => 'Tipo de Evento',
 	'Visibility'                   => 'Visibilidad',
 	'Private'                      => 'Privado',
@@ -39,10 +40,12 @@ $languageStrings = array(
 	'Planned'                      => 'Planeado',
 	'Held'                         => 'Realizada',
 	'Not Held'                     => 'Pendiente',
+    'Related To'                   => 'En relación con',
 	'LBL_DAYS'                     => 'Días',
 	'LBL_HOURS'                    => 'Horas',
 	'LBL_CALENDAR_VIEW'            => 'Vista de Calendario',
-	'LBL_HOLD_FOLLOWUP_ON' => 'Mantener seguimiento el',
+	'LBL_HOLD_FOLLOWUP_ON'         => 'Mantenga Seguimiento On',
+    'LBL_CREATE_FOLLOWUP_EVENT'    => 'Crear Seguimiento de eventos',
 	'LBL_RELATED_TO' => 'Relacionado con',
 	'LBL_DAYS_TYPE' => 'Día(s)',
 	'LBL_WEEKS_TYPE' => 'Semana(s)',
@@ -68,11 +71,15 @@ $languageStrings = array(
 	'Weekly' => 'Semana(s)',
 	'Monthly' => 'Mes(es)',
 	'Yearly' => 'Año',
-	'LBL_REPEATEVENT' => 'Repite una vez cada',
+	'LBL_REPEATEVENT' => 'Una vez en cada',
 	'LBL_UNTIL' => 'Hasta',
 	'LBL_DAY_OF_THE_MONTH' => 'díay del mes',
 	'LBL_ON' => 'en',
 	'LBL_INVITE_USER_BLOCK' => 'Invita',
 	'LBL_INVITE_USERS' => 'Invita Usuarios',
-	'INVITATION'=>' Invitación ',
+        'LBL_INVITE_PEOPLE' => 'Invitar Gente',
+
+  'INVITATION' => ' Invitación ',
+  'Busy' => 'Ocupado',
+
 );

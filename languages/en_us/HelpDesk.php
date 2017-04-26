@@ -95,5 +95,15 @@ $languageStrings = array(
 	'LBL_LOGIN_REVOKED' => 'Your login is revoked. Please contact your admin.',
 	'LBL_MAIL_SENT' => 'Mail has been sent to your mail id with the customer portal login details',
 	'LBL_ALTBODY' => 'This is the body in plain text for non-HTML mail clients',
-	'HelpDesk ID' => 'Ticket ID',
+	'HelpDesk ID' => 'Ticket ID',    
+	//Portal shortcuts
+	'LBL_ADD_DOCUMENT'=>"Add Document",
+	'LBL_OPEN_TICKETS'=>"Open Tickets",
+	'LBL_CREATE_TICKET'=>"Create Ticket",
+);
+
+$jsLanguageStrings=array(
+	'LBL_ADD_DOCUMENT'=>'Add Document',
+	'LBL_OPEN_TICKETS'=>'Open Tickets',
+	'LBL_CREATE_TICKET'=>'Create Ticket'
 );

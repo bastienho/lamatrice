@@ -13,7 +13,8 @@ header('Expires: 0');
 header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 header('Cache-Control: private', false);
 
-ini_set('include_path', '../../../');
+//Opensource fix for tracking email access count
+chdir(dirname(__FILE__). '/../../../');
 
 require_once 'includes/Loader.php';
 require_once 'include/utils/utils.php';
@@ -22,6 +23,7 @@ vimport('includes.http.Request');
 vimport('includes.runtime.Globals');
 vimport('includes.runtime.BaseModel');
 vimport ('includes.runtime.Controller');
+vimport('includes.runtime.LanguageHandler');
 
 class Emails_TrackAccess_Action extends Vtiger_Action_Controller {
 
@@ -29,17 +31,42 @@ class Emails_TrackAccess_Action extends Vtiger_Action_Controller {
 		if (vglobal('application_unique_key') !== $request->get('applicationKey')) {
 			exit;
 		}
+		if((strpos($_SERVER['HTTP_REFERER'], vglobal('site_URL')) !== false)) {
+			exit;
+		}
 
+		global $current_user;
+		$current_user = Users::getActiveAdminUser();
+		
+		if($request->get('method') == 'click') {
+			$this->clickHandler($request);
+		}else{
+			$parentId = $request->get('parentId');
+			$recordId = $request->get('record');
+
+			if ($parentId && $recordId) {
+				$recordModel = Emails_Record_Model::getInstanceById($recordId);
+				$recordModel->updateTrackDetails($parentId);
+				Vtiger_ShortURL_Helper::sendTrackerImage();
+			}
+		}
+	}
+	
+	public function clickHandler(Vtiger_Request $request) {
 		$parentId = $request->get('parentId');
 		$recordId = $request->get('record');
 
 		if ($parentId && $recordId) {
 			$recordModel = Emails_Record_Model::getInstanceById($recordId);
-			$recordModel->updateTrackDetails($parentId);
+			$recordModel->trackClicks($parentId);
+		}
+		
+		$redirectUrl = $request->get('redirectUrl');
+		if(!empty($redirectUrl)) {
+			return Vtiger_Functions::redirectUrl(rawurldecode($redirectUrl));
 		}
 	}
 }
 
 $track = new Emails_TrackAccess_Action();
 $track->process(new Vtiger_Request($_REQUEST));
-?>

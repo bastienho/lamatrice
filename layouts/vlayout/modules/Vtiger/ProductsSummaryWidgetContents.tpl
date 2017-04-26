@@ -10,35 +10,35 @@
 ********************************************************************************/
 -->*}
 {strip}
+	{foreach item=HEADER from=$RELATED_HEADERS}
+		{if $HEADER->get('label') eq "Product Name"}
+			{assign var=PRODUCT_NAME_HEADER value={vtranslate($HEADER->get('label'),$MODULE)}}
+		{elseif $HEADER->get('label') eq "Unit Price"}
+			{assign var=PRODUCT_UNITPRICE_HEADER value={vtranslate($HEADER->get('label'),$MODULE)}}
+		{/if}
+	{/foreach}
+	<div class="row-fluid">		
+		<span class="span7">
+			<strong>{$PRODUCT_NAME_HEADER}</strong>
+		</span>
+		<span class="span4">
+			<span class="pull-right">
+				<strong>{$PRODUCT_UNITPRICE_HEADER}</strong>
+			</span>
+		</span>
+	</div>
 	{foreach item=RELATED_RECORD from=$RELATED_RECORDS}
 		<div class="recentActivitiesContainer">
 			<ul class="unstyled">
 				<li>
 					<div class="row-fluid">
-						<span class="span6 textOverflowEllipsis">
+						<span class="span7 textOverflowEllipsis">
 							<a href="{$RELATED_RECORD->getDetailViewUrl()}" id="{$MODULE}_{$RELATED_MODULE}_Related_Record_{$RELATED_RECORD->get('id')}" title="{$RELATED_RECORD->getDisplayValue('productname')}">
 								{$RELATED_RECORD->getDisplayValue('productname')}
 							</a>
 						</span>
-						<span class="span2">
-							<a href="{$RELATED_RECORD->getDetailViewUrl()}" id="{$MODULE}_{$RELATED_MODULE}_Related_Record_{$RELATED_RECORD->get('id')}" title="{$RELATED_RECORD->getDisplayValue('productname')}">
-								<span class="pull-right">{$RELATED_RECORD->getDisplayValue('productcode')}</span>
-							</a>
-						</span>
-						<span class="span1">
-						{if $RELATED_RECORD->get('quantity')}
-							<a href="{$RELATED_RECORD->getDetailViewUrl()}" id="{$MODULE}_{$RELATED_MODULE}_Related_Record_{$RELATED_RECORD->get('id')}" title="{$RELATED_RECORD->getDisplayValue('productname')}">
-								<span class="pull-right">x{if (float)$RELATED_RECORD->get('quantity') < 100}&nbsp;{/if}{(float)$RELATED_RECORD->get('quantity')}</span>
-							</a>
-						{else}&nbsp;
-						{/if}
-						</span>
-						<span class="span2">
-							<a href="{$RELATED_RECORD->getDetailViewUrl()}" id="{$MODULE}_{$RELATED_MODULE}_Related_Record_{$RELATED_RECORD->get('id')}" title="{$RELATED_RECORD->getDisplayValue('productname')}">
-								{if (float)$RELATED_RECORD->get('listprice') neq 0}
-									<span class="pull-right">{CurrencyField::convertToUserFormat($RELATED_RECORD->get('listprice'), null, false, false, 2)} &euro;</span>
-								{/if}
-							</a>
+						<span class="span4">
+							<span class="pull-right">{$RELATED_RECORD->getDisplayValue('unit_price')}</span>
 						</span>
 					</div>
 				</li>

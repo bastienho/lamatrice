@@ -14,18 +14,21 @@ $languageStrings = array(
 	'LBL_RECORDS_LIST'             => 'List View'                   , 
 	'LBL_EVENTS'                   => 'Olaylar'                     , 
 	'LBL_TODOS'                    => 'Görev'                      , 
-	'LBL_HOLD_FOLLOWUP_ON'         => 'Hold Followup on'            , // TODO: Review
-	'LBL_EVENT_INFORMATION'        => 'Event Details'               , 
+	'LBL_HOLD_FOLLOWUP_ON'         => 'İzleyen Hold On'             ,
+    'LBL_CREATE_FOLLOWUP_EVENT'    => 'Takip Etkinlik Oluştur'      ,
+	'LBL_EVENT_INFORMATION'        => 'Etkinlik Ayrıntıları'        , 
 	'LBL_RECURRENCE_INFORMATION'   => 'Recurrence Details'          , 
 	'LBL_RELATED_TO'               => 'Related To'                  , // TODO: Review
+    'Related To'                   => 'İlgili'                      ,
 	'Start Date & Time'            => 'Başlangıç Tarihi ve Zamanı', 
-	'Recurrence'                   => 'Recurrence'                  , 
+	'Recurrence'                   => 'Yinelenme'                  , 
 	'Send Notification'            => 'Send Notification'           , 
 	'Location'                     => 'Location'                    , 
 	'Send Reminder'                => 'Send Reminder'               , 
 	'End Date & Time'              => 'Bitiş Tarihi ve Zamanı'    , 
+    'End Date'                     => 'Bitiş Tarihi ve Zamanı'    , 
 	'Activity Type'                => 'Aktivite Tipi'               , 
-	'Visibility'                   => 'Visibility'                  , 
+	'Visibility'                   => 'Görünürlük'                  , 
 	'Private'                      => 'Özel'                       , 
 	'Public'                       => 'Herkese Açık'              , 
 	'Call'                         => 'Arama'                       , 
@@ -59,11 +62,17 @@ $languageStrings = array(
 	'Weekly'                       => 'Week(s)'                     , // TODO: Review
 	'Monthly'                      => 'Month(s)'                    , // TODO: Review
 	'Yearly'                       => 'Year'                        , // TODO: Review
-	'LBL_REPEATEVENT'              => 'Repeat once in every'        , // TODO: Review
+	'LBL_REPEATEVENT'              => 'Sonra her'        , // TODO: Review
 	'LBL_UNTIL'                    => 'Until'                       , // TODO: Review
 	'LBL_DAY_OF_THE_MONTH'         => 'day of the month'            , // TODO: Review
 	'LBL_ON'                       => 'on'                          , // TODO: Review
 	'LBL_CALENDAR_VIEW'            => 'Calendar View'               , 
 	'LBL_INVITE_USER_BLOCK'        => 'Invite'                      , // TODO: Review
 	'LBL_INVITE_USERS'             => 'Invite Users'                , // TODO: Review
+        'LBL_INVITE_PEOPLE'            => 'İnsanlar Davet',
+
+
+  'INVITATION' => ' Davetiye ',
+  'Busy' => 'Meşgul',
+
 );

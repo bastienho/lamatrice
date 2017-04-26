@@ -25,13 +25,27 @@ class Settings_SMSNotifier_SaveAjax_Action extends Settings_Vtiger_Index_Action 
 			$recordModel->set($fieldName, $request->get($fieldName));
 		}
 
+		$userName = $request->get('username');
+		if(isset($userName)) {
+			$recordModel->set('username', $request->get('username'));
+		}
+		$password = $request->get('username');
+		if(isset($password)) {
+			$recordModel->set('password', $request->get('password'));
+		}
+		
+        $parameters = ''; 
 		$selectedProvider = $request->get('providertype');
 		$allProviders = $recordModel->getModule()->getAllProviders();
 		foreach ($allProviders as $provider) {
 			if ($provider->getName() === $selectedProvider) {
-				foreach ($provider->getRequiredParams() as $key) {
-					$recordModel->set($key, $request->get($key));
-				}
+				$fieldsInfo = Settings_SMSNotifier_ProviderField_Model::getInstanceByProvider($provider); 
+				foreach ($fieldsInfo as $fieldInfo) { 
+ 		        	$recordModel->set($fieldInfo['name'], $request->get($fieldInfo['name'])); 
+ 		            $parameters[$fieldInfo['name']] = $request->get($fieldInfo['name']); 
+		        } 
+ 		        $recordModel->set('parameters', Zend_Json::encode($parameters)); 
+ 		        break;
 			}
 		}
 
@@ -44,4 +58,8 @@ class Settings_SMSNotifier_SaveAjax_Action extends Settings_Vtiger_Index_Action 
 		}
 		$response->emit();
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -17,7 +17,7 @@ Class Settings_Webforms_Edit_View extends Settings_Vtiger_Index_View {
 		$currentUserPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 
 		if (!$currentUserPrivilegesModel->hasModulePermission($moduleModel->getId())) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
 		}
 	}
 
@@ -26,26 +26,33 @@ Class Settings_Webforms_Edit_View extends Settings_Vtiger_Index_View {
 		$qualifiedModuleName = $request->getModule(false);
 		$mode = '';
 		$selectedFieldsList = $allFieldsList = array();
+		$viewer = $this->getViewer($request);
+		$supportedModules = Settings_Webforms_Module_Model::getSupportedModulesList();
 
 		if ($recordId) {
 			$recordModel = Settings_Webforms_Record_Model::getInstanceById($recordId, $qualifiedModuleName);
 			$selectedFieldsList = $recordModel->getSelectedFieldsList();
-			
-			$allFieldsList = $recordModel->getAllFieldsList();
+
 			$sourceModule = $recordModel->get('targetmodule');
 			$mode = 'edit';
 		} else {
 			$recordModel = Settings_Webforms_Record_Model::getCleanInstance($qualifiedModuleName);
 			$sourceModule = $request->get('sourceModule');
 			if (!$sourceModule) {
-				$sourceModule = reset(array_keys(Settings_Webforms_Module_Model::getSupportedModulesList()));
+				$sourceModule = reset(array_keys($supportedModules));
 			}
-			$allFieldsList = $recordModel->getAllFieldsList($sourceModule);
+			$recordModel->set('targetmodule',$sourceModule);
+		}
+		if(!$supportedModules[$sourceModule]){
+			$message = vtranslate('LBL_ENABLE_TARGET_MODULES_FOR_WEBFORM',$qualifiedModuleName);
+			$viewer->assign('MESSAGE', $message);
+			$viewer->view('OperationNotPermitted.tpl', 'Vtiger');
+			return false;
 		}
 
+		$allFieldsList = $recordModel->getAllFieldsList($sourceModule);
 		$recordStructure = Vtiger_RecordStructure_Model::getInstanceFromRecordModel($recordModel, Vtiger_RecordStructure_Model::RECORD_STRUCTURE_MODE_EDIT);
 
-		$viewer = $this->getViewer($request);
 		$viewer->assign('MODE', $mode);
 		$viewer->assign('RECORD_ID', $recordId);
 		$viewer->assign('RECORD_MODEL', $recordModel);
@@ -58,7 +65,7 @@ Class Settings_Webforms_Edit_View extends Settings_Vtiger_Index_View {
 		$viewer->assign('RECORD_STRUCTURE_MODEL', $recordStructure);
 		$viewer->assign('RECORD_STRUCTURE', $recordStructure->getStructure());
 		$viewer->assign('USER_MODEL', Users_Record_Model::getCurrentUserModel());
-		
+
 		$viewer->view('EditView.tpl', $qualifiedModuleName);
 	}
 
@@ -81,4 +88,10 @@ Class Settings_Webforms_Edit_View extends Settings_Vtiger_Index_View {
 		return $headerScriptInstances;
 	}
 
+	public function setModuleInfo($request, $moduleModel){
+		$record = $request->get('record');
+		if ($record) {
+			parent::setModuleInfo($request, $moduleModel);
+		}
+	}
 }

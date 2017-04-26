@@ -11,23 +11,14 @@
 class PriceBooks_RelationListView_Model extends Vtiger_RelationListView_Model {
 
 	public function getHeaders() {
-		$relationModel = $this->getRelationModel();
-		$relatedModuleModel = $relationModel->getRelationModuleModel();
-
-		$headerFieldNames = $relatedModuleModel->getRelatedListFields();
-
-		$headerFields = array();
-		foreach($headerFieldNames as $fieldName) {
-			$headerFields[$fieldName] = $relatedModuleModel->getField($fieldName);
-		}
+		$headerFields = parent::getHeaders();
 
 		//Added to support List Price
 		$field = new Vtiger_Field_Model();
 		$field->set('name', 'listprice');
 		$field->set('column', 'listprice');
 		$field->set('label', 'List Price');
-
-		array_push($headerFields, $field);
+		$headerFields['listprice'] = $field;
 
 		return $headerFields;
 	}
@@ -36,7 +27,10 @@ class PriceBooks_RelationListView_Model extends Vtiger_RelationListView_Model {
 		$db = PearDatabase::getInstance();
 		$parentModule = $this->getParentRecordModel()->getModule();
 		$relationModule = $this->getRelationModel()->getRelationModuleModel();
-		$relatedColumnFieldMapping = $relationModule->getRelatedListFields();
+		$relatedColumnFieldMapping = $relationModule->getConfigureRelatedListFields();
+		if(count($relatedColumnFieldMapping) <= 0){
+			$relatedColumnFieldMapping = $relationModule->getRelatedListFields();
+		}
 
 		$query = $this->getRelationQuery();
 
@@ -49,43 +43,35 @@ class PriceBooks_RelationListView_Model extends Vtiger_RelationListView_Model {
 			$query = "$query ORDER BY $orderBy $sortOrder";
 		}
 
-		$limitQuery = $query .' LIMIT '.$startIndex.','.($pageLimit + 1); /* ED140907 + 1 instead of two db query */
+		$limitQuery = $query .' LIMIT '.$startIndex.','.$pageLimit;
 		$result = $db->pquery($limitQuery, array());
 		$relatedRecordList = array();
 
-		$max_rows = min($db->num_rows($result), $pageLimit);/* ED140907 + 1 instead of two db query */
-		for($i=0; $i < $max_rows; $i++ ) {
+		for($i=0; $i< $db->num_rows($result); $i++ ) {
 			$row = $db->fetch_row($result,$i);
 			$newRow = array();
 			foreach($row as $col=>$val){
 				if(array_key_exists($col,$relatedColumnFieldMapping))
 					$newRow[$relatedColumnFieldMapping[$col]] = $val;
 			}
-			if ($relationModule->getName() === 'Products') {
-				$recordId = $row['productid'];
-			} else if ($relationModule->getName() === 'Services') {
-				$recordId = $row['serviceid'];
-			}
+			
+			$recordId = $row['crmid'];
 			$newRow['id'] = $recordId;
 			//Added to support List Price
 			$newRow['listprice'] = CurrencyField::convertToUserFormat($row['listprice'], null, true);
-			$newRow['listpriceunit'] = $row['listpriceunit'];
 
 			$record = Vtiger_Record_Model::getCleanInstance($relationModule->get('name'));
 			$relatedRecordList[$recordId] = $record->setData($newRow)->setModuleFromInstance($relationModule);
 		}
 		$pagingModel->calculatePageRange($relatedRecordList);
 
-		/* ED140907 + 1 instead of two db query */
-		$pagingModel->set('nextPageExists', $db->num_rows($result) > $pageLimit);
-		/*
 		$nextLimitQuery = $query. ' LIMIT '.($startIndex+$pageLimit).' , 1';
 		$nextPageLimitResult = $db->pquery($nextLimitQuery, array());
 		if($db->num_rows($nextPageLimitResult) > 0){
 			$pagingModel->set('nextPageExists', true);
 		}else{
 			$pagingModel->set('nextPageExists', false);
-		}*/
+		}
 		return $relatedRecordList;
 	}
 }

@@ -19,12 +19,7 @@ class Vtiger_GetData_Action extends Vtiger_IndexAjax_View {
 		if($permitted) {
 			$recordModel = Vtiger_Record_Model::getInstanceById($record, $sourceModule);
 			$data = $recordModel->getData();
-			$result = array('success'=>true, 'data'=>array_map('decode_html',$data));
-			//ED50515
-			if($request->get('related_data')){
-				$result['related_data'] = $recordModel->getRelatedData($request->get('related_data'));
-			}
-			$response->setResult($result);
+			$response->setResult(array('success'=>true, 'data'=>array_map('decode_html',$data)));
 		} else {
 			$response->setResult(array('success'=>false, 'message'=>vtranslate('LBL_PERMISSION_DENIED')));
 		}

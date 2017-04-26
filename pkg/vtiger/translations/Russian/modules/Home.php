@@ -12,7 +12,7 @@ $languageStrings = array(
 	'PLVT'                         => 'Последние Сделки', // KEY 5.x: Top Potentials
 	'QLTQ'                         => 'Последние Предложения', // KEY 5.x: Top Quotes
 	'CVLVT'                        => 'Ключевые Показатели', // KEY 5.x: Key Metrics
-	'HLT'                          => 'Top Support Tickets'         , // TODO: Review
+	'HLT'                          => 'Топ Билеты Поддержка'         , 
 	'GRT'                          => 'Положение Моей Группы', // KEY 5.x: My Group Allocation
 	'OLTSO'                        => 'Последние Заказы на Продажу', // KEY 5.x: Top Sales Orders
 	'ILTI'                         => 'Последние Счета', // KEY 5.x: Top Invoices
@@ -21,4 +21,9 @@ $languageStrings = array(
 	'LTFAQ'                        => 'Мои Частые ЧаВо', // KEY 5.x: My Recent FAQs
 	'UA'                           => 'Ближайшие События', // KEY 5.x: LBL_UPCOMING_EVENTS
 	'PA'                           => 'События в процессе', // KEY 5.x: LBL_PENDING_EVENTS
+        'Home'                         => 'Приборная панель',
+
+  'LBL_SAVE_ORDER' => 'Сохранить Порядок',
+  'LBL_ADD_NEW_DASHBOARD' => 'Добавить новую приборную панель',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'Максимум 30 символов разрешено для имени панели.',
 );

@@ -15,8 +15,8 @@ $languageStrings = array(
 	'LBL_CONTACT_INFORMATION'      => 'Kapcsolat adatok'            , 
 	'LBL_CUSTOMER_PORTAL_INFORMATION' => 'Ügyfélszolgálati Portál adatok', 
 	'LBL_IMAGE_INFORMATION'        => 'Képek'                      , 
-	'LBL_COPY_OTHER_ADDRESS'       => 'Copy Other Address'          , // TODO: Review
-	'LBL_COPY_MAILING_ADDRESS'     => 'Copy Mailing Address'        , // TODO: Review
+	'LBL_COPY_OTHER_ADDRESS'       => 'Copy Egyéb cím'          , // TODO: Review
+	'LBL_COPY_MAILING_ADDRESS'     => 'Copy Levelezési cím'        , // TODO: Review
 	'Office Phone'                 => 'Telefon, irodai'             , 
 	'Home Phone'                   => 'Telefon, otthoni'            , 
 	'Title'                        => 'Beosztás'                   , 
@@ -33,13 +33,13 @@ $languageStrings = array(
 	'Mailing State'                => 'Állam/Megye (Levelezés)'   , 
 	'Mailing Zip'                  => 'Irányítószám (Levelezés)', 
 	'Mailing Country'              => 'Ország (Levelezés)'        , 
-	'Mailing PO Box'               => 'Postafiók (Levelezés)'     , 
+	'Mailing Po Box'               => 'Postafiók (Levelezés)'     , 
 	'Other Street'                 => 'Utca, házszám (Másik)'    , 
 	'Other City'                   => 'Város (Másik)'             , 
 	'Other State'                  => 'Állam/Megye (Másik)'       , 
 	'Other Zip'                    => 'Irányítószám (Másik)'   , 
 	'Other Country'                => 'Ország (Másik)'            , 
-	'Other PO Box'                 => 'Postafiók (Másik)'         , 
+	'Other Po Box'                 => 'Postafiók (Másik)'         , 
 	'Contact Image'                => 'Kapcsolat képe'             , 
 	'Mr.'                          => 'Mr.'                         , 
 	'Ms.'                          => 'Ms.'                         , 
@@ -48,10 +48,14 @@ $languageStrings = array(
 	'Prof.'                        => 'Prof.'                       , 
 	'User List'                    => 'Felhasználó lista'         , 
 	'Contact Id' => 'Kapcsolat Id',
+    'Support Start Date'           => 'Támogatás Indítás dátuma',
+    'Support End Date'             => 'Támogatás End Date',
+
+  'Other Phone' => 'Másodlagos Telefon',
+  'Email' => 'Elsődleges E-Mail',
+  'Secondary Email' => 'Másodlagos E-Mail',
+  'LBL_TRANSACTIONS' => 'Tranzakciók',
+
 );
 $jsLanguageStrings = array(
-	'LBL_SYNC_BUTTON'              => 'Synchronize Now'             , // TODO: Review
-	'LBL_SYNCRONIZING'             => 'Synchronizing....'           , // TODO: Review
-	'LBL_NOT_SYNCRONIZED'          => 'You have not synchronized yet', // TODO: Review
-	'LBL_FIELD_MAPPING'            => 'Field Mapping'               , // TODO: Review
 );

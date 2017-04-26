@@ -89,8 +89,16 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model {
      * Get the user datetimefeild
      */
     function getLastEndDateTime() {
-        if($this->get('lastend') != NULL){
-            return Vtiger_Datetime_UIType::getDisplayDateTimeValue(date('Y-m-d H:i:s', $this->get('lastend')));
+        if($this->get('lastend') != NULL) {
+		    $lastScannedTime = Vtiger_Datetime_UIType::getDisplayDateTimeValue(date('Y-m-d H:i:s', $this->get('lastend')));
+		    $userModel = Users_Record_Model::getCurrentUserModel();
+			$hourFormat = $userModel->get('hour_format');
+		    if($hourFormat == '24') {
+				return $lastScannedTime;
+		    } else {
+				$dateTimeList = explode(" ", $lastScannedTime);
+                return $dateTimeList[0]." ".date('g:i:sa', strtotime($dateTimeList[1]));
+			}
 		} else {
 			return '';
 		}
@@ -112,9 +120,6 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model {
 	 * @return <String>
 	 */
 	public function getDisplayValue($fieldName) {
-		if(is_a($fieldName, "Vtiger_Field_Model"))
-			$fieldName = $fieldName->getName();
-		
 		$fieldValue = $this->get($fieldName);
 		switch ($fieldName) {
 			case 'frequency'	: $fieldValue = intval($fieldValue);
@@ -143,20 +148,6 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model {
 									  $fieldValue = '';
 								  }
 								  break;
-			case 'start_hour'	: if ($fieldValue) {
-									  $fieldValue = str_pad((int)$fieldValue, 2, '0', STR_PAD_LEFT)
-												. ':' . str_pad((int)(fmod($fieldValue, 1) * 100 / 60), 2, '0', STR_PAD_LEFT);
-								  } else {
-									  $fieldValue = '00:00';
-								  }
-								  break;
-			case 'excludeweekend'	: if ($fieldValue) {
-										$moduleModel = $this->getModule();
-										$fieldValue = vtranslate('LBL_NOT_ON_WEEKEND', $moduleModel->getParentName().':'.$moduleModel->getName());
-								  } else {
-									  $fieldValue = '';
-								  }
-								  break;
 		}
 		return $fieldValue;
 	}
@@ -174,41 +165,9 @@ class Settings_CronTasks_Record_Model extends Settings_Vtiger_Record_Model {
 	public function save() {
 		$db = PearDatabase::getInstance();
 
-		$updateQuery = "UPDATE vtiger_cron_task
-			SET frequency = ?
-			, status = ?
-			, start_hour = ?
-			, excludeweekend = ?
-			, description = ?
-			WHERE id = ?";
-		$params = array($this->get('frequency')
-						, $this->get('status')
-						, self::parseStartHour($this->get('start_hour'))
-						, $this->get('excludeweekend') ? 1 : 0
-						, $this->get('description')
-						, $this->getId());
+		$updateQuery = "UPDATE vtiger_cron_task SET frequency = ?, status = ? WHERE id = ?";
+		$params = array($this->get('frequency'), $this->get('status'), $this->getId());
 		$db->pquery($updateQuery, $params);
-	}
-	
-	/* ED151202
-	 * RŽinitialise les dates de dernires exŽcutions pour une rŽexŽcution immŽdiate
-	 */
-	public function resetLastStartTime(){
-		$db = PearDatabase::getInstance();
-
-		$updateQuery = "UPDATE vtiger_cron_task
-			SET laststart = 0
-			, lastend = 0
-			WHERE id = ?";
-		$params = array( $this->getId());
-		$result = $db->pquery($updateQuery, $params);
-		if(!$result)
-			$db->echoError();
-	}
-	
-	protected static function parseStartHour($str){
-		$str = explode(':', $str);
-		return $str[0] + ($str[1] ? ((float)$str[1])/60 : 0);
 	}
 
 	/**

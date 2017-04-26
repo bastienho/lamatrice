@@ -6,15 +6,13 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013   
  ************************************************************************************/
 $languageStrings = array(
+    'Quotes'                       => 'Devis'                       , 
 	'SINGLE_Quotes'                => 'Devis'                       , 
 	'LBL_EXPORT_TO_PDF'            => 'Export PDF'                  , 
-	'LBL_SEND_MAIL_PDF'            => 'Envoi PDF par Email'         , 
-	'LBL_ADD_RECORD'               => 'Ajouter devis'                   , 
+	'LBL_SEND_MAIL_PDF'            => 'Send Email with PDF'         , // TODO: Review
+	'LBL_ADD_RECORD'               => 'Add Quote'                   , 
 	'LBL_RECORDS_LIST'             => 'Liste devis'                 , 
 	'LBL_QUOTE_INFORMATION'        => 'Détail devis'               , 
 	'Quote No'                     => 'Devis N°'                   , 
@@ -23,8 +21,7 @@ $languageStrings = array(
 	'Inventory Manager'            => 'Responsable du stock'        , 
 	'Accepted'                     => 'Accepté'                    , 
 	'Rejected'                     => 'Rejeté'                     ,
-	'LBL_COPY_SHIPPING_ADDRESS'    => 'Copier l\'adresse de livraison'       , 
-	'LBL_COPY_BILLING_ADDRESS'     => 'Copier l\'adresse de facturation'        , 	
+    'Related To'                   => 'Relatif à la'                ,
 	
 	//Translations used for Export to Pdf
 	'Valid Date' => 'Date de validité',
@@ -41,4 +38,9 @@ $languageStrings = array(
 	'Tax' => 'Taxe',
 	'Contact Name' => 'Nom contact',
 	'Grand Total:' => 'Total:',
+
+  'LBL_THIS' => 'Cette',
+  'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'est supprimé du système.merci de supprimer ou de remplacer cet élément',
+  'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'Cet élément est supprimé du système,veuillez supprimer cette ligne d\'articles',
+
 );

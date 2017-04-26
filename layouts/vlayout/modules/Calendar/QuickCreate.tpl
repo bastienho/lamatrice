@@ -27,6 +27,8 @@
 	<input type="hidden" name="action" value="SaveAjax">
 	<input type="hidden" name="defaultCallDuration" value="{$USER_MODEL->get('callduration')}" />
 	<input type="hidden" name="defaultOtherEventDuration" value="{$USER_MODEL->get('othereventduration')}" />
+	 <input type="hidden" name="userChangedEndDateTime" value="0" />
+
 	<!-- Random number is used to make specific tab is opened -->
 	{assign var="RAND_NUMBER" value=rand()}
 	<div class="modal-body tabbable" style="padding:0px">
@@ -87,10 +89,12 @@
 								{/if}
 							{/foreach}
 							</tr>
-							{if $smarty.request.parent_id neq ''}
-								<input type="hidden" name="parent_id" value="{$smarty.request.parent_id}" />
-							{else if $smarty.request.contact_id neq ''}
-								<input type="hidden" name="contact_id" value="{$smarty.request.contact_id}" />
+                                                        {assign var=PARENT_ID value={getPurifiedSmartyParameters('parent_id')}}
+                                                        {assign var=CONTACT_ID value={getPurifiedSmartyParameters('contact_id')}}
+							{if $PARENT_ID neq ''}
+								<input type="hidden" name="parent_id" value="{$PARENT_ID}" />
+							{else if $CONTACT_ID neq ''}
+								<input type="hidden" name="contact_id" value="{$CONTACT_ID}" />
 							{/if}
 						</table>
 					</div>

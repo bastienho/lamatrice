@@ -8,7 +8,8 @@
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
-	'LBL_ADD_RECORD' => 'Add Email Template',
+    'Email Templates' => 'Email Templates',
+    'LBL_ADD_RECORD' => 'Add Email Template',
 	'SINGLE_EmailTemplates' => 'Email Template',
 	'LBL_EMAIL_TEMPLATES'=> 'Email Templates',
 	'LBL_EMAIL_TEMPLATE' => 'Email Template',
@@ -17,8 +18,15 @@ $languageStrings = array(
 	'LBL_DESCRIPTION' => 'Description',
 	'LBL_SUBJECT' => 'Subject',
 	'LBL_GENERAL_FIELDS' => 'General Fields',
-	'LBL_SELECT_FIELD_TYPE' => 'Select Field Type',
-	
+	'LBL_SELECT_FIELD_TYPE' => 'Selectați Module & Câmp',
+	'LBL_MODULE_NAME' => 'Modulul Nume',
 	'LBL_EMAIL_TEMPLATE_DESCRIPTION'=>'Manage templates for E-Mail module',
+	'LBL_NO_PERMISSIONS_TO_DELETE_SYSTEM_TEMPLATE' => 'Nici permisiunea de a șterge Format System',
+	'LBL_RECORD_ID'                => 'Record ID'                   , 
 	
+);
+
+$jsLanguageStrings = array(
+    'LBL_CUTOMER_LOGIN_DETAILS_TEMPLATE_DELETE_MESSAGE' => 'Tu nu va fi capabil de a trimite Portal pentru clienți detaliile de conectare la contactul dacă ștergeți "Login clienți Details" șablon. Doriți să continuați?',
+	'JS_REQUIRED_FIELD' => '* Este necesară Mesaj',
 );

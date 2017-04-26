@@ -17,4 +17,5 @@ $languageStrings = array(
 	'Comment'                      => 'Comment'                     , 
 	'Creator'                      => 'Creator'                     , 
 	'Related To Comments'          => 'Parent Comment'              , 
+    'LBL_COMMENTED_AT' => 'Commented at',
 );

@@ -17,4 +17,5 @@ $languageStrings = array(
 	'Comment'                      => 'Feljegyzés'                 , 
 	'Creator'                      => 'Létrehozó'                 , 
 	'Related To Comments'          => 'Kapcsolódó feljegyzések'  , 
+	'LBL_COMMENTED_AT'             => 'Commented at'                , 
 );

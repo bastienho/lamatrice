@@ -1,17 +1,15 @@
 <?php
-/*+**********************************************************************************
+/*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.1
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- ************************************************************************************/
+ ************************************************************************************ */
 
 $languageStrings = Array (
 	'MailManager' => 'Mail Manager',
-	
-	// General translations
 	'LBL_Folders'         => 'Folders',
 	'LBL_Newer'           => 'Newer',
 	'LBL_Older'           => 'Older',
@@ -38,8 +36,7 @@ $languageStrings = Array (
 	'LBL_No_Matching_Record_Found' => 'No matching records found.',
 	'LBL_ACTIONS'         => 'Actions',
 	'LBL_Search'          => 'Search',
-	'LBL_Delete'            =>  'Delete',
-	
+	'LBL_Delete'          =>  'Delete',
 	'LBL_Username'             => 'User Name',
 	'LBL_Your_Mailbox_Account' => 'your mailbox account',
 	'LBL_Password'             => 'Password',
@@ -55,7 +52,6 @@ $languageStrings = Array (
 	'LBL_Validate_Cert'           => 'Validate cert',
 	'LBL_Do_Not_Validate_Cert'    => 'Do not validate cert',
 	'LBL_SELECT_ACCOUNT_TYPE'     => 'Select Organization Type',
-	
 	'LBL_FROM'        => 'From',
 	'LBL_TO'          => 'To',
 	'LBL_CC'          => 'CC',
@@ -83,10 +79,11 @@ $languageStrings = Array (
     'LBL_MAILMANAGER_ADD_Contacts' => 'Add Contact',
     'LBL_MAILMANAGER_ADD_Accounts' => 'Add Organization',
     'LBL_MAILMANAGER_ADD_Leads' => 'Add Lead',
-    'LBL_MAILMANAGER_ADD_Calendar' => 'Add ToDo',
+    'LBL_MAILMANAGER_ADD_Calendar' => 'Add Event/To Do',
     'LBL_MAILMANAGER_ADD_HelpDesk' => 'Add Ticket',
     'LBL_MAILMANAGER_ADD_Emails' => 'Attach Email',
     'LBL_MAILMANAGER_ADD_ModComments' => 'Add Comment',
+	'LBL_MAILMANAGER_ADD_Potentials' => 'Add Opportunity',
     'LBL_ADD' => 'Add',
 	'JSLBL_Body_Cannot_Be_Empty' => 'Body cannot be empty',
 	'LBL_ALLMAILS' => 'All Mails',
@@ -96,17 +93,39 @@ $languageStrings = Array (
 	'LBL_TO_USERS' => 'To Users',
 	'LBL_SENT_MAILS' => 'Sent Mails',
 	'LBL_Print' => 'Print',
-	
 	'LBL_SAVE_BUTTON_LABEL' => 'Save',
 	'LBL_CANCEL_BUTTON_LABEL' => 'Cancel',
 	'LBL_CREATE_MAILBOX' => 'Create Mailbox',
-	'LBL_WRITE_YOUR_COMMENT_HERE' => 'Add your comment here ...'
+	'LBL_WRITE_YOUR_COMMENT_HERE' => 'Add your comment here ...',
+	'LBL_MAILBOX_DETAILS' => 'Mailbox Details',
+	'LBL_DELETE_Mailbox' => 'Delete Mailbox',
+	'LBL_ACCOUNT_TYPE' => 'Account Type',
+	'LBL_MODULE_DESCRIPTION' => "Mail Manager is an integrated email client that allows users to perform CRM related actions on incoming email. It helps you create Leads, Contacts, Organizations, Trouble Tickets and Tasks from the emails that you receive in your inbox. Should sender's email id match with a record in vtiger CRM, you can perform more actions like, Attaching email, Adding Task, Comment and Ticket. Additionally, you can manage composing, replying, forwarding emails etc.",
+    'LBL_CHOOSE_EXISTING_FOLDER' => 'Choose an existing folder',
+    'LBL_CHOOSE_FOLDER_DESC' => 'Copies of the sent mails for this account will be saved in the default <b>Sent Mail</b> folder.<br><br>
+            If you want to change the default sent mail folder, after creating the mail box click on <b>Settings</b> icon and <b>Edit</b> the MailBox.',
+    'LBL_CHOOSE_FOLDER' => 'Copies of the sent mails for this account will be saved in this folder.',
+    'LBL_SELECTED_FOLDER' => 'Selected Folder',
+	'LBL_EDIT_MAILBOX' => 'Edit Mailbox',
+	'LBL_SELECT_ACCOUNT' => 'Select Account',
+	'LBL_SAVE_SENT_MAILS_IN' => 'Save sent mails in',
+	'LBL_CONFIGURE_MAILBOX' => 'Configure Mailbox',
+	'LBL_INBOX' => 'Inbox',
+	'LBL_SENT' => 'Sent',
+	'LBL_TRASH' => 'Trash',
+	'LBL_TYPE_TO_SEARCH' => 'Type to search...',
+	'LBL_NO_MAIL_SELECTED_DESC' => 'No mail selected. Click on mail for preview.',
+	'LBL_FILES' => 'files',
+	'LBL_CC_SMALL' => 'Cc',
+	'LBL_BCC_SMALL' => 'Bcc',
+	'LBL_MARK_AS_READ' => 'Mark as read',
+	'LBL_ADD_CALENDAR' => 'Add Task',
+	'LBL_ADD_EVENTS' => 'Add Event',
+	'LBL_MAILMANAGER_ADD_Cases' => 'Add Case',
 );
 
 $jsLanguageStrings = Array (
 	'MailManager' => 'Mail Manager',
-	
-	// Translations for JS (please use the prefix JSLBL in key)
 	'JSLBL_Loading_Please_Wait'  => 'Loading Please Wait',
 	'JSLBL_Loading'              => 'Loading',
 	'JSLBL_Settings'             => 'Settings',
@@ -172,7 +191,16 @@ $jsLanguageStrings = Array (
     'JSLBL_NO_EMAILS_SELECTED' => 'No Emails Selected.',
     'JSLBL_ENTER_SOME_VALUE' => 'Enter some string to search',
     'JSLBL_DRAFT_MAIL_SAVED'=>'Mail is saved under Drafts',
+	'JS_FUTURE_EVENT_CANNOT_BE_HELD' => 'Cannot Be Held For Future',
+    'JSLBL_ENTER_VALID_EMAIL_ADDRESS' => 'Please enter a valid email address.',
+	'LBL_DELETE_CONFIRMATION' => 'Are you sure you want to delete the email(s) permanently?',
+	'JS_DELETE_MAILBOX_SETTINGS_CONFIRMATION' => 'Are you sure you want to Delete?',
+	'JSLBL_NO_MAIL_SELECTED_DESC' => 'No mail selected. Click on mail for preview.',
+	'JSLBL_FAILED_ADDING_COMMENT' => 'Failed to add comment',
+	'JSLBL_MAILS_DELETED' => 'Mail(s) deleted successfully.',
+	'JSLBL_MAILS_MARKED_UNREAD' => 'Mail(s) marked as unread.',
+	'JSLBL_MAILS_MARKED_READ' => 'Mail(s) marked as read.',
 );
 
-// Special Handling: Mix of language strings are used.
+//Special Handling: Mix of language strings are used.
 $languageStrings = array_merge($languageStrings, $jsLanguageStrings);

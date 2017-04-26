@@ -34,9 +34,9 @@ $languageStrings = array(
 	'Other Phone' => 'Secondary Phone',
 	'Phone' => 'Primary Phone',
 	'Email' => 'Primary Email',
-	
+	'Type' => 'Type',
+
 	//Added for existing picklist entries
-	
 	'Analyst'=>'Analyst',
 	'Competitor'=>'Competitor',
 	'Customer'=>'Customer',
@@ -47,16 +47,18 @@ $languageStrings = array(
 	'Reseller'=>'Reseller',
 	'LBL_START_DATE' => 'Start Date',
 	'LBL_END_DATE' => 'End Date',
-	
+
 	//Duplication error message
 	'LBL_DUPLICATES_EXIST' => 'Organization Name already exists',
 	'LBL_COPY_SHIPPING_ADDRESS' => 'Copy Shipping Address',
 	'LBL_COPY_BILLING_ADDRESS' => 'Copy Billing Address',
+	'LBL_IMAGE_INFORMATION' => 'Profile Picture',
+	'Organization Image' => 'Organization Image',
 );
 
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Are you sure you want to delete?',
 	'LBL_DELETE_CONFIRMATION' => 'Deleting this Organization will remove its related Opportunities & Quotes. Are you sure you want to delete this Organization?',
 	'LBL_MASS_DELETE_CONFIRMATION' => 'Deleting this Organization(s) will remove its related Opportunities & Quotes. Are you sure you want to delete the selected records?',
-	'JS_DUPLICTAE_CREATION_CONFIRMATION' => 'Organization Name already Exists.Do you want to create a duplicate record?'
+	'JS_DUPLICATE_CREATION_CONFIRMATION' => 'Organization Name already Exists.Do you want to create a duplicate record?'
 );

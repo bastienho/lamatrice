@@ -6,15 +6,12 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013    
  ************************************************************************************/
 $languageStrings = array(
 	'HelpDesk'                     => 'Tickets'                     , 
 	'SINGLE_HelpDesk'              => 'Ticket'                      , 
-	'LBL_ADD_RECORD'               => 'Ajouter Ticket'                  , 
-	'LBL_RECORDS_LIST'             => 'Liste des tickets'                 , 
+	'LBL_ADD_RECORD'               => 'Add Ticket'                  , 
+	'LBL_RECORDS_LIST'             => 'Ticket List'                 , 
 	'LBL_TICKET_INFORMATION'       => 'Détail ticket'              , 
 	'LBL_TICKET_RESOLUTION'        => 'Détail solution'            , 
 	'Ticket No'                    => 'Ticket N°'                  , 
@@ -40,8 +37,9 @@ $languageStrings = array(
 	'Closed'                       => 'Fermé'                      , 
 	'LBL_STATUS'                   => 'Statut'                      , 
 	'LBL_SEVERITY'                 => 'Engagement'                  , 
-	'LBL_CONVERT_FAQ'              => 'Convertir en FAQ'              , 
+	'LBL_CONVERT_FAQ'              => 'Convert to FAQ'              , 
 	'LBL_RELATED_TO'               => 'Relatif à'                  ,
+    'Related To'                   => 'Relatif à la'                ,
 
 	//added to support i18n in ticket mails
 	'Hi' => 'Bonjour',
@@ -68,7 +66,7 @@ $languageStrings = array(
 	'LBL_SUPPORT_ADMIN' => 'Administrateur support',
 	'LBL_RESPONDTO_TICKETID' => 'Réponse pour le ticket n°',
 	'LBL_RESPONSE_TO_TICKET_NUMBER' => 'Réponse au billet le numéro',
-	'LBL_CUSTOMER_PORTAL' => 'Portail client - URGENT',
+	'LBL_CUSTOMER_PORTAL' => 'in Customer Portal - URGENT',
 	'LBL_LOGIN_DETAILS' => 'Voici vos codes d\'accès au portail client',
 	'LBL_MAIL_COULDNOT_SENT' => 'Le mail ne peut être envoyé',
 	'LBL_USERNAME' => 'Nom utilisateur :',
@@ -79,7 +77,17 @@ $languageStrings = array(
 	'LBL_LOGIN_REVOKED' => 'Votre login a été désactivé. Contactez le support',
 	'LBL_MAIL_SENT' => 'Un email a été envoyé à votre adresse email avec votre nom d\'utilisateur et votre mot de passe',
 	'LBL_ALTBODY' => 'Ceci est le corps du mail texte pour les clients mails non-HTML',
-	'HelpDesk ID' => 'ID Ticket',
+	'HelpDesk ID' => 'Ticket ID',
 	'Ticket ID' => 'Ref ticket',
 	'LBL_TICKET_NUMBER' => 'Nombre de billets',
+
+  'Contact Name' => 'Nom Du Contact',
+  'LBL_SUBJECT' => 'Sujet : ',
+  'The comments are' => 'Les commentaires sont',
+  'Ticket Title' => 'Titre De Ticket',
+  'Re' => 'Re :',
+  'LBL_ADD_DOCUMENT' => 'Ajouter Un Document',
+  'LBL_OPEN_TICKETS' => 'Les Tickets Ouverts',
+  'LBL_CREATE_TICKET' => 'Créer Un Ticket',
+
 );

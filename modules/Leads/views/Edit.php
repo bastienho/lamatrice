@@ -25,8 +25,13 @@ class Leads_Edit_View extends Vtiger_Edit_View {
 
 		$viewer = $this->getViewer($request);
 
-		$salutationFieldModel = Vtiger_Field_Model::getInstance('salutationtype', $recordModel->getModule());
-		$salutationFieldModel->set('fieldvalue', $recordModel->get('salutationtype'));
+	$salutationFieldModel = Vtiger_Field_Model::getInstance('salutationtype', $recordModel->getModule());
+	$salutationValue = $request->get('salutationtype');
+        if(!empty($salutationValue)){ 
+        	$salutationFieldModel->set('fieldvalue', $salutationValue); 
+        } else{ 
+        	$salutationFieldModel->set('fieldvalue', $recordModel->get('salutationtype')); 
+        } 
 		$viewer->assign('SALUTATION_FIELD_MODEL', $salutationFieldModel);
 
 		parent::process($request);

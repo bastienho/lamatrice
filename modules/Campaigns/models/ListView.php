@@ -24,12 +24,12 @@ class Campaigns_ListView_Model extends Vtiger_ListView_Model {
 
 		$basicLinks = array();
 
-		$createPermission = Users_Privileges_Model::isPermitted($moduleModel->getName(), 'EditView');
+		$createPermission = Users_Privileges_Model::isPermitted($moduleModel->getName(), 'CreateView');
 		if($createPermission) {
 			$basicLinks[] = array(
 					'linktype' => 'LISTVIEWBASIC',
 					'linklabel' => 'LBL_ADD_RECORD',
-					'linkurl' => 'javascript:Vtiger_List_Js.triggerAddRecord(event, "'.$moduleModel->getCreateRecordUrl().'")',
+					'linkurl' => $moduleModel->getCreateRecordUrl(),
 					'linkicon' => ''
 			);
 		}

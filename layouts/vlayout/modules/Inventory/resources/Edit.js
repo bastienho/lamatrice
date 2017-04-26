@@ -14,13 +14,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	directAmountDiscountType : 'amount',
 
 	individualTaxType : 'individual',
-	groupTaxType :  'group',
-	
-	discountTypes : {
-		'SANS' : 'sans',
-		'DEPOT-VENTE' : 'dv',
-		'GROUPE' : 'grp',
-	}
+	groupTaxType :  'group'
 },{
 
 	//Container which stores the line item elements
@@ -38,15 +32,13 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 
 	//will be having class which is used to identify the rows
 	rowClass : 'lineItemRow',
+    
+    prevSelectedCurrencyConversionRate : false,
 
 	//Will have the mapping of address fields based on the modules
 	addressFieldsMapping : {'Contacts' :
 								{'bill_street' :  'mailingstreet',
-								'bill_street2' :  'mailingstreet2',
-								'bill_street3' :  'mailingstreet3',
 								'ship_street' : 'otherstreet',
-								'ship_street2' : 'otherstreet2',
-								'ship_street3' : 'otherstreet3',
 								'bill_pobox' : 'mailingpobox',
 								'ship_pobox' : 'otherpobox',
 								'bill_city' : 'mailingcity',
@@ -62,11 +54,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 							'Accounts' :
 								{
 								'bill_street' :  'bill_street',
-								'bill_street2' :  'bill_street2',
-								'bill_street3' :  'bill_street3',
 								'ship_street' : 'ship_street',
-								'ship_street2' : 'ship_street2',
-								'ship_street3' : 'ship_street3',
 								'bill_pobox' : 'bill_pobox',
 								'ship_pobox' : 'ship_pobox',
 								'bill_city' : 'bill_city',
@@ -82,11 +70,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 							'Vendors' :
 								{
 								'bill_street' : 'street',
-								'bill_street2' : 'street2',
-								'bill_street3' : 'street3',
 								'ship_street' : 'street',
-								'ship_street2' : 'street2',
-								'ship_street3' : 'street3',
 								'bill_pobox' : 'pobox',
 								'ship_pobox' : 'pobox',
 								'bill_city' : 'city',
@@ -99,13 +83,11 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 								'ship_country' : 'country'
 								}
 							},
-							
+
 	//Address field mapping between modules specific for billing and shipping
 	addressFieldsMappingBetweenModules:{
 								'AccountsBillMap' : {
 									'bill_street' :  'bill_street',
-									'bill_street2' :  'bill_street2',
-									'bill_street3' :  'bill_street3',
 									'bill_pobox' : 'bill_pobox',
 									'bill_city' : 'bill_city',
 									'bill_state' : 'bill_state',
@@ -114,8 +96,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 									},
 								'AccountsShipMap' : {
 									'ship_street' : 'ship_street',
-									'ship_street2' : 'ship_street2',
-									'ship_street3' : 'ship_street3',
 									'ship_pobox' : 'ship_pobox',
 									'ship_city'  : 'ship_city',
 									'ship_state' : 'ship_state',
@@ -124,8 +104,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 									},
 								'ContactsBillMap' : {
 									'bill_street' :  'mailingstreet',
-									'bill_street2' :  'mailingstreet2',
-									'bill_street3' :  'mailingstreet3',
 									'bill_pobox' : 'mailingpobox',
 									'bill_city' : 'mailingcity',
 									'bill_state' : 'mailingstate',
@@ -134,22 +112,18 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 									},
 								'ContactsShipMap' : {
 									'ship_street' : 'otherstreet',
-									'ship_street2' : 'otherstreet2',
-									'ship_street3' : 'otherstreet3',
 									'ship_pobox' : 'otherpobox',
 									'ship_city'  : 'othercity',
 									'ship_state' : 'otherstate',
 									'ship_code' : 'otherzip',
 									'ship_country' : 'othercountry'
-								}
-		
+									}
+
 	},
-							
+
 	//Address field mapping within module
 	addressFieldsMappingInModule : {
 										'bill_street':'ship_street',
-										'bill_street2':'ship_street2',
-										'bill_street3':'ship_street3',
 										'bill_pobox':'ship_pobox',
 										'bill_city'	:'ship_city',
 										'bill_state':'ship_state',
@@ -241,23 +215,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		return false;
 	},
 
-	/** ED150602
-	 * inventory_accountdiscounttype_holder
-	 */
-	getAccountDiscountType : function(){
-		if (app.getModuleName() == 'SalesOrder') {
-			return Inventory_Edit_Js.discountTypes['DEPOT-VENTE'];
-		}
-		return $('#inventory_accountdiscounttype_holder :radio:checked:first').val();
-	},
-
-	/** ED150602
-	 * inventory_accountdiscounttype_holder
-	 */
-	setAccountDiscountType : function(account_discount_type){
-		$('#inventory_accountdiscounttype_holder input[value="' + account_discount_type + '"]').attr("checked","checked").button('refresh');
-	},
-	
 	/**
 	 * Function which gives edit view form
 	 * @return : jQuery object which represents the form element
@@ -275,16 +232,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : string
 	 */
 	getQuantityValue : function(lineItemRow){
-		return this.parseFloat(jQuery('.qty', lineItemRow).val());
-	},
-
-	/** ED150625
-	 * Function which gives quantity value
-	 * @params : lineItemRow - row which represents the line item
-	 * @return : string
-	 */
-	setQuantityValue : function(lineItemRow, qty){
-		return jQuery('.qty', lineItemRow).val(qty);
+		return parseFloat(jQuery('.qty', lineItemRow).val());
 	},
 
 	/**
@@ -292,34 +240,18 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @params : lineItemRow - row which represents the line item
 	 * @return : string
 	 */
-	getListPriceValue : function(lineItemRow, asListPriceMode) {
-		var listPrice = this.parseFloat(jQuery('.listPrice',lineItemRow).val());
-		if (asListPriceMode === undefined)
-			asListPriceMode = this.getListPriceMode(lineItemRow);
-		if (asListPriceMode === 'TTC') {
-			var taxRate = this.getLineItemTaxRate(lineItemRow);
-			return listPrice / (1 + taxRate / 100);
-		}
-		return listPrice;
+	getListPriceValue : function(lineItemRow) {
+		return parseFloat(jQuery('.listPrice',lineItemRow).val());
 	},
 
-	setListPriceValue : function(lineItemRow, listPriceValue, decimals) {
-		if (typeof decimals !== 'number') {
-			decimals = 8;
-		}
-		var listPrice = parseFloat(listPriceValue);
-		var listPriceMode = this.getListPriceMode(lineItemRow);
-		if (listPriceMode === 'TTC') {
-			var taxRate = this.getLineItemTaxRate(lineItemRow);
-			listPrice *= 1 + taxRate / 100;
-			//listPrice = listPrice.toFixed(8);
-		}
-		else
-			//listPrice = listPrice.toFixed(decimals);
-		lineItemRow.find('.listPrice').val(listPrice)
+	setListPriceValue : function(lineItemRow, listPriceValue) {
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
+		var listPrice = parseFloat(listPriceValue).toFixed(numberOfDecimal);
+		lineItemRow.find('.listPrice').val(listPrice);
 		return this;
 	},
-	
+
+
 	/**
 	 * Function which will set the line item total value excluding tax and discount
 	 * @params : lineItemRow - row which represents the line item
@@ -327,43 +259,17 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : current instance;
 	 */
 	setLineItemTotal : function(lineItemRow, lineItemTotalValue) {
-		var strValue = parseFloat(lineItemTotalValue);//.toFixed(2);
-		jQuery('.productTotal', lineItemRow).text(strValue);
+		jQuery('.productTotal', lineItemRow).text(lineItemTotalValue);
 		return this;
 	},
 
-	/** ED151229
-	 * Mode d'affichage du prix : HT ou TTC
-	 */
-	getListPriceMode : function(lineItemRow) {
-		return jQuery('.listPrice-mode:checked',lineItemRow).data('mode');
-	},
-	
-	/** ED151229
-	 * Calcul du taux total des taxes pour la ligne
-	 */
-	getLineItemTaxRate : function(lineItemRow){
-		var thisInstance = this;
-		var taxPercentages = jQuery('.taxPercentage',lineItemRow);
-		var taxTotal = 0;
-		jQuery.each(taxPercentages,function(index,domElement){
-			var taxPercentage = jQuery(domElement);
-			var individualTaxRow = taxPercentage.closest('tr');
-			var individualTaxPercentage = thisInstance.parseFloat(taxPercentage.val());
-			if(individualTaxPercentage != ""){
-				taxTotal += parseFloat(individualTaxPercentage);
-			}
-		});
-		return taxTotal;
-	},
-	
 	/**
 	 * Function which will get the value of line item total (qty*listprice)
 	 * @params : lineItemRow - row which represents the line item
 	 * @return : string
 	 */
 	getLineItemTotal : function(lineItemRow) {
-		return this.parseFloat(this.getLineItemTotalElement(lineItemRow).text());
+		return parseFloat(this.getLineItemTotalElement(lineItemRow).text());
 	},
 
 	/**
@@ -375,81 +281,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		return jQuery('.productTotal', lineItemRow);
 	},
 
-	/*ED150602
-	 *
-	 */
-	setLineItemDiscountPercentage : function(lineItemRow, discountpc){
-		if (!(typeof lineItemRow === 'object')) {
-			var productId = parseInt(lineItemRow)
-			, container;
-			lineItemRow = $('#lineItemTab input.selectedModuleId[value="' + productId + '"]', container).parents('tr.lineItemRow');
-		}
-		if (lineItemRow.length == 0) {
-			//console.log('Impossible de trouver la ligne contenant l\article ' + productId);
-			return;
-		}
-		this.setLineItemDiscount(lineItemRow, discountpc, Inventory_Edit_Js.percentageDiscountType);
-	},
-	/**
-	 *
-	 * ED151227 : @param raiseCalculation : enable to lock row calculation
-	 */
-	setLineItemDiscount : function(lineItemRow, discountpc, discount_type, raiseCalculation){
-		if (discountpc && typeof discountpc === 'string') {
-			discountpc = discountpc.replace(/[,|\.]0*$/, '');
-		}
-		lineItemRow.find('.discountUI input.discount_'+discount_type+'.discountVal').val(discountpc);
-		if (!discountpc){
-			discountpc = 0;
-			discount_type = 'zero';
-		}
-		lineItemRow.find('.discountUI input.discount_type').val(parseFloat(discount_type));
-		lineItemRow.find('.discountUI input[type="radio"][data-discount-type="'+discount_type+'"].discounts').each(function(){
-			this.checked = true;
-		});
-		if (raiseCalculation !== false)
-			this.quantityChangeActions(lineItemRow);
-	},
-
-	/*ED151213
-	 * Une unité de vente définie sur "unique" impose la quantité à 1
-	 */
-	setLineItemUsageUnit : function(lineItemRow, usageUnit){
-		var $qty = lineItemRow.find('.qty');
-		$qty.attr('data-usageunit', usageUnit);
-		
-		if (usageUnit === 'unique') {
-			$qty
-				.attr('disabled', 'disabled');
-			
-			var $price = this.getListPriceValue(lineItemRow);
-			//Si la quantité est à zéro et le prix est défini, laisse la possibilité d'utiliser le +1
-			if ( ! ($qty.val() == 0 && $price != 0)) {
-				$qty.nextAll('.qty_helper_plus,.qty_helper_minus')
-					.addClass('hide')
-				;
-			}
-		} else {
-			$qty
-				.removeAttr('disabled')
-				.nextAll('.qty_helper_plus,.qty_helper_minus')//qty_helper + et -
-					.removeClass('hide');
-		}
-	},
-	
-	//Affiche une erreur sur le produit
-	showLineItemGestionError : function(lineItemRow, title, error){
-		if(!error) return;
-		$('<pre></pre>')
-			.html(error)
-			.dialog({
-				modal: true,
-				title : title,
-				width: 'auto',
-				height: 'auto',
-			});
-	},
-
 	/**
 	 * Function which will set the discount total value for line item
 	 * @params : lineItemRow - row which represents the line item
@@ -457,8 +288,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : current instance;
 	 */
 	setDiscountTotal : function(lineItemRow, discountValue) {
-		var strValue = parseFloat(discountValue);//.toFixed(2);
-		jQuery('.discountTotal',lineItemRow).text(strValue);
+		jQuery('.discountTotal',lineItemRow).text(discountValue);
 		return this;
 	},
 
@@ -468,7 +298,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : string
 	 */
 	getDiscountTotal : function(lineItemRow) {
-		return this.parseFloat(jQuery('.discountTotal',lineItemRow).text());
+		return parseFloat(jQuery('.discountTotal',lineItemRow).text());
 	},
 
 	/**
@@ -488,7 +318,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : string
 	 */
 	getTotalAfterDiscount : function(lineItemRow) {
-		return this.parseFloat(jQuery('.totalAfterDiscount',lineItemRow).text());
+		return parseFloat(jQuery('.totalAfterDiscount',lineItemRow).text());
 	},
 
 	/**
@@ -508,7 +338,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : string
 	 */
 	getLineItemTaxTotal : function(lineItemRow){
-		return this.parseFloat(jQuery('.productTaxTotal', lineItemRow).text());
+		return parseFloat(jQuery('.productTaxTotal', lineItemRow).text());
 	},
 
 	/**
@@ -528,63 +358,61 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	 * @return : string
 	 */
 	getLineItemNetPrice : function(lineItemRow) {
-		return this.parseFloat(jQuery('.netPrice',lineItemRow).text());
+		return parseFloat(jQuery('.netPrice',lineItemRow).text());
 	},
 
 	setNetTotal : function(netTotalValue){
-		var strValue = parseFloat(netTotalValue).toFixed(2);
-		jQuery('#netTotal').text(strValue);
+		jQuery('#netTotal').text(netTotalValue);
 		return this;
 	},
 
 	getNetTotal : function() {
-		return this.parseFloat(jQuery('#netTotal').text());
+		return parseFloat(jQuery('#netTotal').text());
 	},
 
 	/**
 	 * Function to set the final discount total
 	 */
 	setFinalDiscountTotal : function(finalDiscountValue){
-		var strValue = parseFloat(finalDiscountValue).toFixed(2);
-		jQuery('#discountTotal_final').text(strValue);
+		jQuery('#discountTotal_final').text(finalDiscountValue);
 		return this;
 	},
 
 	getFinalDiscountTotal : function() {
-		return this.parseFloat(jQuery('#discountTotal_final').text());
+		return parseFloat(jQuery('#discountTotal_final').text());
 	},
-	
+
 	setGroupTaxTotal : function(groupTaxTotalValue) {
-		var strValue = parseFloat(groupTaxTotalValue).toFixed(2);
-		jQuery('#tax_final').text(strValue);
+		jQuery('#tax_final').text(groupTaxTotalValue);
 	},
 
 	getGroupTaxTotal : function() {
-		return this.parseFloat(jQuery('#tax_final').text());
+		return parseFloat(jQuery('#tax_final').text());
 	},
 
 	getShippingAndHandling : function() {
-		return this.parseFloat(this.getShippingAndHandlingControlElement().val());
+		return parseFloat(this.getShippingAndHandlingControlElement().val());
 	},
 
 	setShippingAndHandlingTaxTotal : function() {
 		var shippingTotal = jQuery('.shippingTaxTotal');
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
 		var shippingFinalTaxTotal = 0;
 		jQuery.each(shippingTotal,function(index,domElement){
 			var totalVal = parseFloat(jQuery(domElement).val());
 			shippingFinalTaxTotal += totalVal;
 		});
-		shippingFinalTaxTotal = shippingFinalTaxTotal.toFixed(2);
+		shippingFinalTaxTotal = shippingFinalTaxTotal.toFixed(numberOfDecimal);
 		jQuery('#shipping_handling_tax').text(shippingFinalTaxTotal);
 		return this;
 	},
 
 	getShippingAndHandlingTaxTotal : function() {
-		return this.parseFloat(jQuery('#shipping_handling_tax').text());
+		return parseFloat(jQuery('#shipping_handling_tax').text());
 	},
 
 	getAdjustmentValue : function() {
-		return this.parseFloat(this.getAdjustmentTextElement().val());
+		return parseFloat(this.getAdjustmentTextElement().val());
 	},
 
 	isAdjustMentAddType : function() {
@@ -620,64 +448,15 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	},
 
 	setGrandTotal : function(grandTotalValue) {
-		var strValue = parseFloat(grandTotalValue).toFixed(2);
-		jQuery('#grandTotal').text(strValue);
+		jQuery('#grandTotal').text(grandTotalValue);
 		return this;
 	},
 
 	getGrandTotal : function() {
-		return this.parseFloat(jQuery('#grandTotal').text());
-	},
-	
-	//ED151014
-	getReceivedControlElement : function() {
-		return jQuery('#received,#paid');
+		return parseFloat(jQuery('#grandTotal').text());
 	},
 
-	getReceived : function() {
-		return this.parseFloat(this.getReceivedControlElement().val());
-	},
-	
-	//ED150708 : comma to dot before parseFloat
-	parseFloat : function($value){
-		if (!$value)
-			return 0.0;
-		if (typeof $value === 'numeric')
-			return $value;
-		return parseFloat($value.replace(',', '.'));
-	},
-	
-	//ED150129 : set balance (solde, reste à payer)
-	setBalance : function(value) {
-		jQuery('#balance').val(value);
-		
-		//this.setAutoInvoiceStatus(value);
-		return this;
-	},
-	
-	//ED151201 Abandon
-	////ED150515 : set balance (solde, reste à payer)
-	//setAutoInvoiceStatus : function(balance) {
-	//	var $status = $('select[name="invoicestatus"]');
-	//	//Si le statut n'est pas défini et qu'il y a un total à payer
-	//	//ou que le status a été défini automatiquement
-	//	if ((!$status.val() && this.getGrandTotal())
-	//	|| ($status.val() && $status.is('.auto-filled'))) {
-	//		var status = balance == 0 ? 'Paid' : '';
-	//		$status
-	//			.addClass('auto-filled')
-	//			.val(status);
-	//		var $seloption = $status.children('option[value="' + status + '"]:first');
-	//		if ($seloption.length) {
-	//			$seloption.attr('selected', 'selected');
-	//			$status.select2("val",status); /* ne fonctionne pas bien */
-	//			$status.next().find('> a > span:first').html($seloption.html());
-	//		}
-	//	}
-	//	return this;
-	//},
-
-	loadRowSequenceNumber: function() {
+    loadRowSequenceNumber: function() {
 		if(this.rowSequenceHolder == false) {
 			this.rowSequenceHolder = jQuery('.' + this.rowClass, this.getLineItemContentsContainer()).length;
 		}
@@ -708,83 +487,36 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		return newRow.removeClass('hide lineItemCloneCopy');
 	},
 
-
-	registerAddingNewProductsAndServices: function(){
+    registerAddingNewProductsAndServices: function(){
 		var thisInstance = this;
-		this.loadRowSequenceNumber();
 		var lineItemTable = this.getLineItemContentsContainer();
-		jQuery('#addProduct').on('click',function(e){
-			thisInstance.addProductButtonClickHandler(e, lineItemTable, 'Products');
+		jQuery('#addProduct').on('click',function(){
+			var newRow = thisInstance.getBasicRow().addClass(thisInstance.rowClass);
+			jQuery('.lineItemPopup[data-module-name="Services"]',newRow).remove();
+			var sequenceNumber = thisInstance.getNextLineItemRowNumber();
+			newRow = newRow.appendTo(lineItemTable);
+			thisInstance.checkLineItemRow();
+			newRow.find('input.rowNumber').val(sequenceNumber);
+			thisInstance.updateLineItemsElementWithSequenceNumber(newRow,sequenceNumber);
+			newRow.find('input.productName').addClass('autoComplete');
+			thisInstance.registerLineItemAutoComplete(newRow);
 		});
-		jQuery('#addService').on('click',function(e){
-			thisInstance.addProductButtonClickHandler(e, lineItemTable, 'Services');
+		jQuery('#addService').on('click',function(){
+			var newRow = thisInstance.getBasicRow().addClass(thisInstance.rowClass);
+			jQuery('.lineItemPopup[data-module-name="Products"]',newRow).remove();
+			var sequenceNumber = thisInstance.getNextLineItemRowNumber();
+			newRow = newRow.appendTo(lineItemTable);
+			thisInstance.checkLineItemRow();
+			newRow.find('input.rowNumber').val(sequenceNumber);
+			thisInstance.updateLineItemsElementWithSequenceNumber(newRow,sequenceNumber);
+			newRow.find('input.productName').addClass('autoComplete');
+			thisInstance.registerLineItemAutoComplete(newRow);
 		});
     },
-	
-	addProductButtonClickHandler: function(e, lineItemTable, moduleName){
-		var thisInstance = this;
-		var buttonIsFocused = !e.isTrigger; //sous FireFox, document.activeElement n'est pas sur le bouton
-		var newRow = thisInstance.getBasicRow().addClass(thisInstance.rowClass);
-		var otherModule = moduleName === 'Products' ? 'Services' : 'Products';
-		jQuery('.lineItemPopup[data-module-name="' + otherModule + '"]',newRow).remove();
-		var sequenceNumber = thisInstance.getNextLineItemRowNumber();
-		newRow = newRow.appendTo(lineItemTable);
-		thisInstance.checkLineItemRow();
-		newRow.find('input.rowNumber').val(sequenceNumber);
-		thisInstance.updateLineItemsElementWithSequenceNumber(newRow,sequenceNumber);
-		newRow.find('input.productName').addClass('autoComplete');
-		thisInstance.registerLineItemAutoComplete(newRow);
-		if (buttonIsFocused) {
-			newRow.find('input.productName').focus();
-			thisInstance.scrollToView(e.target);
-		}
-	},
-    
-	//ED151230 : s'assure de la visibilité des boutons Ajouter, de sorte que la liste autoComplete soit assez visible
-    scrollToView: function(el){
-		if (el.jquery) {
-			if (el.length === 0)
-				return;
-			el = el.get(0);
-		}
-		var topOfPage = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-		var heightOfPage = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-		var elY = 0;
-		var elH = 0;
-		if (document.layers) { // NS4
-			elY = el.y;
-			elH = el.height;
-		}
-		else {
-			for(var p=el; p&&p.tagName!='BODY'; p=p.offsetParent){
-				elY += p.offsetTop;
-			}
-			elH = el.offsetHeight;
-		}
-		if ((topOfPage + heightOfPage) < (elY + elH)) {
-			el.scrollIntoView(false);
-		}
-		else if (elY < topOfPage) {
-			el.scrollIntoView(true);
-		}
-	},
-    
-    /* ED151230
-    Après avoir choisi un produit, focus sur la quantité ou tarif */
-    setSelectedProductInputFocus: function(newRow){
-	if (newRow) {
-		var $input = newRow.find('input.qty');
-		if ($input.attr('disabled')) {
-			$input = newRow.find('input.listPrice');
-		}
-		$input.select().focus();
-	}
-    },
-    
     getTaxDiv: function(taxObj,parentRow){
 		var rowNumber = jQuery('input.rowNumber',parentRow).val();
 		var loopIterator = 1;
-		var taxDiv = '<div class="taxUI hide" id="tax_div'+rowNumber+'">'+
+		var taxDiv = '<div class="taxUI validCheck hide" id="tax_div'+rowNumber+'">'+
 			'<table width="100%" border="0" cellpadding="5" cellspacing="0" class="table table-nobordered popupTable" id="tax_table'+rowNumber+'">'+
 			   '<tr>'+
 					'<th id="tax_div_title'+rowNumber+'" align="left" ><b>Set Tax for :</b></th>'+
@@ -796,7 +528,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 				   var taxInfo = taxObj[taxName]
 				   taxDiv += '<tr>'+
 					'<td>'+
-					'<input type="text" name="'+taxName+'_percentage'+rowNumber+'" id="'+taxName+'_percentage'+rowNumber+'" value="'+taxInfo.percentage+'" class="smallInputBox taxPercentage">&nbsp;%'+
+					'<input type="text" name="'+taxName+'_percentage'+rowNumber+'" data-validation-engine="validate[funcCall[Vtiger_PositiveNumber_Validator_Js.invokeValidation]]" id="'+taxName+'_percentage'+rowNumber+'" value="'+taxInfo.percentage+'" class="smallInputBox taxPercentage">&nbsp;%'+
 					'</td>'+
 					'<td><div class="textOverflowEllipsis">'+taxInfo.label+'</div></td> '+
 					'<td>'+
@@ -807,7 +539,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			   }
 		   }else{
 				taxDiv += '<tr>'+
-							'<td>No taxes exist </td>'+
+							'<td>'+app.vtranslate("JS_LBL_NO_TAXES")+'</td>'+
 					      '</tr>';
 		   }
 		taxDiv += '</table><div class="modal-footer lineItemPopupModalFooter modal-footer-padding">'+
@@ -848,116 +580,49 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		);
 	},
 
-	mapResultsToFields: function(referenceModule,element,responseData, setFocus){
+    mapResultsToFields: function(referenceModule,element,responseData){
 		var parentRow = jQuery(element).closest('tr.'+this.rowClass);
 		var lineItemNameElment = jQuery('input.productName',parentRow);
 
 		for(var id in responseData){
-			var recordId = id
-			, recordData = responseData[id]
-			, productcode = recordData.productcode
-			, selectedName = productcode + ' - ' + recordData.name
-			, unitPrice = recordData.listprice
-			, usageUnit = recordData.usageunit
-			, taxes = recordData.taxes
-			, gestionError = recordData.gestionerror;
-			//ED151016
-			if (app.getModuleName() === 'PurchaseOrder'
-			&&  recordData.purchaseprice) {
-				unitPrice = recordData.purchaseprice;
-			}
-			if (gestionError) {
-				this.showLineItemGestionError(parentRow, selectedName, gestionError);
-				selectedName = 'ERREUR ' + selectedName;
-			}
-			
-			//ED151208
-			if (app.getModuleName() !== 'PurchaseOrder'){
-				var priceBookDetails = recordData.priceBook;
-				parentRow.data('pricebookdetails', priceBookDetails);
-			
-				//ED150602 discount % from account discount type
-				var discountpc = recordData.discountpc;
-				this.checkLineWithSameProduct(recordId, selectedName, parentRow);
-			}
-			else
-				parentRow.data('pricebookdetails', {});
-			
+			var recordId = id;
+			var recordData = responseData[id];
+			var selectedName = recordData.name;
+			var unitPrice = recordData.listprice;
+            var listPriceValues = recordData.listpricevalues;
+			var taxes = recordData.taxes;
 			if(referenceModule == 'Products') {
 				parentRow.data('quantity-in-stock',recordData.quantityInStock);
 			}
 			var description = recordData.description;
 			jQuery('input.selectedModuleId',parentRow).val(recordId);
 			jQuery('input.lineItemType',parentRow).val(referenceModule);
-			lineItemNameElment
-				.val(selectedName)
-				.attr('title', selectedName);
+			lineItemNameElment.val(selectedName);
 			lineItemNameElment.attr('disabled', 'disabled');
 			jQuery('input.listPrice',parentRow).val(unitPrice);
+			var currencyId = jQuery("#currency_id").val();
+            var listPriceValuesJson  = JSON.stringify(listPriceValues);
+            if(typeof listPriceValues[currencyId]!= 'undefined') {
+            	this.setListPriceValue(parentRow, listPriceValues[currencyId]);
+                this.lineItemRowCalculations(parentRow);
+        	}
+            jQuery('input.listPrice',parentRow).attr('list-info',listPriceValuesJson);
 			jQuery('textarea.lineItemCommentBox',parentRow).val(description);
 			var taxUI = this.getTaxDiv(taxes,parentRow);
 			jQuery('.taxDivContainer',parentRow).html(taxUI);
-			if(this.isIndividualTaxMode()) {
-			    parentRow.find('.productTaxTotal').removeClass('hide')
-			}else{
-			    parentRow.find('.productTaxTotal').addClass('hide')
-			}
-			this.setLineItemDiscountPercentage(parentRow, discountpc);
-			this.setLineItemUsageUnit(parentRow, usageUnit);
+            if(this.isIndividualTaxMode()) {
+                parentRow.find('.productTaxTotal').removeClass('hide')
+            }else{
+                parentRow.find('.productTaxTotal').addClass('hide')
+            }
 		}
 		if(referenceModule == 'Products'){
 			this.loadSubProducts(parentRow);
 		}
+
 		jQuery('.qty',parentRow).trigger('focusout');
-		if (setFocus)
-			this.setSelectedProductInputFocus(parentRow);
-	},
-	
-	
-	/* ED151006
-	 * Lors de la sélection d'un produit pour une nouvellle ligne, vérifie si ce produit existe déjà dans une précédente ligne.
-	 * Si c'est le cas, propose le regroupement
-	 */
-	checkLineWithSameProduct : function(productId, productName, newRow){
-		var thisInstance = this
-		, $existing = newRow.siblings().find('input.selectedModuleId[value="' + productId + '"]');
-		if ($existing.length) {
-			var message = "Une autre ligne contient le même article \"" + productName + "\".<br>Voulez-vous reprendre cette ligne ?";
-			Vtiger_Helper_Js.showConfirmationBox({'message' : message}).then(
-				function(e) {
-					var parentRows = $existing.parents('tr.'+ thisInstance.rowClass)
-					, qty = 0.0
-					, amount = 0.0
-					, comments = '';
-					parentRows.find('input.qty').each(function(){ qty += parseFloat(this.value.replace(',', '.')); });
-					parentRows.find('input.listPrice').each(function(){ amount += parseFloat(this.value.replace(',', '.')); });
-					parentRows.find('textarea.lineItemCommentBox').each(function(){
-						if (this.value) {
-							if(comments) comments += "\n";
-							comments += this.value;
-						}
-					});
-					parentRows.find('.deleteRow').click();
-					if (comments)
-						newRow.find('textarea.lineItemCommentBox')
-							.val(comments);
-					$newPrice = newRow.find('input.listPrice');
-					if ($newPrice.val()==0) {
-						//par exemple, un don
-						$newPrice.val(amount)
-							.focusout();
-						$qty = 1;
-					}
-					newRow.find('input.qty')
-						.val(qty)
-						.focusout();
-				},
-				function(error, err){
-				}
-			);			
-		}
-	},
-	
+    },
+
 	showPopup : function(params) {
 		var aDeferred = jQuery.Deferred();
 		var popupInstance = Vtiger_Popup_Js.getInstance();
@@ -986,7 +651,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		this.showPopup(params).then(function(data){
 			var responseData = JSON.parse(data);
 			var len = Object.keys(responseData).length;
-			var newRow = false;
 			if(len >1 ){
 				for(var i=0;i<len;i++){
 					if(i == 0){
@@ -998,13 +662,12 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 							var row1 = jQuery('#addService').trigger('click');
 						}
 						//TODO : CLEAN :  we might synchronus invocation since following elements needs to executed once new row is created
-						newRow = jQuery('#lineItemTab > tbody > tr:last');
+						var newRow = jQuery('#lineItemTab > tbody > tr:last');
 						var targetElem = jQuery('.lineItemPopup',newRow);
 						thisInstance.mapResultsToFields(referenceModule,targetElem,responseData[i]);
 						aDeferred.resolve();
 					}
 				}
-				thisInstance.setSelectedProductInputFocus(newRow);
 			}else{
 				thisInstance.mapResultsToFields(referenceModule,popupImageElement,responseData);
 				aDeferred.resolve();
@@ -1016,8 +679,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	/**
 	 * Function which will be used to handle price book popup
 	 * @params :  popupImageElement - popup image element
-	 *
-	 * ED151200 masqué, le calcul est automatique
 	 */
 	pricebooksPopupHandler : function(popupImageElement){
 		var thisInstance = this;
@@ -1051,15 +712,10 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	},
 
 	/**
-	 * Function which will calculate line item total after discount
+	 * Function which will calculate discount for the line item
 	 * @params : lineItemRow - element which will represent lineItemRow
 	 */
-	calculateTotalAfterDiscount: function(lineItemRow, rounded) {
-		// var unitPriceAfterDiscount = this.getUnitPriceAfterDiscount(lineItemRow, true);
-		
-		// var totalAfterDiscount = (unitPriceAfterDiscount * quantity).toFixed(2);
-		// return totalAfterDiscount;
-
+	calculateDiscountForLineItem : function(lineItemRow) {
 		var discountContianer = lineItemRow.find('div.discountUI');
 		var element = discountContianer.find('input.discounts').filter(':checked');
 		var discountType = element.data('discountType');
@@ -1073,94 +729,80 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		rowPercentageField.addClass('hide');
 		rowAmountField.addClass('hide');
 
-		var totalBeforeDiscount = this.getLineItemTotal(lineItemRow);
-		var discountValue = this.parseFloat(discountRow.find('.discountVal').val());
-		var priceAfterDiscount = totalBeforeDiscount;
-
-		// if(discountValue == ""){
-		// 	return listprice;
-		// }
-		if(discountType == Inventory_Edit_Js.percentageDiscountType){
-			priceAfterDiscount = totalBeforeDiscount - (totalBeforeDiscount * discountValue/100);
-		}else if(discountType == Inventory_Edit_Js.directAmountDiscountType){
-			//rowAmountField.removeClass('hide').focus(); //tmp usefull for what ??
-//			priceAfterDiscount = discountValue; // TMP to check if it's usefull !!!!!
+		var discountValue = discountRow.find('.discountVal').val();
+		if(discountValue == ""){
+			discountValue = 0;
 		}
-
-		return rounded ? priceAfterDiscount.toFixed(2) : priceAfterDiscount;
-	},
-
-	/**
-	 * Function which will calculate discount for the line item
-	 * @params : lineItemRow - element which will represent lineItemRow
-	 */
-	calculateDiscountForLineItem : function(lineItemRow) {
-		this.updateTotalAfterDiscount(lineItemRow);
-		var totalBeforeDiscount = this.getLineItemTotal(lineItemRow).toFixed(2);
-		var totalAfterDiscount = this.calculateTotalAfterDiscount(lineItemRow, true);
-		var discountValue =  (totalBeforeDiscount - totalAfterDiscount).toFixed(2);
-
-		this.setDiscountTotal(lineItemRow,discountValue);
-	},
+		if(isNaN(discountValue) ||  discountValue < 0){
+                        discountValue = 0;
+		}
+		if(discountType == Inventory_Edit_Js.percentageDiscountType){
+				rowPercentageField.removeClass('hide').focus();
+				//since it is percentage
+				var productTotal = this.getLineItemTotal(lineItemRow);
+				discountValue = (productTotal * discountValue)/100;
+		}else if(discountType == Inventory_Edit_Js.directAmountDiscountType){
+				rowAmountField.removeClass('hide').focus();
+		}
+		this.setDiscountTotal(lineItemRow,discountValue)
+			.calculateTotalAfterDiscount(lineItemRow);
+    },
 
 	/**
-	 * Function which will update line item total after discount
+	 * Function which will calculate line item total after discount
 	 * @params : lineItemRow - element which will represent lineItemRow
 	 */
-	updateTotalAfterDiscount: function(lineItemRow) {
-		this.setTotalAfterDiscount(lineItemRow, this.calculateTotalAfterDiscount(lineItemRow, true));
-	},
+	calculateTotalAfterDiscount: function(lineItemRow) {
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
+		var productTotal = this.getLineItemTotal(lineItemRow);
+		var discountTotal = this.getDiscountTotal(lineItemRow);
+		var totalAfterDiscount = productTotal - discountTotal;
+		totalAfterDiscount = totalAfterDiscount.toFixed(numberOfDecimal);
+		this.setTotalAfterDiscount(lineItemRow,totalAfterDiscount);
+    },
 
 	/**
 	 * Function which will calculate tax for the line item total after discount
 	 */
 	calculateTaxForLineItem : function(lineItemRow) {
-		// var thisInstance = this;
-		// var totalAfterDiscount = this.calculateTotalAfterDiscount(lineItemRow);
-		// var quantity = this.getQuantityValue(lineItemRow);
-		// var taxPercentages = jQuery('.taxPercentage',lineItemRow);
-		// //intially make the tax as zero
-		// var taxTotal = 0;
-		// jQuery.each(taxPercentages,function(index,domElement){
-		// 	var taxPercentage = jQuery(domElement);
-		// 	var individualTaxRow = taxPercentage.closest('tr');
-		// 	var individualTaxPercentage = thisInstance.parseFloat(taxPercentage.val());
-		// 	if(individualTaxPercentage == ""){
-		// 		individualTaxPercentage = "0.00";
-		// 	}
-		// 	individualTaxPercentage = parseFloat(individualTaxPercentage);
-		// 	var individualTaxTotal = (individualTaxPercentage * totalAfterDiscount)/100;
-		// 	//if (quantity <= 1)
-		// 		individualTaxTotal = individualTaxTotal.toFixed(2);
-		// 	//ED151016 pas nécessaire si le paramétrage Utilisateur est sur 4 chiffres
-		// 	//else //ED151014 : arrondit le tarif unitaire puis le multiplie par la quantité 
-		// 	//	individualTaxTotal = (Math.round(individualTaxTotal/quantity * 100) * quantity / 100).toFixed(2);
-		// 	jQuery('.taxTotal',individualTaxRow).val(individualTaxTotal);
-		// 	taxTotal += parseFloat(individualTaxTotal);
-		// });
-		// taxTotal = parseFloat(taxTotal.toFixed(2));
-		// this.setLineItemTaxTotal(lineItemRow, taxTotal);
-		var totalAfterDiscount = this.getTotalAfterDiscount(lineItemRow).toFixed(2);
-		var lineItemNetPrice = this.getLineItemNetPrice(lineItemRow).toFixed(2);
-		var taxTotal = parseFloat((lineItemNetPrice - totalAfterDiscount).toFixed(2));
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
+		var totalAfterDiscount = this.getTotalAfterDiscount(lineItemRow);
+		var taxPercentages = jQuery('.taxPercentage',lineItemRow);
+		//intially make the tax as zero
+		var taxTotal = 0;
+		jQuery.each(taxPercentages,function(index,domElement){
+			var taxPercentage = jQuery(domElement);
+			var individualTaxRow = taxPercentage.closest('tr');
+			var individualTaxPercentage = taxPercentage.val();
+			if(individualTaxPercentage == ""){
+				individualTaxPercentage = "0";
+			}
+             if(isNaN(individualTaxPercentage)){
+                var individualTaxTotal = "0";
+            } else {
+                var individualTaxPercentage = parseFloat(individualTaxPercentage);
+                var individualTaxTotal = Math.abs(individualTaxPercentage * totalAfterDiscount)/100;
+                individualTaxTotal = individualTaxTotal.toFixed(numberOfDecimal);
+            }
+			jQuery('.taxTotal',individualTaxRow).val(individualTaxTotal);
+			taxTotal += parseFloat(individualTaxTotal);
+		});
+		taxTotal = parseFloat(taxTotal.toFixed(numberOfDecimal));
 		this.setLineItemTaxTotal(lineItemRow, taxTotal);
-		console.log ("TotalAfterDiscount " + this.getTotalAfterDiscount(lineItemRow) + " " + totalAfterDiscount);
-		console.log ("lineItemNetPrice " + this.getLineItemNetPrice(lineItemRow) + " " + lineItemNetPrice);
-		console.log ("taxTotal " + taxTotal);
 	},
 
 	/**
 	 * Function which will calculate net price for the line item
 	 */
 	calculateLineItemNetPrice : function(lineItemRow) {
-		var totalAfterDiscount = this.calculateTotalAfterDiscount(lineItemRow);
-		var taxeRate = this.getLineItemTaxRate(lineItemRow);
-		var netPrice = totalAfterDiscount * (1 + taxeRate/100);
-		// if(this.isIndividualTaxMode()) { //?
-		// 	var productTaxTotal = this.getLineItemTaxTotal(lineItemRow);
-		// 	netPrice +=  parseFloat(productTaxTotal)
-		// }
-		netPrice = netPrice.toFixed(2);
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
+		var totalAfterDiscount = this.getTotalAfterDiscount(lineItemRow);
+		var netPrice = parseFloat(totalAfterDiscount);
+		if(this.isIndividualTaxMode()) {
+			var productTaxTotal = this.getLineItemTaxTotal(lineItemRow);
+			netPrice +=  parseFloat(productTaxTotal)
+		}
+		netPrice = netPrice.toFixed(numberOfDecimal);
 		this.setLineItemNetPrice(lineItemRow,netPrice);
 	},
 
@@ -1179,55 +821,70 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	},
 
 	calculateFinalDiscount : function() {
+        var thisInstance = this;
 		var discountContainer = jQuery('#finalDiscountUI');
 		var element = discountContainer.find('input.finalDiscounts').filter(':checked');
 		var discountType = element.data('discountType');
 		var discountRow = element.closest('tr');
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
 
 		jQuery('#discount_type_final').val(discountType);
 		var rowPercentageField = discountContainer.find('input.discount_percentage_final');
 		var rowAmountField = discountContainer.find('input.discount_amount_final');
-
+        
 		//intially making percentage and amount discount fields as hidden
 		rowPercentageField.addClass('hide');
 		rowAmountField.addClass('hide');
 
-		var discountValue = this.parseFloat(discountRow.find('.discountVal').val());
+		var discountValue = discountRow.find('.discountVal').val();
 		if(discountValue == ""){
 			discountValue = 0;
 		}
-		if(discountType == Inventory_Edit_Js.percentageDiscountType){
-				rowPercentageField.removeClass('hide').focus();
-				//since it is percentage
-				var productTotal = this.getNetTotal();
-				discountValue = (productTotal * discountValue)/100;
-		}else if(discountType == Inventory_Edit_Js.directAmountDiscountType){
-				rowAmountField.removeClass('hide').focus();
+		if(isNaN(discountValue) ||  discountValue < 0){
+           discountValue = 0;
 		}
-		discountValue = parseFloat(discountValue).toFixed(2);
+		if(discountType == Inventory_Edit_Js.percentageDiscountType){
+            rowPercentageField.removeClass('hide').focus();
+            //since it is percentage
+            var productTotal = this.getNetTotal();
+            discountValue = (productTotal * discountValue)/100;
+		}else if(discountType == Inventory_Edit_Js.directAmountDiscountType){
+            if(thisInstance.prevSelectedCurrencyConversionRate){
+                var conversionRate = jQuery('#conversion_rate').val();
+                conversionRate = conversionRate / thisInstance.prevSelectedCurrencyConversionRate;  
+                discountValue = discountValue * conversionRate;
+                discountRow.find('.discountVal').val(discountValue);
+            }
+            rowAmountField.removeClass('hide').focus();
+		}
+		discountValue = parseFloat(discountValue).toFixed(numberOfDecimal);
 		this.setFinalDiscountTotal(discountValue);
 		this.calculatePreTaxTotal();
     },
-	
+
 	calculateGroupTax : function() {
-		var thisInstance = this
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
 		var netTotal = this.getNetTotal();
 		var finalDiscountValue = this.getFinalDiscountTotal();
 		var amount = netTotal - finalDiscountValue;
-		amount = parseFloat(amount).toFixed(2);
+		amount = parseFloat(amount).toFixed(numberOfDecimal);
 		var groupTaxContainer = jQuery('#group_tax_div');
 		var groupTaxTotal = 0;
 		groupTaxContainer.find('.groupTaxPercentage').each(function(index,domElement){
 			var groupTaxPercentageElement = jQuery(domElement);
 			var groupTaxRow = groupTaxPercentageElement.closest('tr');
-			var groupTaxValue = (amount * thisInstance.parseFloat(groupTaxPercentageElement.val()))/100;
-			groupTaxValue = parseFloat(groupTaxValue).toFixed(2);
+            if(isNaN(groupTaxPercentageElement.val())){
+                var groupTaxValue = "0";
+            } else {
+                var groupTaxValue = Math.abs(amount * groupTaxPercentageElement.val())/100;
+            }
+			groupTaxValue = parseFloat(groupTaxValue).toFixed(numberOfDecimal);
 			groupTaxRow.find('.groupTaxTotal').val(groupTaxValue);
 			groupTaxTotal += parseFloat(groupTaxValue);
 		});
 		this.setGroupTaxTotal(groupTaxTotal);
 	},
-	
+
 	calculateShippingAndHandlingTaxCharges : function() {
 		var shippingHandlingCharge = this.getShippingAndHandling();
 		var shippingTaxDiv = jQuery('#shipping_handling_div');
@@ -1237,49 +894,49 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			var currentTaxPer = jQuery(domElement);
 			var currentParentRow = currentTaxPer.closest('tr');
 			var currentTaxPerValue = currentTaxPer.val();
+            var currentTaxTotal = "0";
 			if(currentTaxPerValue == ""){
-				currentTaxPerValue = "0.00";
+				currentTaxPerValue = "0";
 			}
-			currentTaxPerValue = parseFloat(currentTaxPerValue);
-			var currentTaxTotal = (currentTaxPerValue * shippingHandlingCharge)/100;
+             if(isNaN(currentTaxPerValue)){
+                var currentTaxTotal = "0";
+            } else {
+				currentTaxPerValue = parseFloat(currentTaxPerValue);
+                var currentTaxTotal = Math.abs(currentTaxPerValue * shippingHandlingCharge)/100;
+            }
 			jQuery('.shippingTaxTotal',currentParentRow).val(currentTaxTotal);
 		});
 	},
 
 	calculateGrandTotal : function(){
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
 		var netTotal = this.getNetTotal();
 		var discountTotal = this.getFinalDiscountTotal();
 		var shippingHandlingCharge = this.getShippingAndHandling();
 		var shippingHandlingTax = this.getShippingAndHandlingTaxTotal();
 		var adjustment = this.getAdjustmentValue();
 		var grandTotal = parseFloat(netTotal) - parseFloat(discountTotal) + parseFloat(shippingHandlingCharge) + parseFloat(shippingHandlingTax);
-		
+
 		if(this.isGroupTaxMode()){
 			grandTotal +=  this.getGroupTaxTotal();
 		}
-		
+
 		if(this.isAdjustMentAddType()) {
 			grandTotal +=  parseFloat(adjustment);
 		}else if(this.isAdjustMentDeductType()) {
 			grandTotal -=  parseFloat(adjustment);
 		}
-		
-		grandTotal = grandTotal.toFixed(2);
+
+		grandTotal = grandTotal.toFixed(numberOfDecimal);
 		this.setGrandTotal(grandTotal);
-		this.calculateBalance(grandTotal);
 	},
 
-	/*ED150129*/
-	calculateBalance : function(grandTotal){
-		if(grandTotal === undefined)
-		    grandTotal = this.getGrandTotal();
-		var received = this.getReceived();
-		var balance = grandTotal - received;
-		
-		balance = balance.toFixed(2);
-		this.setBalance(balance);
+        setShippingAndHandlingAmountForTax : function() {
+           shippingAndHandlingValue= this.getShippingAndHandling();
+           jQuery('#shAmountForTax').text(shippingAndHandlingValue);
+           return this;
 	},
-
+    
 	registerFinalDiscountShowEvent : function(){
 		var thisInstance = this;
 		jQuery('#finalDiscount').on('click',function(e){
@@ -1303,23 +960,25 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		jQuery('.finalDiscountSave').on('click',function(e){
 			thisInstance.finalDiscountChangeActions();
 		});
-	},
-
-	/*ED150126
-	 * event received.changed
-	 */
-	registerFinalReceivedValueChangeEvent : function(){
-		var thisInstance = this;
-		jQuery('#received,#paid').on('change',function(e){
-			thisInstance.calculateBalance();
-		});
-	},
+    },
 
 	registerLineItemActionSaveEvent : function(){
 		var editForm =  this.getForm();
 		editForm.on('click','button[name="lineItemActionSave"]',function(){
-			//ED150930 adds :visible. Sinon très très très long quand il y a bq de lignes de facture
-			jQuery('.closeDiv:visible').trigger('click');
+            var match = true;
+            var formError = jQuery('#EditView').data('jqv').InvalidFields;
+            var closestDiv = jQuery('button[name="lineItemActionSave"]').closest('.validCheck').find('input[data-validation-engine]').not('.hide');
+            jQuery(closestDiv).each(function(key,value){
+                if(jQuery.inArray(value,formError) != -1){
+                    match = false;
+                }
+            });
+            if(!match){
+                editForm.removeData('submit');
+                return false;
+            } else {
+				jQuery('.closeDiv').trigger('click');
+            }
 		});
 	},
 
@@ -1345,7 +1004,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	registerShippingAndHandlingChargesChange : function(){
 		var thisInstance = this;
 		this.getShippingAndHandlingControlElement().on('focusout', function(e){
-			var value = thisInstance.parseFloat(jQuery(e.currentTarget).val());
+			var value = jQuery(e.currentTarget).val();
 			if(value == ""){
 				jQuery(e.currentTarget).val("0.00");
 			}
@@ -1378,105 +1037,29 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	registerAdjustmentValueChange : function() {
 		var thisInstance = this;
 		this.getAdjustmentTextElement().on('focusout',function(e){
-			var value = thisInstance.parseFloat(jQuery(e.currentTarget).val());
+			var value = jQuery(e.currentTarget).val();
 			if(value == ""){
-				jQuery(e.currentTarget).val("0.00");
+				jQuery(e.currentTarget).val("0");
 			}
 			thisInstance.calculateGrandTotal();
 		});
 	},
 
+
 	registerLineItemsPopUpCancelClickEvent : function(){
 		var editForm = this.getForm();
 		editForm.on('click','.cancelLink',function(){
-			//ED150930 adds :visible. Sinon très très très long quand il y a bq de lignes de facture
-			jQuery('.closeDiv:visible').trigger('click');
+			jQuery('.closeDiv').trigger('click')
 		})
 	},
 
-	//ED150708 : boutons + et - des frais d'expédition
-	registerShippingChargeButtonsEvent : function(container) {
-		var thisInstance = this;
-		container.on('click','#shipping_handling_charge_plus, #shipping_handling_charge_minus',function(e){
-			var $this=$(this)
-			, $input = thisInstance.getShippingAndHandlingControlElement()
-			, value = thisInstance.parseFloat($input.val())
-			, offset = thisInstance.parseFloat($this.attr('data-offset'));
-			if (offset < 0 && (value + offset) < 0)
-				value = 0;
-			else
-				value = value + offset;
-			$input.val(value).focusout();
-			return false;		
-		});
-	},
-
-	//ED151014 : bouton = du réglement
-	registerReceivedButtonsEvent : function(container) {
-		var thisInstance = this;
-		container.on('click','#received_set_balance',function(e){
-			var $this=$(this)
-			, $input = thisInstance.getReceivedControlElement()
-			, value = (thisInstance.parseFloat($input.val()) + thisInstance.parseFloat(container.find("#balance").val())).toFixed(2);
-			$input.val(value).change();
-			return false;		
-		});
-	},
-
-	//ED150708 : boutons + et - des quantités
-	registerQuantityButtonsEvent : function(container) {
-		var thisInstance = this;
-		container.on('click','a.qty_helper_plus, a.qty_helper_minus',function(e){
-			var $this=$(this)
-			, $input = $this.prevAll('input.qty:first')
-			, value = thisInstance.parseFloat($input.val())
-			, offset = this.className.indexOf('_minus') > 0 ? -1 : 1;
-			if (offset < 0 && (value + offset) < 0)
-				value = 0;
-			else
-				value = value + offset;
-			$input.val(value).focusout();
-			return false;		
-		});
-	},
-
-	//ED160109 : validation de la quantité par [Enter]
-	registerQuantityKeyPressEvent : function(container) {
-		var thisInstance = this;
-		container.on('keyup','input.qty',function(e){
-			if (e.keyCode === 13) {
-				var $this=$(this)
-				, $tr = $this.parents('tr:first')
-				, $input = $tr.find('input.listPrice:first');
-				$input.focus().select();	
-			}
-			return false;		
-		});
-	},
-
-	/* ED151229 sélection du mode HT ou TTC */
-	registerListPriceModeButtonsEvent: function(container) {
-		var thisInstance = this;
-		container.on('change','input.listPrice-mode',function(e){
-			var lineItemRow = jQuery(e.currentTarget).closest('tr.'+thisInstance.rowClass);
-			var selectedListPriceMode = thisInstance.getListPriceMode(lineItemRow)
-			, asListPriceMode = selectedListPriceMode === 'TTC' ? 'HT' : 'TTC';
-			var price = thisInstance.getListPriceValue(lineItemRow, asListPriceMode);
-			thisInstance.setListPriceValue(lineItemRow, price);
-			thisInstance.lineItemRowCalculations(lineItemRow);
-			return;		
-		});
-	},
-
-	lineItemResultActions: function(){
+    lineItemResultActions: function(){
 		var thisInstance = this;
 		var lineItemResultTab = this.getLineItemResultContainer();
 
 		this.registerFinalDiscountShowEvent();
 		this.registerFinalDiscountValueChangeEvent();
 		this.registerFinalDiscountChangeEvent();
-		//ED150129
-		this.registerFinalReceivedValueChangeEvent();
 
 		this.registerLineItemActionSaveEvent();
 		this.registerLineItemsPopUpCancelClickEvent();
@@ -1499,8 +1082,8 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	lineItemRowCalculations : function(lineItemRow) {
 		this.calculateLineItemTotal(lineItemRow);
 		this.calculateDiscountForLineItem(lineItemRow);
-		this.calculateLineItemNetPrice(lineItemRow);
 		this.calculateTaxForLineItem(lineItemRow);
+		this.calculateLineItemNetPrice(lineItemRow);
 	},
 
 	lineItemToTalResultCalculations : function(){
@@ -1513,141 +1096,20 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		this.calculateGrandTotal();
 	},
 
-	/** ED151208
-	 * Affectation du tarif selon la grille
-	 */
-	lineItemGetPriceFromPriceBook : function(lineItemRow){
-		//Prix d'achat
-		if (app.getModuleName() === 'PurchaseOrder') 
-			return;
-		
-		var thisInstance = this;
-		//recursive for each row
-		if (lineItemRow.length > 1) {
-			lineItemRow.each(function(){
-				thisInstance.lineItemGetPriceFromPriceBook($(this));
-			});
-			return;
-		}
-		var priceBookDetails = thisInstance.getProductPriceBookDetails(lineItemRow);
-		if (!priceBookDetails || priceBookDetails.length === 0)
-			return;
-		
-		var qty = Math.abs(thisInstance.getQuantityValue(lineItemRow))
-		, discountType = thisInstance.getAccountDiscountType()
-		, price = undefined
-		, priceUnit = undefined //HT, TTC ou %
-		;
-		if (!discountType) 
-			discountType = "0";
-			
-		for (var $i = 0; $i < priceBookDetails.length; $i++) {
-			if (((!discountType && priceBookDetails[$i].modeapplication == 'qty')
-			|| (discountType && priceBookDetails[$i].modeapplication == 'qty,discounttype'))
-			&&  (discountType == priceBookDetails[$i].discounttype)) {
-				if (priceBookDetails[$i].minimalqty > qty) {
-					break;
-				}
-				else{
-					price = priceBookDetails[$i].listprice;
-					priceUnit = priceBookDetails[$i].listpriceunit;
-				}
-			}
-		}
-		if (price === undefined && priceBookDetails.length) {	
-			price = priceBookDetails[0].listprice;
-			priceUnit = priceBookDetails[0].listpriceunit;
-		}
-		if (price !== undefined) {
-			var discountpc = 0;
-			switch(priceUnit){
-			case 'TTC':
-				//calcul du cumul des taxes
-				var taxTotal = thisInstance.getLineItemTaxRate(lineItemRow);
-				//TTC -> HT
-				price = price / (1 + taxTotal/100);
-				break;
-			case '%':
-				var basicPrice = priceBookDetails[0].listprice;
-				discountpc = price;
-				price = basicPrice;
-				break;
-			}
-			thisInstance.setLineItemDiscount(lineItemRow, discountpc, Inventory_Edit_Js.percentageDiscountType, false);
-			thisInstance.setListPriceValue(lineItemRow, price);
-		}
-	},
-	
-	getProductPriceBookDetails : function(lineItemRow){
-		
-		var priceBookDetails = lineItemRow.data('pricebookdetails');
-		if (priceBookDetails === undefined){
-			
-			var productId = lineItemRow.find('input.selectedModuleId').val();
-			if (!productId)
-				return;
-			var currency_id = jQuery('#currency_id option:selected').val()
-			, account_discount_type = this.getAccountDiscountType()
-			, params = {
-				url: "index.php",
-				data: {
-					module: 'Inventory',
-					action: 'GetTaxes',
-					record: productId,
-					currency_id:currency_id,
-					accountdiscounttype:account_discount_type//ED151227 TODO peut-être ne devrions nous plus utiliser ce champ
-				},
-				async: false //TODO depreciated : defer
-			};
-			
-			AppConnector.request(params).then(
-				function(data){
-					for(var id in data.result){
-						if(typeof data.result[id] == "object"){
-							var recordData = data.result[id];
-							priceBookDetails = recordData.priceBook;
-							lineItemRow.data('pricebookdetails', priceBookDetails);
-						}
-					}
-				},
-				function(error,err){
-					lineItemRow.data('pricebookdetails', false);
-				}
-			);
-		}
-		return priceBookDetails;
-	},
-	
 	/**
 	 * Function which will handle the actions that need to be preformed once the qty is changed like below
 	 *  - calculate line item total -> discount and tax -> net price of line item -> grand total
 	 * @params : lineItemRow - element which will represent lineItemRow
 	 */
 	quantityChangeActions : function(lineItemRow) {
-		
-		/*ED151208*/
-		this.lineItemGetPriceFromPriceBook(lineItemRow);
-		
-		/*ED150603*/
-		if (lineItemRow.length >1){
-			var thisInstance = this;
-			lineItemRow.each(function(){
-				thisInstance.lineItemRowCalculations($(this));
-			});
-		}
-		else{
-			var $input = lineItemRow.find('.qty');
-			$input.css('color', $input.val()=='0' ?'red' : '#444444');
-			this.lineItemRowCalculations(lineItemRow);
-		}
+		this.lineItemRowCalculations(lineItemRow);
 		this.lineItemToTalResultCalculations();
 	},
 
 	lineItemDiscountChangeActions : function(lineItemRow){
 		this.calculateDiscountForLineItem(lineItemRow);
-		this.calculateLineItemNetPrice(lineItemRow);
 		this.calculateTaxForLineItem(lineItemRow);
-		
+		this.calculateLineItemNetPrice(lineItemRow);
 
 		this.lineItemToTalResultCalculations();
 	},
@@ -1660,7 +1122,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 
 	taxPercentageChangeActions : function(lineItemRow){
 		this.calculateLineItemNetPrice(lineItemRow);
-		this.calculateTaxForLineItem(lineItemRow);
 		this.calculateNetTotal();
 		this.calculateFinalDiscount();
 		if(this.isGroupTaxMode()){
@@ -1679,6 +1140,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		this.setShippingAndHandlingTaxTotal();
 		this.calculatePreTaxTotal();
 		this.calculateGrandTotal();
+                this.setShippingAndHandlingAmountForTax();
 	},
 
 	finalDiscountChangeActions : function() {
@@ -1692,7 +1154,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	/**
 	 * Function which will register change event for discounts radio buttons
 	 */
-	registerDiscountChangeEvent : function() {
+	registerDisountChangeEvent : function() {
 		var thisInstance = this;
 		var lineItemTable = this.getLineItemContentsContainer();
 		lineItemTable.on('change','.discounts',function(e){
@@ -1736,12 +1198,9 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			if(response == true){
 				return;
 			}
-			var parentElem = jQuery(e.currentTarget).closest('td')
-			, $UI = parentElem.find('div.discountUI')
-			, visible = $UI.is(':visible');
-			thisInstance.hideLineItemPopup()
-			if (!visible)
-				$UI.removeClass('hide');
+			var parentElem = jQuery(e.currentTarget).closest('td');
+			thisInstance.hideLineItemPopup();
+			parentElem.find('div.discountUI').removeClass('hide');
 		});
 	},
 
@@ -1792,7 +1251,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			var lineItemRow = element.closest('tr.'+thisInstance.rowClass);
 			var quantityInStock = lineItemRow.data('quantityInStock');
 			if(typeof quantityInStock  != 'undefined') {
-				if(thisInstance.parseFloat(element.val()) > parseFloat(quantityInStock)) {
+				if(parseFloat(element.val()) > parseFloat(quantityInStock)) {
 					lineItemRow.find('.stockAlert').removeClass('hide').find('.maxQuantity').text(quantityInStock);
 				}else{
 					lineItemRow.find('.stockAlert').addClass('hide');
@@ -1812,12 +1271,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		lineItemTable.on('focusout', 'input.listPrice',function(e){
 			var element = jQuery(e.currentTarget);
 			var lineItemRow = thisInstance.getClosestLineItemRow(element);
-			if (this.value != 0) {
-				var $qty = lineItemRow.find('input.qty');
-				if ($qty.val() == '0') {
-					$qty.val(1);
-				}
-			}
 			thisInstance.quantityChangeActions(lineItemRow);
 		});
 	 },
@@ -1829,10 +1282,9 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		lineItemTable.on('focusout','.taxPercentage',function(e){
 			var element = jQuery(e.currentTarget);
 			var lineItemRow = thisInstance.getClosestLineItemRow(element);
-			thisInstance.calculateLineItemNetPrice(lineItemRow);
 			thisInstance.calculateTaxForLineItem(lineItemRow);
 		});
-		
+
 		lineItemTable.on('click','.taxSave',function(e){
 			var element = jQuery(e.currentTarget);
 			var lineItemRow = thisInstance.getClosestLineItemRow(element);
@@ -1857,12 +1309,9 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			if(response == true){
 				return;
 			}
-			var parentElem = jQuery(e.currentTarget).closest('td')
-			, $UI = parentElem.find('.taxUI')
-			, visible = $UI.is(':visible');
+			var parentElem = jQuery(e.currentTarget).closest('td');
 			thisInstance.hideLineItemPopup()
-			if (!visible)
-				$UI.removeClass('hide');
+			parentElem.find('.taxUI').removeClass('hide');
 		});
 	 },
 
@@ -1897,7 +1346,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 					var lineItemRow = jQuery(domElement);
 					lineItemRow.find('.individualTaxContainer,.productTaxTotal').addClass('hide');
 					thisInstance.calculateLineItemNetPrice(lineItemRow);
-					thisInstance.calculateTaxForLineItem(lineItemRow);
 				});
 			}
 			thisInstance.lineItemToTalResultCalculations();
@@ -1908,30 +1356,76 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		var thisInstance = this;
 		jQuery('#currency_id').change(function(e){
 			var element = jQuery(e.currentTarget);
+			var currencyId = element.val();
 			var conversionRateElem = jQuery('#conversion_rate');
 			var prevSelectedCurrencyConversionRate = conversionRateElem.val();
+            thisInstance.prevSelectedCurrencyConversionRate = prevSelectedCurrencyConversionRate;
 			var optionsSelected = element.find('option:selected');
 			var conversionRate = optionsSelected.data('conversionRate');
 			conversionRateElem.val(conversionRate);
 			conversionRate = parseFloat(conversionRate)/ parseFloat(prevSelectedCurrencyConversionRate);
+            thisInstance.LineItemDirectDiscountCal(conversionRate);
 			var lineItemTable = thisInstance.getLineItemContentsContainer();
 			lineItemTable.find('tr.'+thisInstance.rowClass).each(function(index,domElement){
-				var lineItemRow = jQuery(domElement);
-				var listPriceVal = thisInstance.getListPriceValue(lineItemRow);
-				var convertedListPrice = listPriceVal * conversionRate;
-				thisInstance.setListPriceValue(lineItemRow, convertedListPrice);
-				thisInstance.lineItemRowCalculations(lineItemRow);
+			var lineItemRow = jQuery(domElement);
+            var listPriceElement = jQuery(lineItemRow).find('[name^=listPrice]');
+            var listPriceValues = JSON.parse(listPriceElement.attr('list-info'));
+            if(typeof listPriceValues[currencyId]!= 'undefined') {
+            	thisInstance.setListPriceValue(lineItemRow, listPriceValues[currencyId]);
+                thisInstance.lineItemRowCalculations(lineItemRow);
+            } else {
+                var listPriceVal = thisInstance.getListPriceValue(lineItemRow);
+                var convertedListPrice = listPriceVal * conversionRate;
+                thisInstance.setListPriceValue(lineItemRow, convertedListPrice);
+                thisInstance.lineItemRowCalculations(lineItemRow);
+            }
 
 			});
+            thisInstance.AdjustmentShippingResultCalculation(conversionRate);
 			thisInstance.lineItemToTalResultCalculations();
 			jQuery('#prev_selected_currency_id').val(optionsSelected.val())
 		});
 	 },
+     
+     AdjustmentShippingResultCalculation: function(conversionRate){
+         //Adjustment
+         var thisInstance = this;
+         var adjustmentElement = thisInstance.getAdjustmentTextElement();
+         var newAdjustment = jQuery(adjustmentElement).val() * conversionRate;
+         jQuery(adjustmentElement).val(newAdjustment);
+         
+         //Shipping & handling 
+         var shippingHandlingElement = thisInstance.getShippingAndHandlingControlElement();
+         var resultVal = jQuery(shippingHandlingElement).val() * conversionRate;
+         jQuery(shippingHandlingElement).val(resultVal);
+         jQuery(shippingHandlingElement).trigger('focusout');
+    }, 
+    
+    LineItemDirectDiscountCal: function(conversionRate){
+         //LineItems Discount Calculations for direct Price reduction
+        var thisInstance = this;
 
-	lineItemActions: function() {
+        var lineItemRows = jQuery('.lineItemRow');
+        jQuery(lineItemRows).each(function(index) {
+            var lineItemRow = jQuery(lineItemRows[index]);
+            var discountContianer = lineItemRow.find('div.discountUI');
+            var element = discountContianer.find('input.discounts').filter(':checked');
+            var discountRow = element.closest('tr');
+            var discountType = element.data('discountType');
+            var discountValue = discountRow.find('.discountVal').val();
+            if((discountType == Inventory_Edit_Js.directAmountDiscountType) ){
+                var newdiscountValue = conversionRate * discountValue;
+                discountRow.find('.discountVal').val(newdiscountValue);
+                jQuery(element).closest('tr').find('.discountVal').val(newdiscountValue);
+                thisInstance.setDiscountTotal(lineItemRow,newdiscountValue);
+            }
+        });
+    },
+     
+    lineItemActions: function() {
 		var lineItemTable = this.getLineItemContentsContainer();
 
-		this.registerDiscountChangeEvent();
+		this.registerDisountChangeEvent();
 		this.registerDisountValueChange();
 		this.registerLineItemDiscountShowEvent();
 
@@ -1982,10 +1476,8 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		var idFields = new Array('productName','subproduct_ids','hdnProductId',
 							   'comment','qty','listPrice','discount_type','discount_percentage',
 							   'discount_amount','lineItemType','searchIcon','netPrice','subprod_names',
-								'productTotal','discountTotal','totalAfterDiscount','taxTotal'
-								,'mode-listPrice','mode-ht-listPrice','mode-ttc-listPrice','popup_tax_row'
-								,'tax0_percentage','tax1_percentage','tax2_percentage','tax3_percentage','tax4_percentage','tax5_percentage');
-		
+								'productTotal','discountTotal','totalAfterDiscount','taxTotal');
+
 		var nameFields = new Array('discount');
 		var classFields = new Array('taxPercentage');
 		//To handle variable tax ids
@@ -1999,7 +1491,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		}
 
 		var expectedRowId = 'row'+expectedSequenceNumber;
-		
 		for(var idIndex in idFields ) {
 			var elementId = idFields[idIndex];
 			var actualElementId = elementId + currentSequenceNumber;
@@ -2016,22 +1507,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		}
 
 
-		/* ED151229 buttonset listPrice-mode */
-		var idListPriceButtonSet = 'mode-listPrice';
-		var expectedElementId = idListPriceButtonSet + expectedSequenceNumber;
-		lineItemRow.find('#'+expectedElementId)
-			//remplacement dans l'attribute name des input radio
-			.children('input').each(function(){
-				this.setAttribute('name', this.getAttribute('name').replace(currentSequenceNumber, expectedSequenceNumber));
-			}).end()
-			//remplacement dans l'attributee for des labels
-			.children('label').each(function(){
-				this.setAttribute('for', this.getAttribute('for').replace(currentSequenceNumber, expectedSequenceNumber));
-			}).end()
-			.buttonset()
-		;
-		
-		
 		return lineItemRow.attr('id',expectedRowId);
 	},
 
@@ -2052,7 +1527,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	},
 
 	saveProductCount : function () {
-		jQuery('#totalProductCount').val(jQuery('tr.'+this.rowClass, this.getLineItemContentsContainer()).length);//.val(this.rowSequenceHolder);
+		jQuery('#totalProductCount').val(jQuery('tr.'+this.rowClass, this.getLineItemContentsContainer()).length);
 	},
 
 	saveSubTotalValue : function() {
@@ -2106,14 +1581,13 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			}
 			thisInstance.updateLineItemElementByOrder();
 			var lineItemTable = thisInstance.getLineItemContentsContainer();
-			//ED151006 adds :visible
-			jQuery('.discountSave:visible',lineItemTable).trigger('click');
+			jQuery('.discountSave',lineItemTable).trigger('click');
 			thisInstance.lineItemToTalResultCalculations();
 			thisInstance.saveProductCount();
 			thisInstance.saveSubTotalValue();
 			thisInstance.saveTotalValue();
 			thisInstance.savePreTaxTotalValue();
-		});
+		})
 	},
 
 	/**
@@ -2123,81 +1597,22 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		var thisInstance = this;
 
 		jQuery('input[name="contact_id"]', container).on(Vtiger_Edit_Js.referenceSelectionEvent, function(e, data){
-			//ED150707 don't ask if it is empty
-			thisInstance.referenceSelectionEventHandler(data, container, !thisInstance.isEmptyAddress(container));
-			
-			//ED150707 set account_id
-			thisInstance.contactSelectionEventHandler(data, container);
+			thisInstance.referenceSelectionEventHandler(data, container);
 		});
 	},
 
-	/** ED150707
-	 * Tests if addresses contain data or not
-	 */
-	isEmptyAddress : function(container){
-		var addressDetails = this.addressFieldsMapping['Contacts'];
-		for(var key in addressDetails) {
-			if(container.find('[name="'+key+'"]').val())
-				return false;
-		}
-		return true;
-	},
-	
 	/**
 	 * Reference Fields Selection Event Handler
-	 *
-	 * @param askUser (default is True) //ED150707
 	 */
-	referenceSelectionEventHandler : function(data,container, askUser){
+	referenceSelectionEventHandler : function(data,container){
 		var thisInstance = this;
-		if (askUser === false) {
+		var message = app.vtranslate('OVERWRITE_EXISTING_MSG1')+app.vtranslate('SINGLE_'+data['source_module'])+' ('+data['selectedName']+') '+app.vtranslate('OVERWRITE_EXISTING_MSG2');
+		Vtiger_Helper_Js.showConfirmationBox({'message' : message}).then(
+		function(e) {
 			thisInstance.copyAddressDetails(data, container);
-		}
-		else {
-			var message = app.vtranslate('OVERWRITE_EXISTING_MSG1')+data['selectedName']+ ' (' + app.vtranslate('SINGLE_'+data['source_module'])+')'+' '+app.vtranslate('OVERWRITE_EXISTING_MSG2');
-			Vtiger_Helper_Js.showConfirmationBox({'message' : message}).then(
-				function(e) {
-					thisInstance.copyAddressDetails(data, container);
-				},
-				function(error, err){
-				});
-		}
-	},
-	
-	/** ED150707
-	 * Contact Selection Event Handler
-	 * Set account id and invoice title
-	 * 
-	 */
-	contactSelectionEventHandler : function(data,container){
-		var thisInstance = this;
-		var sourceModule = data['source_module'];
-		
-		thisInstance.getRecordDetails(data).then(
-			function(data){
-				var response = data['result'];
-				container.find('input[name="account_id"]').val(response.data.account_id);
-				
-				var subject = (response.data.firstname + " " + response.data.lastname
-					+ "/" + response.data.mailingzip
-					+ " " + response.data.contact_no).trim();
-				container.find('input[name="subject"]:empty').val(subject);
-				
-				var account_discount_type = response.data.discounttype;
-				thisInstance.setAccountDiscountType(account_discount_type);
-				
-				var account_data = response['account_data']
-				, account_accounttype = account_data ? account_data['accounttype'] : false
-				, $accounttype = container.find('.accounttype');
-				if (account_accounttype) {
-					$accounttype.html(account_accounttype).removeClass('hide');
-				} else {
-					$accounttype.html('').addClass('hide');
-				}
 			},
-			function(error, err){
-
-			});
+		function(error, err){
+		});
 	},
 
 	/**
@@ -2208,7 +1623,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		var sourceModule = data['source_module'];
 		var noAddress = true;
 		var errorMsg;
-		
+
 		thisInstance.getRecordDetails(data).then(
 			function(data){
 				var response = data['result'];
@@ -2227,7 +1642,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 							errorMsg = 'JS_SELECTED_CONTACT_DOES_NOT_HAVE_AN_ADDRESS';
 						}
 						Vtiger_Helper_Js.showPnotify(app.vtranslate(errorMsg));
-					} else{	
+					} else{
 						thisInstance.mapAddressDetails(addressMap, result, container);
 					}
 				} else{
@@ -2289,8 +1704,29 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			},
 			'select' : function(event, ui ){
 				var selectedItemData = ui.item;
+				//To stop selection if no results is selected
+				if(typeof selectedItemData.type != 'undefined' && selectedItemData.type=="no results"){
+					return false;
+				}
 				var element = jQuery(this);
-				thisInstance.autoCompleteSelected(element, selectedItemData);
+				element.attr('disabled','disabled');
+				var tdElement = element.closest('td');
+				var selectedModule = tdElement.find('.lineItemPopup').data('moduleName');
+				var popupElement = tdElement.find('.lineItemPopup');
+				var dataUrl = "index.php?module=Inventory&action=GetTaxes&record="+selectedItemData.id+"&currency_id="+jQuery('#currency_id option:selected').val();
+				AppConnector.request(dataUrl).then(
+					function(data){
+						for(var id in data){
+							if(typeof data[id] == "object"){
+							var recordData = data[id];
+							thisInstance.mapResultsToFields(selectedModule, popupElement, recordData);
+							}
+						}
+					},
+					function(error,err){
+
+					}
+				);
 			},
 			'change' : function(event, ui) {
 				var element = jQuery(this);
@@ -2302,43 +1738,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		});
 	},
 
-	/* ED150625
-	 * moved from above
-	 */
-	autoCompleteSelected : function( element, selectedItemData ){
-		var thisInstance = this;
-		//To stop selection if no results is selected
-		if(typeof selectedItemData.type != 'undefined' && selectedItemData.type=="no results"){
-			return false;
-		}
-		element.attr('disabled','disabled');
-		var tdElement = element.closest('td');
-		var selectedModule = tdElement.find('.lineItemPopup').data('moduleName');
-		var popupElement = tdElement.find('.lineItemPopup');
-		
-		/* ED150602 account discount type */
-		var account_discount_type = thisInstance.getAccountDiscountType();
-		
-		var dataUrl = "index.php?module=Inventory&action=GetTaxes&record="+selectedItemData.id
-			+"&currency_id="+jQuery('#currency_id option:selected').val()
-			+"&accountdiscounttype="+account_discount_type;
-		AppConnector.request(dataUrl).then(
-			function(data){
-				var isFirst = true;
-				for(var id in data){
-					if(typeof data[id] == "object"){
-						var recordData = data[id];
-						thisInstance.mapResultsToFields(selectedModule, popupElement, recordData, isFirst);
-						isFirst = false;
-					}
-				}
-			},
-			function(error,err){
-
-			}
-		);
-	},
-	
 	registerClearLineItemSelection : function() {
 		var thisInstance = this;
 		var lineItemTable = this.getLineItemContentsContainer();
@@ -2346,10 +1745,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			var elem = jQuery(e.currentTarget);
 			var parentElem = elem.closest('td');
 			thisInstance.clearLineItemDetails(parentElem);
-			parentElem.find('input.productName')
-				.removeAttr('disabled')
-				.removeAttr('title')
-				.val('');
+			parentElem.find('input.productName').removeAttr('disabled').val('');
 			e.preventDefault();
 		});
 	},
@@ -2382,11 +1778,11 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		var lineItemTable = this.getLineItemContentsContainer();
 		lineItemTable.find('.deleteRow').hide();
 	},
-	
+
 	/**
 	 * Function to swap array
 	 * @param Array that need to be swapped
-	 */ 
+	 */
 	swapObject : function(objectToSwap){
 		var swappedArray = {};
 		var newKey,newValue;
@@ -2397,7 +1793,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		}
 		return swappedArray;
 	},
-	
+
 	/**
 	 * Function to copy address between fields
 	 * @param strings which accepts value as either odd or even
@@ -2422,7 +1818,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			toElement.val(fromElement.val());
 		}
 	},
-	
+
 	/**
 	 * Function to register event for copying addresses
 	 */
@@ -2498,7 +1894,7 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 			thisInstance.copyAddress(swapMode);
 		})
 	},
-	
+
 	/**
 	 * Function to toggle shipping and billing address according to layout
 	 */
@@ -2534,21 +1930,21 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 				})
 			}
 		},
-	
+
 	/**
-	 * Function to check for relation operation (création d'une facture à partir d'un coupon, par exemple)
-	 * if relation exist, calculation should happen by default
+	 * Function to check for relation operation
+	 * if relation exist calculation should happen by default
 	 */
-	initializeForRelationOperation : function(){
+	registerForRealtionOperation : function(){
 		var form = this.getForm();
 		var relationExist = form.find('[name="relationOperation"]').val();
 		if(relationExist){
-			jQuery('.qty:first').trigger('focusout');
+			jQuery('.qty').trigger('focusout');
 		}
 	},
-	
+
 	//Related to preTaxTotal Field
-	
+
 	/**
 	 * Function to set the pre tax total
 	 */
@@ -2556,26 +1952,27 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		jQuery('#preTaxTotal').text(preTaxTotalValue);
 		return this;
 	},
-	
+
 	/**
 	 * Function to get the pre tax total
 	 */
 	getPreTaxTotal : function() {
-		return this.parseFloat(jQuery('#preTaxTotal').text());
+		return parseFloat(jQuery('#preTaxTotal').text());
 	},
-	
+
 	/**
 	 * Function to calculate the preTaxTotal value
 	 */
 	calculatePreTaxTotal : function() {
+        var numberOfDecimal = parseInt(jQuery('.numberOfCurrencyDecimal').val());
 		var netTotal = this.getNetTotal();
 		var shippingHandlingCharge = this.getShippingAndHandling();
 		var finalDiscountValue = this.getFinalDiscountTotal();
 		var preTaxTotal = netTotal+shippingHandlingCharge-finalDiscountValue;
-		var preTaxTotalValue = parseFloat(preTaxTotal).toFixed(2);
+		var preTaxTotalValue = parseFloat(preTaxTotal).toFixed(numberOfDecimal);
 		this.setPreTaxTotal(preTaxTotalValue);
 	},
-	
+
 	/**
 	 * Function to save the pre tax total value
 	 */
@@ -2584,196 +1981,13 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 	},
 
 	/**
-	 * Affectation du sujet lors de la sélection du type
-	 * ED141219
-	 */
-	registerTypeSelectionEvent : function(container) {
-			
-		jQuery('select[name="typedossier"]', container).on('change', function(e, data){
-			var $subject = jQuery('input[name="subject"]', container);
-			//si vide ou ayant la classe auto-filled
-			if (!$subject.val() || $subject.is('.auto-filled')) {
-				var $coupon = $('#notesid_display')
-				, coupon = $coupon.val()
-				, typeDossier = this.value
-				, subject = (typeDossier && typeDossier != 'Facture' ? typeDossier + (coupon ? ' / ' : '') : '') + coupon
-				;
-				$subject
-					.addClass('auto-filled')
-					.val(subject);
-			}
-		});
-			
-		jQuery('input[name="subject"]', container).on('blur', function(e, data){
-				//lors de la saisie manuelle, on purge la classe auto-filled
-			jQuery(this).removeClass('auto-filled');
-		});
-	},
-
-
-	/**
-	 * Lors de la sélection d'un compte
-	 * ED150602
-	 */
-	registerAccountSelectionEvent : function(container) {
-		var thisInstance = this;
-		jQuery('input[name="account_id"]', container).on(Vtiger_Edit_Js.referenceSelectionEvent, function(e, data){
-			//Affectation de discounttype
-			
-			var selectedName = data['selectedName'];
-			var progressIndicatorElement = jQuery.progressIndicator({
-				'message' : selectedName + '...',
-				'position' : 'html',
-				'blockInfo' : {
-					'enabled' : true
-				}
-			});
-			thisInstance.getRecordDetails(data).then(
-				function(recordDetails){
-					progressIndicatorElement.progressIndicator({ 'mode' : 'hide' });
-									
-					var account_discount_type = recordDetails.result.data.discounttype;
-					thisInstance.setAccountDiscountType(account_discount_type);
-				},
-				function(error, err){
-					progressIndicatorElement.progressIndicator({ 'mode' : 'hide' });
-				}
-			);
-		});
-	},
-	
-	/**
-	 * Lors de la sélection du type de remise
-	 * ED150602
-	 */
-	registerAccountDiscountTypeSelectionEvent : function(container) {
-		var thisInstance = this;
-		jQuery('#inventory_accountdiscounttype_holder input', container).on('change', function(e, data){
-			jQuery('#inventory_accountdiscounttype_setter', container).addClass('ui-active');
-		});
-		jQuery('#inventory_accountdiscounttype_setter', container).on('click', function(e, data){
-			//Affectation de la remise à tous les articles
-			/* ED150602 account discount type */
-			
-			/* ED151227 à l'origine (enfin au 150602), il n'y avait qu'une gestion par saisie de 2 remises dépôt-vente et groupe
-			 * Maintenant on gère les grilles tarifaires, qui sont prioritaires.
-			 * setLineItemDiscountPercentage() provoque le recalcul de chaque ligne, peut donc appeler la recherche par grille
-			*/
-			
-			var account_discount_type = thisInstance.getAccountDiscountType();
-			if (account_discount_type && account_discount_type !== '0') {
-				//liste des articles
-				var productIds = [];
-				jQuery('#lineItemTab input.selectedModuleId', container).each(function(){
-					if(this.value){
-						//var $module = $('.lineItemType:first', this.parentNode);
-						productIds.push(this.value);
-					}
-				});
-				if (productIds.length) {
-
-					
-					var dataUrl = "index.php?module=Inventory&action=GetTaxes"
-						+"&idlist=["+productIds.join(',')+']'
-						+"&currency_id="+jQuery('#currency_id option:selected').val()
-						+"&accountdiscounttype="+account_discount_type;
-					AppConnector.request(dataUrl).then(
-						function(data){
-							data = data.result;
-							if (data)
-								for(var index in data)
-									if(typeof data[index] == "object")
-										for(var id in data[index])
-											thisInstance.setLineItemDiscountPercentage(id, data[index][id].discountpc);
-							
-						},
-						function(error,err){
-	
-						}
-					);					
-				}
-			}
-			else {
-				//Set remise à 0 sur toutes les lignes
-				jQuery('#lineItemTab input.selectedModuleId', container).each(function(){
-					if(this.value){
-						thisInstance.setLineItemDiscountPercentage($(this).parents('tr.lineItemRow'), 0);
-					}
-				});
-			}
-			jQuery('#inventory_accountdiscounttype_setter', container).removeClass('ui-active');
-		});
-	},
-	
-	/*ED150515
-	 * auto-filled management of invoicestatus field
-	 * invoicestatus is changed when balance changed, but if '.auto-filled:not()'
-	 */
-	registerInvoiceStatusEvent : function(){
-		var editForm = this.getForm();
-		editForm.on('change','select.auto-filled[name="invoicestatus"]',function(){
-			$(this).removeClass('auto-filled')
-		})
-	},
-	
-	/**
-	 * ED141219 : lors de l'enregistrement, enlève les produits ou services vides (sans article sélectionné ou en quantité nulle)
-	 */
-	registerSaveEvent : function(container){
-		var thisInstance = this;
-		jQuery('button.btn-success[type="submit"]', container).on('click', function(e, data){
-				var oneDeleted = false;
-				thisInstance.getLineItemContentsContainer().find('tr.'+thisInstance.rowClass).each(function(){
-						// isProductSelected() semble retourner l'inverse de ce qu'elle dit...
-						var $productField = $(this).find('.productName');
-						if(!$productField.val()){
-							jQuery(this).remove();
-							oneDeleted = true;
-							return;
-						}
-						var $productQuantity = $(this).find('.qty');
-						if($productQuantity.val() == '0'){
-							jQuery(this).remove();
-							oneDeleted = true;
-							return;
-						}
-
-						var listPriceMode = thisInstance.getListPriceMode(this);
-						if (listPriceMode === 'TTC') {
-							var price = thisInstance.getListPriceValue(this, listPriceMode);
-							$(this).find(".listPrice").val(price);
-							$(this).find(".listPrice-mode[data-mode='HT']").prop('checked', true);
-							$(this).find(".listPrice-mode[data-mode='TTC']").prop('checked', false);
-						}
-				});
-				if (oneDeleted) {
-						thisInstance.checkLineItemRow();
-						thisInstance.lineItemDeleteActions();
-				}
-		});
-	},
-
-	
-	/**
 	 * Function which will register all the events
 	 */
     registerBasicEvents : function(container) {
 		this._super(container);
-		this.registerTypeSelectionEvent(container); /*ED141219*/
-		this.registerAccountSelectionEvent(container); /*ED150602*/
-		this.registerAccountDiscountTypeSelectionEvent(container); /*ED150602*/
-		this.registerInvoiceStatusEvent(container);
-		this.registerSaveEvent(container); /*ED141219*/
 		this.registerReferenceSelectionEvent(container);
-		this.registerBlockAnimationEvent(); /*ED150707*/
-		this.registerShippingChargeButtonsEvent(container); /* ED150708 */
-		this.registerQuantityButtonsEvent(container); /* ED150708 */
-		this.registerReceivedButtonsEvent(container); /* ED151014 */
-		this.registerListPriceModeButtonsEvent(container); /* ED151229 */
-		this.registerQuantityKeyPressEvent(container); /* ED160109 */
-		
 	},
-	
+    
     registerEvents: function(){
 		this._super();
 		this.registerAddingNewProductsAndServices();
@@ -2782,6 +1996,6 @@ Vtiger_Edit_Js("Inventory_Edit_Js",{
 		//TODO : this might be costier operation. This we added to calculate tax for each line item
 		this.makeLineItemsSortable();
 		this.checkLineItemRow();
-		this.initializeForRelationOperation();
+		this.registerForRealtionOperation();
     }
 });

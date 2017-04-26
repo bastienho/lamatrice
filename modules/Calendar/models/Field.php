@@ -91,10 +91,14 @@ class Calendar_Field_Model extends Vtiger_Field_Model {
 	 * @param <String> Data base value
 	 * @return <String> value
 	 */
-	public function getEditViewDisplayValue($value) {
+	public function getEditViewDisplayValue($value, $blockfields = FALSE) {
 		$fieldName = $this->getName();
 
 		if ($fieldName == 'time_start' || $fieldName == 'time_end') {
+			if($blockfields && !empty($value)) {
+				$dateField = ($fieldName == 'time_start' ? $blockfields['date_start'] : $blockfields['due_date']);
+				$value = $dateField->get('fieldvalue')." ".$value;
+			}
 			return $this->getUITypeModel()->getDisplayTimeDifferenceValue($fieldName, $value);
 		}
 
@@ -142,4 +146,15 @@ class Calendar_Field_Model extends Vtiger_Field_Model {
 		
 		return $filterOpsByFieldType;
 	}
+	
+	/**
+     * Function which will check if empty piclist option should be given
+     */
+    public function isEmptyPicklistOptionAllowed() {
+		if($this->getFieldName() == 'visibility') {
+			return false;
+		}
+        return true;
+    }
+	
 }

@@ -7,10 +7,10 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  ************************************************************************************/
-ini_set('display_errors','on'); error_reporting(E_ALL & ~E_STRICT & ~E_NOTICE & ~E_DEPRECATED);   // DEBUGGING
 
-//ED150000? Overrides GetRelatedList : used to get related query
+//Overrides GetRelatedList : used to get related query
 //TODO : Eliminate below hacking solution
+include_once 'config.php';
 include_once 'include/Webservices/Relation.php';
 
 include_once 'vtlib/Vtiger/Module.php';

@@ -41,7 +41,7 @@ $languageStrings = array(
 	'Product Image'                => 'Productafbeelding'           , 
 	'Unit Price'                   => 'Prijs per Eenheid'           , 
 	'Commission Rate'              => 'Commissie (%)'               , 
-	'Qty/Unit'                     => 'Hoeveelheid / Eenheid'       , 
+	'Qty/Unit'                     => 'Hoeveelheid / Eenheid'       ,
 	'--None--'                     => '--Geen--'                    , 
 	'Hardware'                     => 'Hardware'                    , 
 	'Software'                     => 'Software'                    , 
@@ -72,4 +72,19 @@ $languageStrings = array(
 	'Spiral Binder'                => 'Spiraal Map'                 , 
 	'Sq Ft'                        => 'Vierkante meter'             , 
 	'LBL_CONVERSION_RATE'          => 'Conversion Rate'             , // TODO: Review
+    'LBL_PRODUCTSMOD_DISABLED'     => 'Enable Producten Module voor Producten bekijken',
+	'LBL_SHOW_BUNDLE_IN_INVENTORY' => 'Toon bundel artikelen in Factuur/Quotes/Sales Order/Bestelling',
+	'LBL_BUNDLE_TOTAL_COST' => 'Totale kosten van de Bundel',
+	'LBL_UPDATE_BUNDLE_PRICE' => 'Bijwerken Bundle Prijs',
+
+  'LBL_PRODUCT_NAME' => 'Naam Van Het Product',
+  'LBL_PRICE_QUANTITY' => 'Prijs x Hoeveelheid',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SUB_PRODUCTS_WILL_BE_SHOWN_IN_INVENTORY' => 'Sub producten zullen in de inventaris worden getoond',
+	'JS_SUB_PRODUCTS_WILL_NOT_BE_SHOWN_IN_INVENTORY' => 'Sub producten zullen niet in de inventaris worden getoond',
+	'JS_SUCCESSFULLY_CHANGED_BUNDLE_COST' => 'Succes gewijzigd totale kosten van de bundel',
+	'JS_DELETION_OR_IN_ACTIVATION_CHILD_PRODUCT_MESSAGE' => 'Dit artikel is onderdeel van een Product bundel. De prijs van de bundel blijven ongewijzigd wanneer een bundel voorwerp wordt verwijderd of geïnactiveerd. Weet u zeker dat u wilt doorgaan?',
 );

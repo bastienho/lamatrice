@@ -22,6 +22,12 @@ $languageStrings = array(
 	'LBL_SELECT_SOURCE_VALUES'     => 'Select Source Values'        , // TODO: Review
 	'LBL_SELECT_SOURCE_PICKLIST_VALUES' => 'Select Source Picklist Values', // TODO: Review
 	'LBL_ERR_CYCLIC_DEPENDENCY'    => 'This dependency setup is not allowed as it ends up in some cyclic dependency', // TODO: Review
+	'LBL_SELECT_ALL_VALUES' => 'Selecionar tudo',
+	'LBL_UNSELECT_ALL_VALUES' => 'Desmarcar tudo',
+    'LBL_CYCLIC_DEPENDENCY_ERROR' => 'Isso poderia acabar em redundância cíclica como campo %s já está configurado para o campo %s',
+
+  'PickListDependency' => 'Lista De Opções De Dependência',
+
 );
 $jsLanguageStrings = array(
 	'JS_LBL_ARE_YOU_SURE_YOU_WANT_TO_DELETE' => 'Are you sure you want to delete this picklist dependency?', // TODO: Review

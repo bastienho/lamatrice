@@ -18,10 +18,20 @@ $languageStrings = array(
 	'LBL_ASSIGN_ROLE'              => 'Assign Role'                 , // TODO: Review
 	'LBL_CHOOSE_PROFILES'          => 'Choose profiles'             , // TODO: Review
 	'LBL_COPY_PRIVILEGES_FROM'     => 'Copy privileges from'        , // TODO: Review
+    'LBL_TRANSFER_TO_OTHER_ROLE' =>'Átadhatják a tulajdonjogot a szerepe',
 	'LBL_PROFILE'                  => 'Profile'                     , // TODO: Review
 	'LBL_REPORTS_TO'               => 'Reports To'                  , // TODO: Review
 	'LBL_NAME'                     => 'Name'                        , // TODO: Review
 	'LBL_ASSIGN_NEW_PRIVILEGES'    => 'Assign privileges directly to Role', // TODO: Review
 	'LBL_ASSIGN_EXISTING_PRIVILEGES' => 'Assign priviliges from existing profiles', // TODO: Review
 	'LBL_PRIVILEGES'               => 'Privileges'                  , // TODO: Review
+
+  'LBL_DUPLICATES_EXIST' => 'Ismétlődő Szerepet Létezik',
+  'LBL_CAN_ASSIGN_RECORDS_TO' => 'Lehet Rendelni Rekordok',
+  'LBL_ALL_USERS' => 'Minden Felhasználó',
+  'LBL_USERS_WITH_LOWER_LEVEL' => 'A felhasználók rendelkező Alárendelt Szerepet játszik',
+  'LBL_USERS_WITH_SAME_OR_LOWER_LEVEL' => 'A felhasználók, amelyek Ugyanazt a Szerepet, vagy csak Alárendelt Szerepet játszik',
+  'LBL_EDIT_ROLE' => 'Szerep Szerkesztése',
+  'LBL_CREATE_ROLE' => 'Hozzon Létre Szerepe',
+
 );

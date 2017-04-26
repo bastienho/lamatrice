@@ -12,18 +12,17 @@ class Leads_DetailView_Model extends Accounts_DetailView_Model {
 	/**
 	 * Function to get the detail view links (links and widgets)
 	 * @param <array> $linkParams - parameters which will be used to calicaulate the params
-	 * @param boolean $countRelatedEntity - AV150619
 	 * @return <array> - array of link models in the format as below
 	 *                   array('linktype'=>list of link models);
 	 */
-	public function getDetailViewLinks($linkParams, $countRelatedEntity = false) {
+	public function getDetailViewLinks($linkParams) {
 		$currentUserModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 
 		$moduleModel = $this->getModule();
 		$recordModel = $this->getRecord();
 		$emailModuleModel = Vtiger_Module_Model::getInstance('Emails');
 
-		$linkModelList = Vtiger_DetailView_Model::getDetailViewLinks($linkParams, $countRelatedEntity);
+		$linkModelList = Vtiger_DetailView_Model::getDetailViewLinks($linkParams);
 
 		if($currentUserModel->hasModulePermission($emailModuleModel->getId())) {
 			$basicActionLink = array(
@@ -52,7 +51,7 @@ class Leads_DetailView_Model extends Accounts_DetailView_Model {
 		
 		$CalendarActionLinks[] = array();
 		$CalendarModuleModel = Vtiger_Module_Model::getInstance('Calendar');
-		if($currentUserModel->hasModuleActionPermission($CalendarModuleModel->getId(), 'EditView')) {
+		if($currentUserModel->hasModuleActionPermission($CalendarModuleModel->getId(), 'CreateView')) {
 			$CalendarActionLinks[] = array(
 					'linktype' => 'DETAILVIEW',
 					'linklabel' => 'LBL_ADD_EVENT',
@@ -69,7 +68,7 @@ class Leads_DetailView_Model extends Accounts_DetailView_Model {
 		}
 
 		$SMSNotifierModuleModel = Vtiger_Module_Model::getInstance('SMSNotifier');
-		if($currentUserModel->hasModulePermission($SMSNotifierModuleModel->getId())) {
+		if($SMSNotifierModuleModel && $currentUserModel->hasModulePermission($SMSNotifierModuleModel->getId())) {
 			$basicActionLink = array(
 				'linktype' => 'DETAILVIEWBASIC',
 				'linklabel' => 'LBL_SEND_SMS',
@@ -84,7 +83,7 @@ class Leads_DetailView_Model extends Accounts_DetailView_Model {
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicLink);
 		}
 
-		if(Users_Privileges_Model::isPermitted($moduleModel->getName(), 'ConvertLead', $recordModel->getId()) && Users_Privileges_Model::isPermitted($moduleModel->getName(), 'EditView', $recordModel->getId())) {
+		if(Users_Privileges_Model::isPermitted($moduleModel->getName(), 'ConvertLead', $recordModel->getId()) && Users_Privileges_Model::isPermitted($moduleModel->getName(), 'EditView', $recordModel->getId()) && !$recordModel->isLeadConverted()) {
 			$basicActionLink = array(
 				'linktype' => 'DETAILVIEWBASIC',
 				'linklabel' => 'LBL_CONVERT_LEAD',

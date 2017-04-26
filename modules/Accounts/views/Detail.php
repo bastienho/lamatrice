@@ -8,9 +8,7 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  * *********************************************************************************** */
-/* ED140921
- * note : hérité par Contacts
- */
+
 class Accounts_Detail_View extends Vtiger_Detail_View {
 
 	/**
@@ -53,39 +51,21 @@ class Accounts_Detail_View extends Vtiger_Detail_View {
 			return $viewer->view('RelatedActivities.tpl', $moduleName, true);
 		}
 	}
-	
-	/**
-	 * ED141210
-	 * en ajoutant NO_ACTIVITIES_WIDGET on désactive le chargement des Events
-	 * en fait, ça permet, dans le SummaryView d'inverser les widgets de gauche à droite 
-	 */
-	public function process(Vtiger_Request $request) {
-		
-		$viewer = $this->getViewer($request);
-		/* ED141210 court-circuite les activits */
-		$viewer->assign('NO_ACTIVITIES_WIDGET', true);
-		/* ED150102 compte de référence */
-		$viewer->assign('ACCOUNT_ID', $request->get('record'));
 
-		return parent::process($request);
-	}
+	public function showModuleDetailView(Vtiger_Request $request) {
+		$recordId = $request->get('record');
+		$moduleName = $request->getModule();
 
-
-	/**
-	 * Function returns related records based on related moduleName
-	 * @param Vtiger_Request $request
-	 * @return <type>
-	 */
-	function showRelatedRecords(Vtiger_Request $request) {
-		//default order
-		if(!$request->get('orderby')){
-			switch($request->get('relatedModule')){
-			 case 'RSNAboRevues':
-				$request->set('orderby', 'debutabo');
-				$request->set('sortorder', 'DESC');
-				break;
-			}
+		// Getting model to reuse it in parent 
+		if (!$this->record) {
+			$this->record = Vtiger_DetailView_Model::getInstance($moduleName, $recordId);
 		}
-		return parent::showRelatedRecords($request);
+		$recordModel = $this->record->getRecord();
+
+		$viewer = $this->getViewer($request);
+		$viewer->assign('IMAGE_DETAILS', $recordModel->getImageDetails());
+
+		return parent::showModuleDetailView($request);
 	}
+
 }

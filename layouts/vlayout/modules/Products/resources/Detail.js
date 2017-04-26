@@ -7,9 +7,7 @@
  * All Rights Reserved.
  *************************************************************************************/
 
-Vtiger_Detail_Js("Products_Detail_Js",{},{
-	
-	
+PriceBooks_Detail_Js("Products_Detail_Js",{},{
 	
 	/**
 	 * Function to register event for image graphics
@@ -30,25 +28,17 @@ Vtiger_Detail_Js("Products_Detail_Js",{},{
 	},
 	
 	/**
-	 * Function to register event for PriceBooks
+	 * Function to register event for select button click on pricebooks in Products related list
 	 */
-	registerEventForPriceBooks : function(){
+	registerEventForSelectRecords : function(){
 		var thisInstance = this;
-		var relatedModuleName = thisInstance.getRelatedModuleName();
-		if (relatedModuleName === 'PriceBooks') {
+		var detailContentsHolder = this.getContentHolder();
+		detailContentsHolder.on('click', 'button[data-modulename="PriceBooks"]', function(e){
 			var selectedTabElement = thisInstance.getSelectedTab();
+			var relatedModuleName = thisInstance.getRelatedModuleName();
 			var relatedController = new Products_RelatedList_Js(thisInstance.getRecordId(), app.getModuleName(), selectedTabElement, relatedModuleName);
-			relatedController.registerEventForPriceBooks();
-		} else if (relatedModuleName === 'Products') {
-			this._super();
-		}
-	},
-	
-	/**
-	 * Function to register Event for Sorting
-	 */
-	registerEventForRelatedList : function(){
-		this.registerEventForPriceBooks();
+			relatedController.showSelectRelationPopup();
+		});
 	},
 	
 	/**

@@ -19,7 +19,7 @@ $languageStrings = array(
 	'LBL_CURRENCY_STATUS_DESC' => 'Enable checkbox to make currency Active',
 	'LBL_TRANSFER_CURRENCY' => 'Transfer Currency',
 	'LBL_CURRENT_CURRENCY' => 'Current Currency',
-	
+
 	//currency names
 	'Albania, Leke' 		=> 'Albania, Leke',
 	'Argentina, Pesos' 		=> 'Argentina, Pesos',

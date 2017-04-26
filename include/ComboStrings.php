@@ -241,14 +241,12 @@ $combo_strings = Array(
 			'Yearly'=>'Yearly'
 			),
 
-'invoicestatus_dom' => Array(/*'AutoCreated'=>'AutoCreated',*/
+'invoicestatus_dom' => Array('AutoCreated'=>'AutoCreated',
 			'Created'=>'Created',
-			/*'Approved'=>'Approved',
-			'Sent'=>'Sent',*/
+			'Approved'=>'Approved',
+			'Sent'=>'Sent',
 			'Credit Invoice'=>'Credit Invoice',
-			/*'Paid'=>'Paid'*/
-                        'Validated'=>'Validated',
-                        'Compta'=>'Compta',
+			'Paid'=>'Paid'
 			),
 
 'postatus_dom' => Array('Created'=>'Created',
@@ -344,8 +342,8 @@ $combo_strings = Array(
 										" " => " ",
 										"$" => "$"
 							),
-'currency_grouping_separator_dom' => Array("." => ".",
-										"," => ",",
+'currency_grouping_separator_dom' => Array("," => ",",
+										"." => ".",
 										"'" => "'",
 										" " => " ",
 										"$" => "$"

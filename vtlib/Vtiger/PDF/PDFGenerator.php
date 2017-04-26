@@ -50,9 +50,6 @@ class Vtiger_PDF_Generator {
 	function getContentFrame() {
 		return $this->contentFrame;
 	}
-	function setContentFrame($value) {
-		$this->contentFrame = $value;
-	}
 
 	function getPDF() {
 		return $this->pdf;
@@ -145,8 +142,8 @@ class Vtiger_PDF_Generator {
 		
 		// ContentViewer
 		$this->contentFrame = new Vtiger_PDF_Frame();
-		$this->contentFrame->x = $pdf->GetX();
-		$this->contentFrame->y = $pdf->GetY();
+		$this->contentFrame->x = $pdf->GetX();    
+                $this->contentFrame->y = $pdf->GetY()+10.0;
 		
 		$this->contentFrame->h = $totalHeightContent;
 		$this->contentFrame->w = $this->totalWidth;
@@ -190,91 +187,6 @@ class Vtiger_PDF_Generator {
 		return $imsize;
 	}
 
-	/** ED151004
-	 * Merge PDF files into one
-	 * Needs ghostscript package
-	 * If failed, returns a zip file, extending $outputName with ".zip" extension
-	 * @params $fileNames : file names array
-	 * @param $outputName : desired output file name
-	 * @return output file name
-	 */
-	public static function mergeFiles($fileNames, $outputName = false){
-		if(!$fileNames)
-			return $outputName;
-		if(count($fileNames) === 1){
-			foreach($files as $fileName)//assoc array
-				break;
-			if(!$outputName)
-					return $fileName;
-			copy($fileName, $outputName);
-			return $outputName;
-		}
-		
-		if(!$outputName)
-			$outputName = tempnam(sys_get_temp_dir(), 'mrg_'.count($fileNames).'_pdf') . '.pdf';
-		
-		$outputName = str_replace(' ', '_', $outputName);
-		
-		if(file_exists($outputName))
-			unlink($outputName);
-			
-		$cmd = "gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$outputName ";
-		//Add each pdf file to the end of the command
-		$cmd .= implode(' ', $fileNames);
-		try {
-			$result = shell_exec($cmd);
-			if(!file_exists($outputName)){
-				$outputName .= '.zip';
-				$zip = new ZipArchive();
-				if ($zip->open($outputName, ZipArchive::CREATE)!==TRUE) {
-					exit("Impossible d'ouvrir le fichier <$outputName>\n");
-				}
-				foreach($fileNames as $fileName)
-					$zip->addFile($fileName, '/'.basename($fileName));
-				$zip->close();
-			}
-		}
-		catch(Exception $ex){
-			throw($ex);
-		}
-		return $outputName;
-	}
-	
-	/***
-	 * Function that send file data
-	 * note "exit;" at the end
-	 */
-	public static function downloadFile($outputFileName, $unlinkFile = false){
-		if(file_exists($outputFileName)){
-			if ($fd = fopen ($outputFileName, "r")) {
-				$fsize = filesize($outputFileName);
-				$path_parts = pathinfo($outputFileName);
-				$ext = strtolower($path_parts["extension"]);
-				switch ($ext) {
-				case "pdf":
-					header("Content-type: application/pdf");
-					header("Content-Disposition: attachment; filename=\"".$path_parts["basename"]."\""); // use 'attachment' to force a file download
-					break;
-					// add more headers for other content types here
-				default: //zip
-					header("Content-type: application/octet-stream");
-					header("Content-Disposition: filename=\"".$path_parts["basename"]."\"");
-					break;
-				}
-				//problme au tŽlŽchargement par Chrome header("Content-length: $fsize");
-				header("Cache-control: private"); //use this to open files directly
-				while(!feof($fd)) {
-					echo fread($fd, 4096);
-				}
-			}
-			fclose ($fd);
-			
-			if($unlinkFile)
-				unlink($outputFileName);
-			
-			exit;
-		}
-	}
 }
 
 ?>

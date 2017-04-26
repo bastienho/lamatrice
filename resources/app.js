@@ -13,8 +13,8 @@ var app = {
 	 * variable stores client side language strings
 	 */
 	languageString : [],
-	
-	
+
+
 	weekDaysArray : {Sunday : 0,Monday : 1, Tuesday : 2, Wednesday : 3,Thursday : 4, Friday : 5, Saturday : 6},
 
 	/**
@@ -39,12 +39,137 @@ var app = {
 	getViewName : function() {
 		return jQuery('#view').val();
 	},
+
+	/**
+	 * Function returns the record id
+	 */
+	getRecordId : function(){
+		var view = jQuery('[name="view"]').val();
+		var recordId;
+		if(view == "Edit"){
+			recordId = jQuery('[name="record"]').val();
+		}else if(view == "Detail"){
+			recordId = jQuery('#recordId').val();
+		}
+		return recordId;  
+	},
+
 	/**
 	 * Function to get the contents container
 	 * @returns jQuery object
 	 */
 	getContentsContainer : function() {
 		return jQuery('.bodyContents');
+	},
+
+	getDecimalSeparator : function() {
+		return jQuery('body').data('user-decimalseparator');
+	},
+
+	getGroupingSeparator : function() {
+		return jQuery('body').data('user-groupingseparator');
+	},
+
+	getNumberOfDecimals : function() {
+		return jQuery('body').data('user-numberofdecimals');
+	},
+
+	getUserCurrencySymbol : function() {
+		return jQuery('body').data('user-currency-symbol');
+	},
+
+	getUserCurrencySymbolPlacement : function() {
+		return jQuery('body').data('user-currency-symbol-placement');
+	},
+
+	appendUserCurrencySymbol : function(value) {
+		var userCurrencySymbol = app.getUserCurrencySymbol();
+		var userCurrencySymbolPlacement = app.getUserCurrencySymbolPlacement();
+
+		var appendedValue = value;
+		if (userCurrencySymbolPlacement === '1.0$') {
+			appendedValue = value + userCurrencySymbol;
+		} else {
+			appendedValue = userCurrencySymbol + value;
+		}
+
+		return appendedValue;
+	},
+
+	convertCurrencyToUserFormat : function(value, appendCurrencySymbol) {
+		var displayValue;
+		var isNegative = false;
+		value = value.toString();
+		if(parseFloat(value) < 0) {
+			isNegative = true;
+			value = value.replace('-', '');
+		}
+		var groupingPattern = jQuery('body').data('user-currencygroupingpattern');
+		var numberOfDecimals = app.getNumberOfDecimals();
+		var decimalSeparator = app.getDecimalSeparator();
+		var groupingSeparator = app.getGroupingSeparator();
+		value = parseFloat(value).toFixed(parseInt(numberOfDecimals));
+		value = value.toString();
+		var valueParts = value.split('.');
+		var wholePart = valueParts[0];
+		var decimalPart = valueParts[1];
+		var truncateTrailingZeros = jQuery('body').data('user-truncatetrailingzeros');
+		var finalWholePart;
+		var ignoreDecimal = false;
+		if(truncateTrailingZeros == '1' && parseInt(decimalPart) === 0) {
+			ignoreDecimal = true;
+		}
+
+		if(groupingPattern == '123456789') {
+			finalWholePart = wholePart;
+		} else if(groupingPattern == '123456,789') {
+			if(wholePart.length > 3) {
+				var wholeFirstPart = wholePart.substr(0, (wholePart.length - 3));
+			}
+			var wholeLastPart = wholePart.substr(wholePart.length - 3);
+			if(wholeFirstPart) {
+				wholePart = wholeFirstPart+groupingSeparator+wholeLastPart;
+			}
+			finalWholePart = wholePart;
+		} else if(groupingPattern == '123,456,789') {
+			var wholeParts = wholePart.toString().split("").reverse().join("").match(/.{1,3}/g).reverse();
+			for(var i = 0; i<wholeParts.length; i++) {
+				wholeParts[i] = wholeParts[i].toString().split("").reverse().join("");
+			}
+			finalWholePart = wholeParts.join(groupingSeparator);
+		} else if(groupingPattern == '12,34,56,789') {
+			if(wholePart.length > 3) {
+				var wholeFirstPart = wholePart.substr(0, (wholePart.length - 3));
+			}
+			var wholeLastPart = wholePart.substr(wholePart.length - 3);
+			if(wholeFirstPart) {
+				wholeLastPart = groupingSeparator+wholeLastPart;
+				var wholeFirstParts = wholeFirstPart.toString().split("").reverse().join("").match(/.{1,2}/g).reverse();
+				for(var i = 0; i<wholeFirstParts.length; i++) {
+					wholeFirstParts[i] = wholeFirstParts[i].toString().split("").reverse().join("");
+				}
+				wholeFirstPart = wholeFirstParts.join(groupingSeparator);
+				finalWholePart = wholeFirstPart+wholeLastPart;
+			} else {
+				finalWholePart = wholeLastPart;
+			}
+		}
+
+		if(ignoreDecimal) {
+			displayValue = finalWholePart;
+		} else {
+			displayValue = finalWholePart+decimalSeparator+decimalPart;
+		}
+
+		if(isNegative) {
+			displayValue = '-'+displayValue;
+		}
+
+		if(appendCurrencySymbol) {
+			displayValue = app.appendUserCurrencySymbol(displayValue);
+		}
+
+		return displayValue;
 	},
 
 	/**
@@ -77,7 +202,7 @@ var app = {
 			jQuery(e.currentTarget).trigger('focusout');
 		});
 
-		var chosenElement = selectElement.chosen();
+		var chosenElement = selectElement.chosen({search_contains: true});
 		var chosenSelectConainer = jQuery('.chzn-container');
 		//Fix for z-index issue in IE 7
 		if (jQuery.browser.msie && jQuery.browser.version === "7.0") {
@@ -151,8 +276,8 @@ var app = {
 		}
 		if(selectElement.attr('multiple') != 'undefined' && typeof params.closeOnSelect == 'undefined') {
 			params.closeOnSelect = false;
-		}	
-		/* ED141011 TODO background-color */
+		}
+
 		selectElement.select2(params)
 					 .on("open", function(e) {
 						 var element = jQuery(e.currentTarget);
@@ -181,7 +306,7 @@ var app = {
 			var data = instance.data()
 			if (jQuery.isArray(data) && data.length >= limit ) {
 				instance.updateResults();
-            }
+			}
 		});
 
 	},
@@ -220,14 +345,20 @@ var app = {
 
 		var unBlockCb = function(){};
 		var overlayCss = {};
+		//This is indicate whether to improve the ui by convert select element to select 2 plugin
+		var enhanceUi = true;
 
 		//null is also an object
+		var backDrop = false;
 		if(typeof data == 'object' && data != null && !(data instanceof jQuery)){
 			css = data.css;
 			cb = data.cb;
 			url = data.url;
 			unBlockCb = data.unblockcb;
 			overlayCss = data.overlayCss;
+			backDrop = data.backDrop;
+			if(typeof data.enhanceUi != "undefined") 
+				enhanceUi = data.enhanceUi;
 			data = data.data
 
 		}
@@ -304,7 +435,10 @@ var app = {
 						unblockUi();
 				}
 			}
-			jQuery('.blockOverlay').click(unblockUi);
+
+			if (backDrop != 'static') {
+				jQuery('.blockOverlay').click(unblockUi);
+			}
 			jQuery(document).on('keyup',escapeKeyHandler);
 			jQuery('[data-dismiss="modal"]', container).click(unblockUi);
 
@@ -318,14 +452,14 @@ var app = {
 				'offset' : '0 50'
 			});
 			//container.css({'height' : container.innerHeight()+15+'px'});
-
-			// TODO Make it better with jQuery.on
-			app.changeSelectElementView(container);
-			//register all select2 Elements
-			app.showSelect2ElementView(container.find('select.select2'));
-			
-			//register date fields event to show mini calendar on click of element
-			app.registerEventForDatePickerFields(container);
+			if(enhanceUi) {
+				// TODO Make it better with jQuery.on
+				app.changeSelectElementView(container);
+				//register all select2 Elements
+				app.showSelect2ElementView(container.find('select.select2'));
+				//register date fields event to show mini calendar on click of element
+				app.registerEventForDatePickerFields(container);
+			}
 			cb(container);
 		}
 
@@ -382,24 +516,23 @@ var app = {
 		//to support validation for chosen select box
 		prettySelect : true,
 		useSuffix: "_chzn",
-        usePrefix : "s2id_"
+		usePrefix : "s2id_"
 	},
 
 	/**
 	 * Function to push down the error message size when validation is invoked
 	 * @params : form Element
 	 */
+
 	formAlignmentAfterValidation : function(form){
 		// to avoid hiding of error message under the fixed nav bar
-		var offset = form.find(".formError:not('.greenPopup'):first").offset();
-		//ED150427
-		if (offset == null)
-			return;
-		var destination = offset.top;
-		var resizedDestnation = destination-105;
-		jQuery('html').animate({
-			scrollTop:resizedDestnation
-		}, 'slow');
+        var formOffset = form.find(".formError:not('.greenPopup'):first").offset();
+        if(formOffset !== null && typeof(formOffset) === 'object' && formOffset.hasOwnProperty('top')) {
+            var resizedDestnation = formOffset.top - 105;
+            $('html, body').animate({
+				scrollTop:resizedDestnation
+			}, 'slow');
+        }
 	},
 
 	convertToDatePickerFormat: function(dateFormat){
@@ -410,7 +543,6 @@ var app = {
 		} else if (dateFormat == 'dd-mm-yyyy') {
 			return 'd-m-Y';
 		}
-		return dateFormat;
 	},
 
 	convertTojQueryDatePickerFormat: function(dateFormat){
@@ -450,16 +582,8 @@ var app = {
 		}
 		element.autosize();
 	},
-	
+
 	registerEventForDatePickerFields : function(parentElement,registerForAddon,customParams){
-		
-		/* ED141010
-		 * TODO ailleurs
-		 * */
-		this.registerEventForColorPickerFields(parentElement,registerForAddon,customParams);
-		this.registerEventForButtonSetFields(parentElement,registerForAddon,customParams);
-		this.registerEventForAsyncFields(parentElement,registerForAddon,customParams);
-		
 		if(typeof parentElement == 'undefined') {
 			parentElement = jQuery('body');
 		}
@@ -490,7 +614,7 @@ var app = {
 		var vtigerDateFormat = app.convertToDatePickerFormat(dateFormat);
 		var language = jQuery('body').data('language');
 		var lang = language.split('_');
-		
+
 		//Default first day of the week
 		var defaultFirstDay = jQuery('#start_day').val();
 		if(defaultFirstDay == '' || typeof(defaultFirstDay) == 'undefined'){
@@ -505,17 +629,17 @@ var app = {
 			starts: convertedFirstDay,
 			eventName : 'focus',
 			onChange: function(formated){
-                var element = jQuery(this).data('datepicker').el;
-                element = jQuery(element);
-                var datePicker = jQuery('#'+ jQuery(this).data('datepicker').id);
-                var viewDaysElement = datePicker.find('table.datepickerViewDays');
-                //If it is in day mode and the prev value is not eqaul to current value
-                //Second condition is manily useful in places where user navigates to other month
-                if(viewDaysElement.length > 0 && element.val() != formated) {
-                    element.DatePickerHide();
-                    element.blur();
-                }
-				element.val(formated).trigger('change');
+				var element = jQuery(this).data('datepicker').el;
+				element = jQuery(element);
+				var datePicker = jQuery('#'+ jQuery(this).data('datepicker').id);
+				var viewDaysElement = datePicker.find('table.datepickerViewDays');
+				//If it is in day mode and the prev value is not eqaul to current value
+				//Second condition is manily useful in places where user navigates to other month
+				if(viewDaysElement.length > 0 && element.val() != formated) {
+					element.DatePickerHide();
+					element.blur();
+				}
+				element.val(formated).trigger('change').focusout();
 			}
 		}
 		if(typeof customParams != 'undefined'){
@@ -567,7 +691,7 @@ var app = {
 	 */
 	registerEventForTimeFields : function(container, registerForAddon, params) {
 
-		if(typeof cotainer == 'undefined') {
+		if(typeof container == 'undefined') {
 			container = jQuery('body');
 		}
 		if(typeof registerForAddon == 'undefined'){
@@ -616,7 +740,7 @@ var app = {
 	 */
 	destroyTimeFields : function(container) {
 
-		if(typeof cotainer == 'undefined') {
+		if(typeof container == 'undefined') {
 			container = jQuery('body');
 		}
 
@@ -627,435 +751,6 @@ var app = {
 		}
 		element.data('timepicker-list',null);
 		return container;
-	},
-
-
-	/**
-	 * Function to register color fields
-	 * ED141010
-	 */
-	registerEventForColorPickerFields : function(parentElement,registerForAddon, customParams) {
-		if(typeof parentElement == 'undefined') {
-			parentElement = jQuery('body');
-		}
-
-		parentElement = jQuery(parentElement);
-
-		if(parentElement.is('.colorField')){
-			var element = parentElement;
-		}else{
-			var element = jQuery('.colorField', parentElement);
-		}
-		if(element.length == 0){
-			return;
-		}
-		element.each(function(){
-			var $this = $(this);
-			var id = this.id;
-			var selectorId = '#' + id + '-colorSelector';
-			$(selectorId).ColorPicker({
-				color: $this.val(),
-				onShow: function (colpkr) {
-					$(colpkr).fadeIn(200);
-					return false;
-				},
-				onHide: function (colpkr) {
-					var $input = $this;
-					if ($input.parent().hasClass('edit')) { /*Detail view -> Edit on click*/
-						$input
-							.parent().prev().click() /* ne valide pas mais permet de declencher le submit en 1 seul clic ailleurs. Enfin, c'est bizarre
-													  * TODO : 	gerer le reset a la couleur d'origine (clic en haut a droite du pickcolor)
-													  *			apres enregistrement, affiche le #010fE24 de la couleur et le pickcolor ne fonctionne plus
-													  * 		*/
-						;
-					}
-					$(colpkr).fadeOut(200);
-					return false;
-				},
-				onChange: function (hsb, hex, rgb) {
-					$this.val('#' + hex);
-					$(selectorId + ' div').css('backgroundColor', '#' + hex);
-				}
-			})
-		});
-	},
-	
-	/**
-	 * Function to register color fields
-	 * ED141010
-	 */
-	registerEventForButtonSetFields : function(parentElement,registerForAddon, customParams) {
-		if(typeof parentElement == 'undefined') {
-			parentElement = jQuery('body');
-		}
-
-		parentElement = jQuery(parentElement);
-
-		if(parentElement.is('.buttonset')){
-			var element = parentElement;
-		}else{
-			var element = jQuery('.buttonset', parentElement);
-		}
-		if(element.length == 0){
-			return;
-		}
-		element.buttonset();
-	},
-
-	/**
-	 * Function to register async fields
-	 * AV150416
-	 */
-	registerEventForAsyncFields : function(parentElement,registerForAddon, customParams) {
-		var self = this;
-		var elements;
-
-		if(typeof parentElement == 'undefined') {
-			parentElement = jQuery('body');
-		}
-
-		parentElement = jQuery(parentElement);
-
-		if(parentElement.is('.ui-async')){
-			elements = parentElement;
-		}else{
-			elements = jQuery('.ui-async', parentElement);
-		}
-		if(elements.length == 0){
-			return;
-		}
-
-		elements.each(function( index ) {
-			//TODO: generalized auto-complete for Chosen type.
-			var tagName = $( this )[0].tagName.toLowerCase();
-			switch (tagName) {
-			case 'input':
-				$( this ).autocomplete({
-					source: [],
-					change: function() {
-				        self.onInputValueChange($( this ));
-				    }
-				});
-				$( this ).on('input', function(e) {
-					self.updateListForInput($( this ));
-				});
-				break;
-			case 'select'://tmp on change !!
-				self.getChosenElementFromSelect($( this )).find('input').on('input', function(e) {
-					self.updateListForChosen($( this ));
-				});
-				break;
-			}
-		});
-	},
-
-	/**
-	 * AV150421
-	 */
-	parseAutoFillValues: function(valueString) {
-		var regExp = /\[([^\]]+)\]/g,
-			results = [],
-			match;
-
-		while ((match = regExp.exec(valueString))) {
-    		results.push(match[1]);
-    	}
-
-		return results;
-	},
-
-	/**
-	 * AV150421
-	 */
-	getRealValue: function(valueString) {
-		var regExp = /\[([^\]]+)\]/g;
-		var realValue = valueString.replace(regExp, '').trim();
-
-		return realValue;
-	},
-
-	/**
-	 * AV150421
-	 * @returns jso {fieldName: fieldValue, fieldName: fieldValue, fieldName: fieldValue}
-	 */
-	onInputValueChange: function(field) {
-		var autoFillFields = this.getAutoFillFields(field);
-		var fieldValue = field.val()
-		, values = this.parseAutoFillValues(fieldValue)
-		, fieldName = field.attr('name')
-		, fieldsValue = {};
-
-		for (var i=0; i < autoFillFields.length; ++i) {
-			if (values[i]){
-				$input = $('input[name="' + autoFillFields[i] +  '"]');
-				$input.val(values[i]);
-				//En DetailView, il faut aussi modifier le span 
-				$input.parents('.fieldValue:first').children('span.value').text(values[i]);
-				fieldsValue[autoFillFields[i] ] = values[i];
-			}
-			//tmp chosen !!!
-		}
-		fieldsValue[fieldName] = this.getRealValue(fieldValue);
-		field.val(fieldsValue[fieldName]);
-		
-		return fieldsValue;
-	},
-
-	/**
-	 * Function to check if a particular result is filter.
-	 * AV150421
-	 */
-	resultIsFiltered: function(result, filters) {
-		for (var filterName in filters) {
-			if (filters[filterName] && result[filterName] && result[filterName].toLowerCase().indexOf(filters[filterName].toLowerCase()) != 0) {
-				return true;
-			}
-		}
-
-		return false;
-	},
-
-	/**
-	 * Function to filter the result using filed filter.
-	 * AV150421
-	 */
-	filterResults: function(fieldData, filters) {
-		var filteredFieldData = [];
-
-		for (var i=0; i < fieldData.length; ++i) {
-			if (!this.resultIsFiltered(fieldData[i], filters)) {
-				filteredFieldData.push(fieldData[i]);
-			}
-		}
-
-		return filteredFieldData;
-	},
-
-	/**
-	 * Function to get asynchronous field data using ajax and a cache.
-	 * AV150416
-	 */
-	getFieldData: function() {
-		var cache = [];
-		return function(searchField, searchValue, searchFieldId, filters, fill_fields, callback) {
-			var self = this;
-			searchValue = searchValue.toLowerCase();
-			var filterString = '';
-			for (var filter in filters) {
-    			filterString += '%%' + filters[filter];
-    		}
-
-			if (cache[searchField] !== undefined) {
-				for (var i = 1; i <= searchValue.length; ++i) {
-					var cacheValue = searchValue.substr(0, i);
-					if (cache[searchField][cacheValue] !== undefined) {
-						callback(this.filterResults(cache[searchField][cacheValue], filters));
-						return;
-					} else if (cache[searchField][cacheValue + filterString] !== undefined) {
-						callback(this.filterResults(cache[searchField][cacheValue + filterString], filters));
-						return;
-					}
-				}
-			}
-
-			var nedeedFields = '';
-			var first = true;
-			for (var key in fill_fields) {
-				if (!first) {
-					nedeedFields += ':';
-				}
-				nedeedFields += fill_fields[key];
-				first = false;
-			}
-			for (var key in filters) {
-				if (nedeedFields.indexOf(key) == -1) {
-					if (!first) {
-						nedeedFields += ':';
-					}
-					nedeedFields += key;
-					first = false;
-				}
-			}
-
-			var data = {
-				module: app.getModuleName(),
-		        action: 'GetFieldData',
-		        search_field: searchField,
-		        search_value: searchValue,
-		        search_field_id: searchFieldId,
-		        needed_fields: nedeedFields
-			}
-
-			var filterNumber = 0;
-
-			for (var key in filters) {
-				if (filters[key]) {
-					data[key] = filters[key];
-					++filterNumber;
-				}
-			}
-
-			$.post('index.php', data,
-		    function(data, status) {
-		    	var cacheString = searchValue;
-		    	if (filterNumber > 0) {
-		    		cacheString += filterString;
-		    	}
-		    	cache[searchField] = (cache[searchField] === undefined) ? [] : cache[searchField];
-		    	cache[searchField][cacheString] = data.result;
-		    	callback(self.filterResults(data.result, filters));
-		    });
-		};
-	}(),
-
-	/**
-	 * Function to get the minimum length of a ui-async field before auto-completion
-	 * AV150416
-	 */
-	getMinAutoCompleteLength : function (field) {
-		var regExp = /ui-async-(\d+)/;
-		var match = regExp.exec(field.attr('class'));
-
-		return (match) ? parseInt(match[1]) : 1;
-	},
-
-	/**
-	 * Function to get related filter fields names
-	 * AV150417
-	 */
-	getRelatedFilterFields : function (field) {
-		var regExp = /auto-filter-by-([a-zA-Z0-9\-_]+)/g,
-			str = field.attr('class'),
-			results = [],
-			match;
-
-		while ((match = regExp.exec(str))) {
-    		results.push(match[1]);
-    	}
-
-		return results;
-	},
-
-	/**
-	 * Function to get related filter fields names
-	 * AV150420
-	 */
-	getAutoFillFields : function (field) {
-		var regExp = /auto-fill-([a-zA-Z0-9\-_]+)/g,
-			str = field.attr('class'),
-			results = [],
-			match;
-
-		while ((match = regExp.exec(str))) {
-    		results.push(match[1]);
-    	}
-
-		return results;
-	},
-
-	/**
-	 * Function to get field id
-	 * @param : the field
-	 * @return : the field id
-	 * AV150420
-	 */
-	getFieldId: function(field) {
-		var regExp = /ui-fieldid-(\d+)/;
-		var match = regExp.exec(field.attr('class'));
-
-		return (match) ? parseInt(match[1]) : 0;
-	},
-
-	/**
-	 * Function to cast the fieldData returned by the serveur to a arrays of string.
-	 * AV150421
-	 */
-	getFieldDataArray: function(fieldData) {
-		var fieldDataArray = [];
-		for(var i=0; i<fieldData.length; ++i) {
-			var value = '',
-				first = true;
-
-			for (var fieldname in fieldData[i]) {
-				if (!first) {
-					value += ' [';
-				}
-
-				value += fieldData[i][fieldname];
-
-				if (!first) {
-					value += ']';
-				} else {
-					first = false;
-				}
-			}
-			fieldDataArray.push(value);
-		}
-
-		return fieldDataArray;
-	},
-
-	/**
-	 * Function to update the auto-completion list a ui-async field.
-	 * This function is call when a modification event is triggered.
-	 * AV150416
-	 */
-	updateListForInput: function(field) {
-		var self = this;
-		this.getFilters(field);
-		if (field.val().length >= this.getMinAutoCompleteLength(field)) {
-			this.getFieldData(field.attr('name'), field.val(), this.getFieldId(field), this.getFilters(field), this.getAutoFillFields(field),function(fieldData) {
-				field.autocomplete({
-	                source: self.getFieldDataArray(fieldData)
-	            });
-			});
-		}
-	},
-
-	/**
-	 * Function to update the auto-completion list a ui-async field.
-	 * This function is call when a modification event is triggered.
-	 * AV150416
-	 */
-	updateListForChosen: function(field) {
-		var self = this;
-		var value = field.val();
-		if (value.length >= this.getMinAutoCompleteLength(field)) {
-			var chosenContainer = $(field).parents('div.chzn-container:first');
-			var selectElement = this.getSelectElementFromChosen(chosenContainer);
-			this.getFieldData(selectElement.attr('name'), value, this.getFieldId(selectElement), this.getFilters(selectElement), this.getAutoFillFields(selectElement), function(fieldData) {
-				$(selectElement).empty();
-				var fieldDataArray = self.getFieldDataArray(fieldData);
-				for (var i=0; i < fieldData.length; ++i) {
-					var newOption = $('<option value="' + fieldData[i][selectElement.attr('name')] + '">' + fieldDataArray[i] + '</option>');
-		        	$(selectElement).append(newOption);
-		        }
-		        $(selectElement).trigger("liszt:updated");
-		        field.val(value);
-			});
-		}
-	},
-
-	/**
-	 * Function to get filters for a specific field
-	 * @param : the field
-	 * @return : an array containing filters
-	 * AV150417
-	 */
-	getFilters: function(field) {
-		var relatedFilterFields = this.getRelatedFilterFields(field);
-		var filters = {};
-
-		for (var i=0; i < relatedFilterFields.length; ++i) {
-			//tmp it may be many field name like that !!??
-			var relatedField = $('input[name="' + relatedFilterFields[i] + '"]')[0];
-
-			if (relatedField !== undefined) {
-				filters[relatedFilterFields[i]] = $( relatedField ).val();
-			}
-		}
-
-		return filters;
 	},
 
 	/**
@@ -1107,15 +802,15 @@ var app = {
 
 	initGuiders: function (list) {
 		if (list) {
-			for (var index=0, len=list.length; index < len; ++index) {
+			for (var index = 0, len = list.length; index < len; ++index) {
 				var guiderData = list[index];
-				guiderData['id'] = ""+index;
+				guiderData['id'] = "" + index;
 				guiderData['overlay'] = true;
 				guiderData['highlight'] = true;
 				guiderData['xButton'] = true;
-				if (index < len-1) {
+				if (index < len - 1) {
 					guiderData['buttons'] = [{name: 'Next'}];
-					guiderData['next'] = ""+(index+1);
+					guiderData['next'] = "" + (index + 1);
 
 				}
 				guiders.createGuider(guiderData);
@@ -1133,6 +828,15 @@ var app = {
 			options.height = element.css('height');
 		}
 
+		var givenHeight = parseInt(options.height.toString().replace('px', ''));
+		var modalBodyHeight = element.find('.modal-body').height();
+		if (element.hasClass('modal-body') && modalBodyHeight == null) {
+			modalBodyHeight = element.height();
+		}
+		if (modalBodyHeight > givenHeight) {
+			var windowHeight = window.innerHeight * 0.7;
+			options.height = windowHeight + 'px';
+		}
 		return element.slimScroll(options);
 	},
 
@@ -1157,14 +861,38 @@ var app = {
 	 * Function returns translated string
 	 */
 	vtranslate : function(key) {
+		//convert arguments in to proper array
+		var params = [].slice.apply(arguments);
+		params.shift();
+
 		if(app.languageString[key] != undefined) {
-			return app.languageString[key];
+			var translatedString = app.languageString[key];
+			if(params.length > 0) {
+				var replaceRegex = new RegExp("(%s)", "g");
+				var paramsPointer = 0;
+				translatedString = translatedString.replace(replaceRegex,function(){
+					var string = params[paramsPointer];
+					paramsPointer++;
+					return string;
+				})
+			}
+			return translatedString;
 		} else {
 			var strings = jQuery('#js_strings').text();
 			if(strings != '') {
 				app.languageString = JSON.parse(strings);
 				if(key in app.languageString){
-					return app.languageString[key];
+					var translatedString = app.languageString[key];
+					if(params.length > 0) {
+						var replaceRegex = new RegExp("(%s)", "g");
+						var paramsPointer = 0;
+						translatedString = translatedString.replace(replaceRegex,function(){
+							var string = params[paramsPointer];
+							paramsPointer++;
+							return string;
+						})
+					}
+					return translatedString;
 				}
 			}
 		}
@@ -1175,11 +903,8 @@ var app = {
 	 * Function which will set the contents height to window height
 	 */
 	setContentsHeight : function() {
-		var bodyContentsElement = app.getContentsContainer();
-		var borderTopWidth = parseInt(bodyContentsElement.css('borderTopWidth'));
-		var borderBottomWidth = parseInt(bodyContentsElement.css('borderBottomWidth'));
-		//Height should not include padding, margins and borders width. So reducing those values
-		bodyContentsElement.css('min-height',(jQuery(window).height()- (borderTopWidth + borderBottomWidth)));
+		var borderTopWidth = parseInt(jQuery(".mainContainer").css('margin-top'))+21; // (footer height 21px)
+		jQuery('#leftPanel, .contentsDiv, .details').css('min-height',(jQuery(document).innerHeight()-borderTopWidth));
 	},
 
 	/**
@@ -1219,13 +944,7 @@ var app = {
 	},
 
 	htmlDecode : function(value) {
-		//ED151124 Array
-		if (typeof value === 'object') {
-			for(var k in value)
-				value[k] = this.htmlDecode(value[k]);
-			return value;
-		}
-		else if (value) {
+		if (value) {
 			return $('<div />').html(value).text();
 		} else {
 			return '';
@@ -1242,8 +961,9 @@ var app = {
 		element.css("left", ((jQuery(window).width() - element.outerWidth()) / 2) + jQuery(window).scrollLeft() + "px");
 	},
 
-	getvalidationEngineOptions : function(select2Status){
-		return app.validationEngineOptions;
+	getvalidationEngineOptions : function() {
+		var options = app.validationEngineOptions;
+		return jQuery.extend({}, options);
 	},
 
 	/**
@@ -1295,7 +1015,7 @@ var app = {
 		if(typeof window[moduleClassName] == 'undefined') {
 			moduleClassName = "Vtiger_"+view+"_Js";
 		}
-        if(typeof window[moduleClassName] == 'function') {
+		if(typeof window[moduleClassName] != 'undefined') {
 			return new window[moduleClassName]();
 		}
 	},
@@ -1317,31 +1037,63 @@ var app = {
 		var yiq = ((r*299)+(g*587)+(b*114))/1000;
 		return (yiq >= 128) ? 'light' : 'dark';
 	},
-    
-    updateRowHeight : function() {
-        var rowType = jQuery('#row_type').val();
-        if(rowType.length <=0 ){
-            //Need to update the row height
-            var widthType = app.cacheGet('widthType', 'mediumWidthType');
-            var serverWidth = widthType;
-            switch(serverWidth) {
-                case 'narrowWidthType' : serverWidth = 'narrow'; break;
-                case 'wideWidthType' : serverWidth = 'wide'; break;
-                default : serverWidth = 'medium';
-            }
+
+	updateRowHeight : function() {
+		var rowType = jQuery('#row_type').val();
+		if(rowType.length <=0 ){
+			//Need to update the row height
+			var widthType = app.cacheGet('widthType', 'mediumWidthType');
+			var serverWidth = widthType;
+			switch(serverWidth) {
+				case 'narrowWidthType' : serverWidth = 'narrow'; break;
+				case 'wideWidthType' : serverWidth = 'wide'; break;
+				default : serverWidth = 'medium';
+			}
 			var userid = jQuery('#current_user_id').val();
-            var params = {
-                'module' : 'Users',
-                'action' : 'SaveAjax',
-                'record' : userid,
-                'value' : serverWidth,
-                'field' : 'rowheight'
-            };
-            AppConnector.request(params).then(function(){
-                jQuery(rowType).val(serverWidth);
-            });
-        }
-    }
+			var params = {
+				'module' : 'Users',
+				'action' : 'SaveAjax',
+				'record' : userid,
+				'value' : serverWidth,
+				'field' : 'rowheight'
+			};
+			AppConnector.request(params).then(function(){
+				jQuery(rowType).val(serverWidth);
+			});
+		}
+	},
+
+	getCookie : function(c_name) {
+		var c_value = document.cookie;
+		var c_start = c_value.indexOf(" " + c_name + "=");
+		if (c_start == -1)
+		  {
+		  c_start = c_value.indexOf(c_name + "=");
+		  }
+		if (c_start == -1)
+		  {
+		  c_value = null;
+		  }
+		else
+		  {
+		  c_start = c_value.indexOf("=", c_start) + 1;
+		  var c_end = c_value.indexOf(";", c_start);
+		  if (c_end == -1)
+			{
+			c_end = c_value.length;
+			}
+		  c_value = unescape(c_value.substring(c_start,c_end));
+		  }
+		return c_value;
+	},
+
+	setCookie : function(c_name,value,exdays) {
+		var exdate=new Date();
+		exdate.setDate(exdate.getDate() + exdays);
+		var c_value=escape(value) + ((exdays==null) ? "" : "; expires="+exdate.toUTCString());
+		document.cookie=c_name + "=" + c_value;
+	}
+
 }
 
 jQuery(document).ready(function(){
@@ -1351,10 +1103,10 @@ jQuery(document).ready(function(){
 	app.showSelect2ElementView(jQuery('body').find('select.select2'));
 
 	app.setContentsHeight();
-	
+
 	//Updating row height
 	app.updateRowHeight();
-	
+
 	jQuery(window).resize(function(){
 		app.setContentsHeight();
 	})
@@ -1362,6 +1114,22 @@ jQuery(document).ready(function(){
 	String.prototype.toCamelCase = function(){
 		var value = this.valueOf();
 		return  value.charAt(0).toUpperCase() + value.slice(1).toLowerCase()
+	}
+
+	// in IE resize option for textarea is not there, so we have to use .resizable() api
+	if(jQuery.browser.msie || (/Trident/).test(navigator.userAgent)) {
+		var makeResizable = function(e) {
+			if(e.resizable("option","disabled")) {
+				e.resizable().css('height','').css('width','');
+				// jQuery ui resizable is adding a parent div which contains fixed height and width which need to be removed
+				e.parent('.ui-wrapper').css('height','').css('width','');
+			}
+		};
+		jQuery(document).on('focus', 'textarea', function(e){
+			var element = jQuery(e.currentTarget);
+			makeResizable(element);
+		});   
+		makeResizable(jQuery('textarea'));
 	}
 
 	// Instantiate Page Controller

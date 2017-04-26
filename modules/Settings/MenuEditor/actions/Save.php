@@ -1,6 +1,11 @@
 <?php
 /*+***********************************************************************************
- * ED141226
+ * The contents of this file are subject to the vtiger CRM Public License Version 1.0
+ * ("License"); You may not use this file except in compliance with the License
+ * The Original Code is:  vtiger CRM Open Source
+ * The Initial Developer of the Original Code is vtiger.
+ * Portions created by vtiger are Copyright (C) vtiger.
+ * All Rights Reserved.
  *************************************************************************************/
 
 class Settings_MenuEditor_Save_Action extends Settings_Vtiger_Index_Action {
@@ -11,15 +16,14 @@ class Settings_MenuEditor_Save_Action extends Settings_Vtiger_Index_Action {
 		$selectedModulesList = $request->get('selectedModulesList');
 
 		if ($selectedModulesList) {
-			if($request->get('roleid'))
-				$menuEditorModuleModel->set('roleid', $request->get('roleid'));
 			$menuEditorModuleModel->set('selectedModulesList', $selectedModulesList);
 			$menuEditorModuleModel->saveMenuStruncture();
 		}
 		$loadUrl = $menuEditorModuleModel->getIndexViewUrl();
-		if($request->get('roleid'))
-			$loadUrl .= '&roleid=' . $request->get('roleid');
 		header("Location: $loadUrl");
 	}
-
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

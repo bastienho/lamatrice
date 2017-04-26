@@ -17,13 +17,7 @@ class Settings_Vtiger_CustomRecordNumbering_View extends Settings_Vtiger_Index_V
 
 		$sourceModule = $request->get('sourceModule');
 		if ($sourceModule) {
-			//ED150630 : attention, changement d'indexation (on passe de l'id au nom du module)
-			//$defaultModuleModel = $supportedModules[getTabid($sourceModule)];
-			$defaultModuleModel = $supportedModules[$sourceModule];
-			if(!$defaultModuleModel)
-				foreach($supportedModules AS $defaultModuleModel)
-					if($defaultModuleModel->getName() == $sourceModule)
-						break;
+			$defaultModuleModel = $supportedModules[getTabid($sourceModule)];
 		} else {
 			$defaultModuleModel = reset($supportedModules);
 		}
@@ -32,6 +26,7 @@ class Settings_Vtiger_CustomRecordNumbering_View extends Settings_Vtiger_Index_V
 		$viewer->assign('SUPPORTED_MODULES', $supportedModules);
 		$viewer->assign('DEFAULT_MODULE_MODEL', $defaultModuleModel);
 		$viewer->assign('QUALIFIED_MODULE',$qualifiedModuleName);
+		$viewer->assign('CURRENT_USER_MODEL', Users_Record_Model::getCurrentUserModel());
 		$viewer->view('CustomRecordNumbering.tpl', $qualifiedModuleName);
 	}
 	

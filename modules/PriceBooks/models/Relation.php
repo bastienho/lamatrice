@@ -19,18 +19,36 @@ class PriceBooks_Relation_Model extends Vtiger_Relation_Model{
 	public function getQuery($recordModel, $actions=false){
 		$parentModuleModel = $this->getParentModuleModel();
 		$relatedModuleModel = $this->getRelationModuleModel();
+		$relatedModuleName = $relatedModuleModel->get('name');
 		$parentModuleName = $parentModuleModel->get('name');
 		$functionName = $this->get('name');
 		$focus = CRMEntity::getInstance($parentModuleName);
 		$focus->id = $recordModel->getId();
 		if(method_exists($parentModuleModel, $functionName)) {
 			$query = $parentModuleModel->$functionName($recordModel, $relatedModuleModel);
-			return $query;
 		} else {
 			$result = $focus->$functionName($recordModel->getId(), $parentModuleModel->getId(),
 											$relatedModuleModel->getId(), $actions);
+			$query = $result['query'];
 		}
-		return $result['query'];
+
+		//modify query if any module has summary fields, those fields we are displayed in related list of that module
+		$relatedListFields = $relatedModuleModel->getConfigureRelatedListFields();
+		if(count($relatedListFields) > 0) {
+			$currentUser = Users_Record_Model::getCurrentUserModel();
+			$queryGenerator = new QueryGenerator($relatedModuleName, $currentUser);
+			$queryGenerator->setFields($relatedListFields);
+			$selectColumnSql = $queryGenerator->getSelectClauseColumnSQL();
+			$newQuery = spliti('FROM', $query);
+			$selectColumnSql = 'SELECT DISTINCT vtiger_crmentity.crmid,'.$selectColumnSql;
+		}
+		if(($functionName == 'get_pricebook_products') || ($functionName ==  'get_pricebook_services')){
+			$selectColumnSql = $selectColumnSql.', vtiger_pricebookproductrel.listprice';
+		}
+		if(!empty($selectColumnSql)) {
+			$query = $selectColumnSql.' FROM '.$newQuery[1];
+		}
+		return $query;
 	}
 
 	/**
@@ -38,13 +56,12 @@ class PriceBooks_Relation_Model extends Vtiger_Relation_Model{
 	 * @param <Integer> $sourceRecordId
 	 * @param <Integer> $destinationRecordId
 	 * @param <Integer> $listPrice
-	 * @param <String> $listPriceUnit (ED151226)
 	 */
-	public function addListPrice($sourceRecordId, $destinationRecordId, $listPrice, $listPriceUnit) {
+	public function addListPrice($sourceRecordId, $destinationRecordId, $listPrice) {
 		$sourceModuleName = $this->getParentModuleModel()->get('name');
 
 		$priceBookModel = Vtiger_Record_Model::getInstanceById($sourceRecordId, $sourceModuleName);
-		$priceBookModel->updateListPrice($destinationRecordId, $listPrice, $listPriceUnit);
+		$priceBookModel->updateListPrice($destinationRecordId, $listPrice);
 	}
 
 	/**
@@ -61,10 +78,5 @@ class PriceBooks_Relation_Model extends Vtiger_Relation_Model{
 		} else {
 			parent::deleteRelation($sourceRecordId, $relatedRecordId);
 		}
-	}
-
-	//ED151226
-	public static function getPriceUnits(){
-		return array('HT', 'TTC', '%');
 	}
 }

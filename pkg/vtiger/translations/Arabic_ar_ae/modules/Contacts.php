@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -38,17 +38,19 @@ $languageStrings = array(
 	'Mailing State' => 'بريد الولاية',
 	'Mailing Zip' => 'الرمز البريدي',
 	'Mailing Country' => 'بريد الدولة',
-	'Mailing PO Box' => 'صندوق البريد',
+	'Mailing Po Box' => 'صندوق البريد',
 	'Other Street' => 'شارع اخر',
 	'Other City' => 'مدينة اخرى',
 	'Other State' => 'ولاية اخرى',
 	'Other Zip' => 'رمز بريدي اخر',
 	'Other Country' => 'بلدة اخرى',
-	'Other PO Box' => 'صندوق بريدي اخر',
+	'Other Po Box' => 'صندوق بريدي اخر',
 	'Contact Image' => 'صورة جهة الاتصال',
 	'Other Phone' => 'هاتف ثاني',
 	'Email' => 'البريد الالكتروني',
 	'Secondary Email' => 'بريد الكتروني ثاني',
+    'Support Start Date' => 'الدعم تاريخ بدء',
+    'Support End Date' => 'تاريخ الإنتهاء الدعم',
 	
 	//Added for Picklist Values
 	'Mr.'=>'السيد',
@@ -58,6 +60,10 @@ $languageStrings = array(
 	'Prof.'=>'الاستاذ',
 
 	'User List'=>'قائمة المستخدمين',
+	'LBL_TRANSACTIONS' => 'المعاملات',
+
+  'Contact Id' => 'معرف الاتصال',
+
 );
 
 $jsLanguageStrings = array(

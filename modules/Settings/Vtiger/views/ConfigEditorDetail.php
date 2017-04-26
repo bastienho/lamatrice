@@ -12,31 +12,20 @@ class Settings_Vtiger_ConfigEditorDetail_View extends Settings_Vtiger_Index_View
 
 	public function process(Vtiger_Request $request) {
 		$qualifiedName = $request->getModule(false);
-		
-		//ED150522
-		$configDomain = $request->get('config_domain');
-		$moduleModel = Settings_Vtiger_ConfigModule_Model::getInstance($configDomain);
-		
+		$moduleModel = Settings_Vtiger_ConfigModule_Model::getInstance();
+
 		$viewer = $this->getViewer($request);
 		$viewer->assign('MODEL', $moduleModel);
 		$viewer->assign('QUALIFIED_MODULE', $qualifiedName);
-		//ED150522
-		$viewer->assign('CONFIG_DOMAIN', $configDomain);
-		
+		$viewer->assign('CURRENT_USER_MODEL', Users_Record_Model::getCurrentUserModel());
+
 		$viewer->view('ConfigEditorDetail.tpl', $qualifiedName);
 	}
-	
 	function getPageTitle(Vtiger_Request $request) {
 		$qualifiedModuleName = $request->getModule(false);
-		$configDomain = $request->get('config_domain');
-		switch($configDomain){
-		case 'RSN' :
-			return vtranslate('LBL_CONFIG'.$configDomain.'_EDITOR',$qualifiedModuleName);
-		default:
-			return vtranslate('LBL_CONFIG_EDITOR',$qualifiedModuleName);
-		}
+		return vtranslate('LBL_CONFIG_EDITOR',$qualifiedModuleName);
 	}
-    
+
 	/**
 	 * Function to get the list of Script models to be included
 	 * @param Vtiger_Request $request
@@ -47,7 +36,8 @@ class Settings_Vtiger_ConfigEditorDetail_View extends Settings_Vtiger_Index_View
 		$moduleName = $request->getModule();
 
 		$jsFileNames = array(
-			"modules.Settings.$moduleName.resources.ConfigEditor"
+			"modules.Settings.$moduleName.resources.ConfigEditor",
+			"modules.Settings.$moduleName.resources.ConfigEditorDetail",
 		);
 
 		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);

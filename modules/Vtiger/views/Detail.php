@@ -10,6 +10,7 @@
 
 class Vtiger_Detail_View extends Vtiger_Index_View {
 	protected $record = false;
+	protected $isAjaxEnabled = null;
 
 	function __construct() {
 		parent::__construct();
@@ -17,13 +18,13 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$this->exposeMethod('showModuleDetailView');
 		$this->exposeMethod('showModuleSummaryView');
 		$this->exposeMethod('showModuleBasicView');
+		$this->exposeMethod('showHistory');
 		$this->exposeMethod('showRecentActivities');
 		$this->exposeMethod('showRecentComments');
 		$this->exposeMethod('showRelatedList');
-		$this->exposeMethod('showRelatedRecords');//ED141025
 		$this->exposeMethod('showChildComments');
-		$this->exposeMethod('showAllComments');
 		$this->exposeMethod('getActivities');
+		$this->exposeMethod('showRelatedRecords');
 	}
 
 	function checkPermission(Vtiger_Request $request) {
@@ -32,7 +33,14 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 
 		$recordPermission = Users_Privileges_Model::isPermitted($moduleName, 'DetailView', $recordId);
 		if(!$recordPermission) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
+		}
+
+		if ($recordId) {
+			$recordEntityName = getSalesEntityType($recordId);
+			if ($recordEntityName !== $moduleName) {
+				throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
+			}
 		}
 		return true;
 	}
@@ -54,6 +62,7 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 			$summaryInfo[$blockLabel] = $fieldList;
 			break;
 		}
+
 		$detailViewLinkParams = array('MODULE'=>$moduleName,'RECORD'=>$recordId);
 
 		$detailViewLinks = $this->record->getDetailViewLinks($detailViewLinkParams);
@@ -105,15 +114,50 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 
 		$viewer->assign('IS_EDITABLE', $this->record->getRecord()->isEditable($moduleName));
 		$viewer->assign('IS_DELETABLE', $this->record->getRecord()->isDeletable($moduleName));
-		$viewer->assign('IS_DUPLICATABLE', $this->record->getRecord()->isDuplicatable($moduleName));
 
 		$linkParams = array('MODULE'=>$moduleName, 'ACTION'=>$request->get('view'));
 		$linkModels = $this->record->getSideBarLinks($linkParams);
 		$viewer->assign('QUICK_LINKS', $linkModels);
+		$viewer->assign('MODULE_NAME', $moduleName);
 
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		$viewer->assign('DEFAULT_RECORD_VIEW', $currentUserModel->get('default_record_view'));
 
+		$picklistDependencyDatasource = Vtiger_DependencyPicklist::getPicklistDependencyDatasource($moduleName);
+		$viewer->assign('PICKIST_DEPENDENCY_DATASOURCE', Vtiger_Functions::jsonEncode($picklistDependencyDatasource));
+
+		$tagsList = Vtiger_Tag_Model::getAllAccessible($currentUserModel->getId(), $moduleName, $recordId);
+		$allUserTags = Vtiger_Tag_Model::getAllUserTags($currentUserModel->getId());
+		$viewer->assign('TAGS_LIST', $tagsList);
+		$viewer->assign('ALL_USER_TAGS', $allUserTags);
+
+		$appName = $request->get('app');
+		if(!empty($appName)){
+			$viewer->assign('SELECTED_MENU_CATEGORY',$appName);
+		}
+
+		$selectedTabLabel = $request->get('tab_label');
+		$relationId = $request->get('relationId');
+
+		if(empty($selectedTabLabel)) {
+			if($currentUserModel->get('default_record_view') === 'Detail') {
+				$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName);
+			} else{
+				if($moduleModel->isSummaryViewSupported()) {
+					$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_SUMMARY', $moduleName);
+				} else {
+					$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName);
+				}
+			}
+		}
+
+		$viewer->assign('SELECTED_TAB_LABEL', $selectedTabLabel);
+		$viewer->assign('SELECTED_RELATION_ID',$relationId);
+
+		//Vtiger7 - TO show custom view name in Module Header
+		$viewer->assign('CUSTOM_VIEWS', CustomView_Record_Model::getAllByGroup($moduleName));
+
+		$viewer->assign('IS_AJAX_ENABLED', $this->isAjaxEnabled($recordModel));
 		if($display) {
 			$this->preProcessDisplay($request);
 		}
@@ -142,32 +186,40 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 	public function postProcess(Vtiger_Request $request) {
 		$recordId = $request->get('record');
 		$moduleName = $request->getModule();
+		if($moduleName=="Calendar"){
+			$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+			$activityType = $recordModel->getType();
+			if($activityType=="Events"){
+				$moduleName="Events";
+			}
+		}
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
 		if(!$this->record){
 			$this->record = Vtiger_DetailView_Model::getInstance($moduleName, $recordId);
 		}
 		$detailViewLinkParams = array('MODULE'=>$moduleName,'RECORD'=>$recordId);
-		//AV150619
-		$detailViewLinks = $this->record->getDetailViewLinks($detailViewLinkParams, true);
+		$detailViewLinks = $this->record->getDetailViewLinks($detailViewLinkParams);
 
 		$selectedTabLabel = $request->get('tab_label');
+		$relationId = $request->get('relationId');
 
 		if(empty($selectedTabLabel)) {
 			if($currentUserModel->get('default_record_view') === 'Detail') {
-			    $selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName);
-			} else{
-			    if($moduleModel->isSummaryViewSupported()) {
-				$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_SUMMARY', $moduleName);
-			    } else {
 				$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName);
-			    }
-			} 
+			} else{
+				if($moduleModel->isSummaryViewSupported()) {
+					$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_SUMMARY', $moduleName);
+				} else {
+					$selectedTabLabel = vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName);
+				}
+			}
 		}
 
 		$viewer = $this->getViewer($request);
 
 		$viewer->assign('SELECTED_TAB_LABEL', $selectedTabLabel);
+		$viewer->assign('SELECTED_RELATION_ID',$relationId);
 		$viewer->assign('MODULE_MODEL', $this->record->getModule());
 		$viewer->assign('DETAILVIEW_LINKS', $detailViewLinks);
 
@@ -191,6 +243,13 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 			"libraries.jquery.ckeditor.adapters.jquery",
 			"modules.Emails.resources.MassEdit",
 			"modules.Vtiger.resources.CkEditor",
+			"~/libraries/jquery/twitter-text-js/twitter-text.js",
+			"libraries.jquery.multiplefileupload.jquery_MultiFile",
+			'~/libraries/jquery/bootstrapswitch/js/bootstrap-switch.min.js',
+			'~/libraries/jquery.bxslider/jquery.bxslider.min.js',
+			"~layouts/v7/lib/jquery/Lightweight-jQuery-In-page-Filtering-Plugin-instaFilta/instafilta.js",
+			'modules.Vtiger.resources.Tag',
+			'modules.Google.resources.Map'
 		);
 
 		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
@@ -210,16 +269,13 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 	 * Function shows the entire detail for the record
 	 * @param Vtiger_Request $request
 	 * @return <type>
-
-	 * ED151126 A noter que les champs d'adresses des contacts sont triés dans modules\Contacts\models\DetailRecordStructure.php
-
 	 */
 	function showModuleDetailView(Vtiger_Request $request) {
 		$recordId = $request->get('record');
 		$moduleName = $request->getModule();
 
 		if(!$this->record){
-				$this->record = Vtiger_DetailView_Model::getInstance($moduleName, $recordId);
+		$this->record = Vtiger_DetailView_Model::getInstance($moduleName, $recordId);
 		}
 		$recordModel = $this->record->getRecord();
 		$recordStrucure = Vtiger_RecordStructure_Model::getInstanceFromRecordModel($recordModel, Vtiger_RecordStructure_Model::RECORD_STRUCTURE_MODE_DETAIL);
@@ -234,12 +290,34 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$viewer->assign('USER_MODEL', Users_Record_Model::getCurrentUserModel());
 		$viewer->assign('MODULE_NAME', $moduleName);
 		$viewer->assign('IS_AJAX_ENABLED', $this->isAjaxEnabled($recordModel));
+		$viewer->assign('MODULE', $moduleName);
 
-		return $viewer->view('DetailViewFullContents.tpl',$moduleName,true);
+		$picklistDependencyDatasource = Vtiger_DependencyPicklist::getPicklistDependencyDatasource($moduleName);
+		$viewer->assign('PICKIST_DEPENDENCY_DATASOURCE', Vtiger_Functions::jsonEncode($picklistDependencyDatasource));
+
+		if ($request->get('displayMode') == 'overlay') {
+			$viewer->assign('MODULE_MODEL', $moduleModel);
+			$this->setModuleInfo($request, $moduleModel);
+			$viewer->assign('SCRIPTS',$this->getOverlayHeaderScripts($request));
+
+			$detailViewLinkParams = array('MODULE'=>$moduleName, 'RECORD'=>$recordId);
+			$detailViewLinks = $this->record->getDetailViewLinks($detailViewLinkParams);
+			$viewer->assign('DETAILVIEW_LINKS', $detailViewLinks);
+			return $viewer->view('OverlayDetailView.tpl', $moduleName);
+		} else {
+			return $viewer->view('DetailViewFullContents.tpl', $moduleName, true);
+		}
+	}
+	public function getOverlayHeaderScripts(Vtiger_Request $request){
+		$moduleName = $request->getModule();
+		$jsFileNames = array(
+			"modules.$moduleName.resources.Detail",
+		);
+		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
+		return $jsScriptInstances;	
 	}
 
 	function showModuleSummaryView($request) {
-		
 		$recordId = $request->get('record');
 		$moduleName = $request->getModule();
 
@@ -257,21 +335,17 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 
 		$viewer->assign('MODULE_NAME', $moduleName);
 		$viewer->assign('IS_AJAX_ENABLED', $this->isAjaxEnabled($recordModel));
-		$viewer->assign('SUMMARY_RECORD_STRUCTURE', $this->getRecordStructure($recordStrucure));
-		
-		/* ED141210 court-circuite les activités */
-		$no_activities = $viewer->getVariable('NO_ACTIVITIES_WIDGET');
-		if(!$no_activities){
-			$viewer->assign('RELATED_ACTIVITIES', $this->getActivities($request));
-		}
+		$viewer->assign('SUMMARY_RECORD_STRUCTURE', $recordStrucure->getStructure());
+		$viewer->assign('RELATED_ACTIVITIES', $this->getActivities($request));
+
+		$viewer->assign('CURRENT_USER_MODEL', Users_Record_Model::getCurrentUserModel());
+		$pagingModel = new Vtiger_Paging_Model();
+		$viewer->assign('PAGING_MODEL', $pagingModel);
+
+		$picklistDependencyDatasource = Vtiger_DependencyPicklist::getPicklistDependencyDatasource($moduleName);
+		$viewer->assign('PICKIST_DEPENDENCY_DATASOURCE', Vtiger_Functions::jsonEncode($picklistDependencyDatasource));
+
 		return $viewer->view('ModuleSummaryView.tpl', $moduleName, true);
-	}
-	
-	/* ED151116
-	 * Permet le tri des champs
-	 */
-	function getRecordStructure($recordStructure){
-		return $recordStructure->getStructure();
 	}
 
 	/**
@@ -279,6 +353,7 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 	 * @param <type> $request
 	 */
 	function showModuleBasicView($request) {
+
 		$recordId = $request->get('record');
 		$moduleName = $request->getModule();
 
@@ -300,23 +375,31 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$viewer->assign('MODULE_NAME', $moduleName);
 
 		$recordStrucure = Vtiger_RecordStructure_Model::getInstanceFromRecordModel($recordModel, Vtiger_RecordStructure_Model::RECORD_STRUCTURE_MODE_DETAIL);
-		
 		$structuredValues = $recordStrucure->getStructure();
 
 		$moduleModel = $recordModel->getModule();
-
+		$viewer->assign('CURRENT_USER_MODEL', Users_Record_Model::getCurrentUserModel());
 		$viewer->assign('RECORD_STRUCTURE', $structuredValues);
 		$viewer->assign('BLOCK_LIST', $moduleModel->getBlocks());
-
 		echo $viewer->view('DetailViewSummaryContents.tpl', $moduleName, true);
 	}
 
 	/**
-	 * Function returns recent changes made on the record
+	 * Funtion to show History view
 	 * @param Vtiger_Request $request
 	 */
-	function showRecentActivities (Vtiger_Request $request) {
-		
+	function showHistory(Vtiger_Request $request){
+		$moduleName = $request->getModule();
+
+		$viewer = $this->getViewer($request);
+		echo $viewer->view('History.tpl', $moduleName, true);
+	}
+
+	/**
+	 * Added to support Engagements view in Vtiger7
+	 * @param Vtiger_Request $request
+	 */
+	function _showRecentActivities(Vtiger_Request $request){
 		$parentRecordId = $request->get('record');
 		$pageNumber = $request->get('page');
 		$limit = $request->get('limit');
@@ -332,15 +415,31 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 			$pagingModel->set('limit', $limit);
 		}
 
-		$recentActivities = ModTracker_Record_Model::getUpdates($parentRecordId, $pagingModel);
+		$recentActivities = ModTracker_Record_Model::getUpdates($parentRecordId, $pagingModel,$moduleName);
 		$pagingModel->calculatePageRange($recentActivities);
 
+		if($pagingModel->getCurrentPage() == ModTracker_Record_Model::getTotalRecordCount($parentRecordId)/$pagingModel->getPageLimit()) {
+			$pagingModel->set('nextPageExists', false);
+		}
+		$recordModel = Vtiger_Record_Model::getInstanceById($parentRecordId);
 		$viewer = $this->getViewer($request);
+		$viewer->assign('SOURCE',$recordModel->get('source'));
 		$viewer->assign('RECENT_ACTIVITIES', $recentActivities);
 		$viewer->assign('MODULE_NAME', $moduleName);
 		$viewer->assign('PAGING_MODEL', $pagingModel);
+		$viewer->assign('RECORD_ID',$parentRecordId);
+	}
 
-		echo $viewer->view('RecentActivities.tpl', $moduleName, 'true');
+	/**
+	 * Function returns recent changes made on the record
+	 * @param Vtiger_Request $request
+	 */
+	function showRecentActivities (Vtiger_Request $request){
+		$moduleName = $request->getModule();
+		$this->_showRecentActivities($request);
+
+		$viewer = $this->getViewer($request);
+		echo $viewer->view('RecentActivities.tpl', $moduleName, true);
 	}
 
 	/**
@@ -353,6 +452,7 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$pageNumber = $request->get('page');
 		$limit = $request->get('limit');
 		$moduleName = $request->getModule();
+		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 
 		if(empty($pageNumber)) {
 			$pageNumber = 1;
@@ -364,15 +464,38 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 			$pagingModel->set('limit', $limit);
 		}
 
-		$recentComments = ModComments_Record_Model::getRecentComments($parentId, $pagingModel);
+		if($request->get('rollup-toggle')) {
+			$rollupsettings = ModComments_Module_Model::storeRollupSettingsForUser($currentUserModel, $request);
+		} else {
+			$rollupsettings = ModComments_Module_Model::getRollupSettingsForUser($currentUserModel, $moduleName);
+		}
+
+		if($rollupsettings['rollup_status']) {
+			$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentId, $moduleName);
+			$recentComments = $parentRecordModel->getRollupCommentsForModule(0, 5);
+		}else {
+			$recentComments = ModComments_Record_Model::getRecentComments($parentId, $pagingModel);
+		}
+
 		$pagingModel->calculatePageRange($recentComments);
-		$currentUserModel = Users_Record_Model::getCurrentUserModel();
+		array_pop($recentComments);
+		$modCommentsModel = Vtiger_Module_Model::getInstance('ModComments');
+
+		$fileNameFieldModel = Vtiger_Field::getInstance("filename", $modCommentsModel);
+		$fileFieldModel = Vtiger_Field_Model::getInstanceFromFieldObject($fileNameFieldModel);
 
 		$viewer = $this->getViewer($request);
 		$viewer->assign('COMMENTS', $recentComments);
 		$viewer->assign('CURRENTUSER', $currentUserModel);
 		$viewer->assign('MODULE_NAME', $moduleName);
 		$viewer->assign('PAGING_MODEL', $pagingModel);
+		$viewer->assign('FIELD_MODEL', $fileFieldModel);
+		$viewer->assign('MAX_UPLOAD_LIMIT_MB', Vtiger_Util_Helper::getMaxUploadSize());
+		$viewer->assign('MAX_UPLOAD_LIMIT_BYTES', Vtiger_Util_Helper::getMaxUploadSizeInBytes());
+		$viewer->assign('COMMENTS_MODULE_MODEL', $modCommentsModel);
+		$viewer->assign('ROLLUP_STATUS', $rollupsettings['rollup_status']);
+		$viewer->assign('ROLLUPID', $rollupsettings['rollupid']);
+		$viewer->assign('PARENT_RECORD', $parentId);
 
 		return $viewer->view('RecentComments.tpl', $moduleName, 'true');
 	}
@@ -383,11 +506,16 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 	 * @return <type>
 	 */
 	function showRelatedList(Vtiger_Request $request) {
-	      
 		$moduleName = $request->getModule();
 		$relatedModuleName = $request->get('relatedModule');
 		$targetControllerClass = null;
-			
+
+		if($relatedModuleName == 'ModComments') {
+			$currentUserModel = Users_Record_Model::getCurrentUserModel();
+			$rollupSettings = ModComments_Module_Model::getRollupSettingsForUser($currentUserModel, $moduleName);
+			$request->set('rollup_settings', $rollupSettings);
+		}
+
 		// Added to support related list view from the related module, rather than the base module.
 		try {
 			$targetControllerClass = Vtiger_Loader::getComponentClassName('View', 'In'.$moduleName.'Relation', $relatedModuleName);
@@ -401,9 +529,7 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 			}
 		}
 		if($targetControllerClass) {
-			
 			$targetController = new $targetControllerClass();
-			
 			return $targetController->process($request);
 		}
 	}
@@ -418,45 +544,26 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$parentCommentModel = ModComments_Record_Model::getInstanceById($parentCommentId);
 		$childComments = $parentCommentModel->getChildComments();
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
-		
+		$modCommentsModel = Vtiger_Module_Model::getInstance('ModComments');
+
 		$viewer = $this->getViewer($request);
 		$viewer->assign('PARENT_COMMENTS', $childComments);
 		$viewer->assign('CURRENTUSER', $currentUserModel);
+		$viewer->assign('COMMENTS_MODULE_MODEL', $modCommentsModel);
 
 		return $viewer->view('CommentsList.tpl', $moduleName, 'true');
 	}
 
-	/**
-	 * Function sends all the comments for a parent(Accounts, Contacts etc)
-	 * @param Vtiger_Request $request
-	 * @return <type>
-	 */
-	function showAllComments(Vtiger_Request $request) {
-		$parentRecordId = $request->get('record');
-		$commentRecordId = $request->get('commentid');
-		$moduleName = $request->getModule();
-		$currentUserModel = Users_Record_Model::getCurrentUserModel();
-
-		$parentCommentModels = ModComments_Record_Model::getAllParentComments($parentRecordId);
-
-		if(!empty($commentRecordId)) {
-			$currentCommentModel = ModComments_Record_Model::getInstanceById($commentRecordId);
-		}
-
-		$viewer = $this->getViewer($request);
-		$viewer->assign('CURRENTUSER', $currentUserModel);
-		$viewer->assign('PARENT_COMMENTS', $parentCommentModels);
-		$viewer->assign('CURRENT_COMMENT', $currentCommentModel);
-
-		return $viewer->view('ShowAllComments.tpl', $moduleName, 'true');
-	}
 	/**
 	 * Function to get Ajax is enabled or not
 	 * @param Vtiger_Record_Model record model
 	 * @return <boolean> true/false
 	 */
 	function isAjaxEnabled($recordModel) {
-		return $recordModel->isEditable();
+		if(is_null($this->isAjaxEnabled)){
+			$this->isAjaxEnabled = $recordModel->isEditable();
+		}
+		return $this->isAjaxEnabled;
 	}
 
 	/**
@@ -493,10 +600,6 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 
 		$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentId, $moduleName);
 		$relationListView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $relatedModuleName);
-		/*ED150507*/
-		$relationListView->set('orderby', $request->get('orderby'));
-		$relationListView->set('sortorder',$request->get('sortorder'));
-		
 		$models = $relationListView->getEntries($pagingModel);
 		$header = $relationListView->getHeaders();
 
@@ -506,15 +609,18 @@ class Vtiger_Detail_View extends Vtiger_Index_View {
 		$viewer->assign('RELATED_HEADERS', $header);
 		$viewer->assign('RELATED_MODULE' , $relatedModuleName);
 		$viewer->assign('PAGING_MODEL', $pagingModel);
-		
-		/* ED150102*/
-		if($models)
-			foreach($models as $relatedRecordModel)
-				break;
-		else
-			$relatedRecordModel = Vtiger_Record_Model::getCleanInstance($relatedModuleName);
-		$viewer->assign('RELATED_RECORD_MODEL', $relatedRecordModel);
 
 		return $viewer->view('SummaryWidgets.tpl', $moduleName, 'true');
 	}
+
+	public function getHeaderCss(Vtiger_Request $request) {
+		$headerCssInstances = parent::getHeaderCss($request);
+		$cssFileNames = array(
+			'~/libraries/jquery/bootstrapswitch/css/bootstrap2/bootstrap-switch.min.css',
+		);
+		$cssInstances = $this->checkAndConvertCssStyles($cssFileNames);
+		$headerCssInstances = array_merge($headerCssInstances, $cssInstances);
+		return $headerCssInstances;
+	}
+
 }

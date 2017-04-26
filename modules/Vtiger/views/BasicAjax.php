@@ -40,7 +40,7 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 	 */
 	function showAdvancedSearch(Vtiger_Request $request) {
 		//Modules for which search is excluded
-		$excludedModuleForSearch = array('Vtiger');
+		$excludedModuleForSearch = array('Vtiger', 'Reports');
 
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
@@ -50,10 +50,10 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 		}
         
 		$saveFilterPermitted = true;
-		$saveFilterexcludedModules =  array('ModComments','RSS','Portal','Integration','PBXManager','DashBoard');
-		if(in_array($moduleName, $saveFilterexcludedModules)){
-		    $saveFilterPermitted = false;
-		}
+        $saveFilterexcludedModules =  array('ModComments','RSS','Portal','Integration','PBXManager','DashBoard');
+        if(in_array($moduleName, $saveFilterexcludedModules)){
+            $saveFilterPermitted = false;
+        }
         
 		//See if it is an excluded module, If so search in home module
 		if(in_array($moduleName, $excludedModuleForSearch)) {
@@ -62,10 +62,12 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 		$module = $request->getModule();
 
 		$customViewModel = new CustomView_Record_Model();
-		$customViewModel->setModule($moduleName);
+        $customViewModel->setModule($moduleName);
 		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
-		$recordStructureInstance = Vtiger_RecordStructure_Model::getInstanceForModule($moduleModel);
-
+        if(!empty($moduleModel)) {
+            $recordStructureInstance = Vtiger_RecordStructure_Model::getInstanceForModule($moduleModel, Vtiger_RecordStructure_Model::RECORD_STRUCTURE_MODE_FILTER);
+            $viewer->assign('RECORD_STRUCTURE', $recordStructureInstance->getStructure());
+        }
 		$viewer->assign('SEARCHABLE_MODULES', Vtiger_Module_Model::getSearchableModules());
 		$viewer->assign('CUSTOMVIEW_MODEL', $customViewModel);
 		
@@ -76,78 +78,20 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 		}
 		$viewer->assign('ADVANCED_FILTER_OPTIONS', Vtiger_Field_Model::getAdvancedFilterOptions());
 		$viewer->assign('ADVANCED_FILTER_OPTIONS_BY_TYPE', $advanceFilterOpsByFieldType);
-		$dateFilters = Vtiger_Field_Model::getDateFilterTypes();
-		foreach($dateFilters as $comparatorKey => $comparatorInfo) {
-		    $comparatorInfo['startdate'] = DateTimeField::convertToUserFormat($comparatorInfo['startdate']);
-		    $comparatorInfo['enddate'] = DateTimeField::convertToUserFormat($comparatorInfo['enddate']);
-		    $comparatorInfo['label'] = vtranslate($comparatorInfo['label'],$module);
-		    $dateFilters[$comparatorKey] = $comparatorInfo;
-		}
-		$viewer->assign('DATE_FILTERS', $dateFilters);
-		$viewer->assign('RECORD_STRUCTURE', $recordStructureInstance->getStructure());
+        $dateFilters = Vtiger_Field_Model::getDateFilterTypes();
+        foreach($dateFilters as $comparatorKey => $comparatorInfo) {
+            $comparatorInfo['startdate'] = DateTimeField::convertToUserFormat($comparatorInfo['startdate']);
+            $comparatorInfo['enddate'] = DateTimeField::convertToUserFormat($comparatorInfo['enddate']);
+            $comparatorInfo['label'] = vtranslate($comparatorInfo['label'],$module);
+            $dateFilters[$comparatorKey] = $comparatorInfo;
+        }
+        $viewer->assign('DATE_FILTERS', $dateFilters);
 		$viewer->assign('SOURCE_MODULE',$moduleName);
-		$viewer->assign('SOURCE_MODULE_MODEL', $moduleModel);
+        $viewer->assign('SOURCE_MODULE_MODEL', $moduleModel);
 		$viewer->assign('MODULE', $module);
-		
-		//ED151118
-		if(false){
-			//TODO
-			//copie depuis modules\CustomView\views\EditAjax.php mais ça ne fonctionne pas 
-
-			/* ED150212
-			 * Related record structures
-			 */
-			$relationModels = $moduleModel->getRelations();
-			$relatedViews = array();
-			foreach($relationModels as $relationModel){
-				$relatedViews[$relationModel->getRelationModuleName()] = $relationModel->getRelationViews();
-			}
-	
-			/* ED150507
-			 * RSNContactsPanels
-			 */
-			if($moduleName == 'Contacts'){
-				$contactsPanels = array();
-				$contactsPanelsRecords = RSNContactsPanels_Record_Model::getAllForCustomViewEditor();
-				foreach($contactsPanelsRecords as $contactsPanel){
-					$contactsPanels[$contactsPanel->getName()] = $contactsPanel;
-				}
-				$viewer->assign('CONTACTS_PANELS',$contactsPanels);
-			}
-	
-			/* ED151025
-			 * RSNStatistics
-			 */
-			if(true){ //TODO Trop long !
-				$relatedStats = array();
-				$statRecords = RSNStatistics_Utils_Helper::getRelatedStatisticsRecordModels($moduleName);
-				if($statRecords){
-					$statsModuleModel = Vtiger_Module_Model::getInstance('RSNStatistics');
-					$periodicityField = false;
-					foreach($statRecords as $statRecord){
-						if(!$periodicityField)
-							$periodicityField = $statsModuleModel->getField('stats_periodicite');
-						else
-							$periodicityField = clone $periodicityField;
-						$periodicityField->set('label', '[' . $statRecord->getName() . '] Période');
-						$periodicityField->set('parentid', $statRecord->getId());
-						$relatedStatsFields = array($periodicityField->getId() => $periodicityField);
-						$relatedStatsFields = array_merge($relatedStatsFields, RSNStatistics_Utils_Helper::getRelatedStatsFieldsVtigerFieldModels($statRecord->getId(),$moduleName));
-						$relatedStats[$statRecord->getId()] = array(
-							'recordModel' => $statRecord,
-							'fields' => $relatedStatsFields,
-						);
-					}
-					$viewer->assign('RELATED_STATISTICS',$relatedStats);
-				}
-			}
-		}
-		$viewer->assign('NOCHOSEN', true);
         
-		$viewer->assign('SAVE_FILTER_PERMITTED', $saveFilterPermitted);
+        $viewer->assign('SAVE_FILTER_PERMITTED', $saveFilterPermitted);
 
-		$viewer->assign('ADVANCE_CRITERIA', array('1' => array(), '2' => array()));
-		
 		echo $viewer->view('AdvanceSearch.tpl',$moduleName, true);
 	}
 
@@ -168,38 +112,42 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 		if(is_array($advFilterList) && count($advFilterList) > 0) {
 			$isAdvanceSearch = true;
 			$user = Users_Record_Model::getCurrentUserModel();
-			$queryGenerator = new QueryGenerator($moduleName, $user);
+			$queryGenerator = new EnhancedQueryGenerator($moduleName, $user);
 			$queryGenerator->setFields(array('id'));
           
-			vimport('~~/modules/CustomView/CustomView.php');
-			$customView = new CustomView($moduleName);
-			$dateSpecificConditions = $customView->getStdFilterConditions();
+            vimport('~~/modules/CustomView/CustomView.php');
+            $customView = new CustomView($moduleName);
+            $dateSpecificConditions = $customView->getStdFilterConditions();
 
 			foreach ($advFilterList as $groupindex=>$groupcolumns) {
 				$filtercolumns = $groupcolumns['columns'];
 				if(count($filtercolumns) > 0) {
 					$queryGenerator->startGroup('');
 					foreach ($filtercolumns as $index=>$filter) {
+                        $specialDateTimeConditions = Vtiger_Functions::getSpecialDateTimeCondtions();
 						$nameComponents = explode(':',$filter['columnname']);
 						if(empty($nameComponents[2]) && $nameComponents[1] == 'crmid' && $nameComponents[0] == 'vtiger_crmentity') {
 							$name = $queryGenerator->getSQLColumn('id');
 						} else {
 							$name = $nameComponents[2];
 						}
-						if(($nameComponents[4] == 'D' || $nameComponents[4] == 'DT') && in_array($filter['comparator'], $dateSpecificConditions)) {
-						    $filter['stdfilter'] = $filter['comparator'];
-						    $valueComponents = explode(',',$filter['value']);
-						    if($filter['comparator'] == 'custom') {
-							$filter['startdate'] = DateTimeField::convertToDBFormat($valueComponents[0]);
-							$filter['enddate'] = DateTimeField::convertToDBFormat($valueComponents[1]);
-						    }
-						    $dateFilterResolvedList = $customView->resolveDateFilterValue($filter);
-						    $value[] = $queryGenerator->fixDateTimeValue($name, $dateFilterResolvedList['startdate']);
-						    $value[] = $queryGenerator->fixDateTimeValue($name, $dateFilterResolvedList['enddate'], false);
-						    $queryGenerator->addCondition($name, $value, 'BETWEEN');
-						}else{
-						    $queryGenerator->addCondition($name, $filter['value'], $filter['comparator']);
-						}
+                        if(($nameComponents[4] == 'D' || $nameComponents[4] == 'DT') && in_array($filter['comparator'], $dateSpecificConditions)) {
+                            $filter['stdfilter'] = $filter['comparator'];
+                            $valueComponents = explode(',',$filter['value']);
+                            if($filter['comparator'] == 'custom') {
+                                $filter['startdate'] = DateTimeField::convertToDBFormat($valueComponents[0]);
+                                $filter['enddate'] = DateTimeField::convertToDBFormat($valueComponents[1]);
+                            }
+                            $dateFilterResolvedList = $customView->resolveDateFilterValue($filter);
+                            $value[] = $queryGenerator->fixDateTimeValue($name, $dateFilterResolvedList['startdate']);
+                            $value[] = $queryGenerator->fixDateTimeValue($name, $dateFilterResolvedList['enddate'], false);
+                            $queryGenerator->addCondition($name, $value, 'BETWEEN');
+                        } else if(($nameComponents[4] == 'D' || $nameComponents[4] == 'DT') && in_array($filter['comparator'], $specialDateTimeConditions)) {
+                            $values = EnhancedQueryGenerator::getSpecialDateConditionValue($filter['comparator'], $filter['value'], $nameComponents[4], true);
+                            $queryGenerator->addCondition($name, $values['date'], $values['comparator']);
+                        } else{
+                            $queryGenerator->addCondition($name, $filter['value'], $filter['comparator']);
+                        }
 						$columncondition = $filter['column_condition'];
 						if(!empty($columncondition)) {
 							$queryGenerator->addConditionGlue($columncondition);
@@ -211,6 +159,9 @@ class Vtiger_BasicAjax_View extends Vtiger_Basic_View {
 						$queryGenerator->addConditionGlue($groupConditionGlue);
 				}
 			}
+            if($moduleName=='Calendar'){
+                $queryGenerator->addCondition('activitytype','Emails','n','AND');
+            }
 			$query = $queryGenerator->getQuery();
 			//Remove the ordering for now to improve the speed
 			//$query .= ' ORDER BY createdtime DESC';

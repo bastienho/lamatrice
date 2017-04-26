@@ -8,17 +8,6 @@
  * All Rights Reserved.
  ********************************************************************************/
 
-//ED150625
-//TODO transposer en fichier de config locale
-define('COUPON_FOLDERID', '9');
-define('COUPON_FOLDERNAME', 'Coupons');
-define('COUPON_LIBRE_ID', '1197732'); //TODO pas fiable
-
-include_once('config.php');
-require_once('include/logging.php');
-require_once('include/database/PearDatabase.php');
-require_once('data/CRMEntity.php');
-
 // Note is used to store customer information.
 class Documents extends CRMEntity {
 
@@ -30,12 +19,12 @@ class Documents extends CRMEntity {
 
 	var $tab_name = Array('vtiger_crmentity','vtiger_notes','vtiger_notescf');
 	var $tab_name_index = Array('vtiger_crmentity'=>'crmid','vtiger_notes'=>'notesid','vtiger_senotesrel'=>'notesid','vtiger_notescf'=>'notesid');
-	
+
 	/**
 	 * Mandatory table for supporting custom fields.
 	 */
 	var $customFieldTable = Array('vtiger_notescf', 'notesid');
-	
+
 	var $column_fields = Array();
 
 	var $sortby_fields = Array('title','modifiedtime','filename','createdtime','lastname','filedownloadcount','smownerid');
@@ -48,49 +37,36 @@ class Documents extends CRMEntity {
 				'Title'=>Array('notes'=>'title'),
 				'File Name'=>Array('notes'=>'filename'),
 				'Modified Time'=>Array('crmentity'=>'modifiedtime'),
-				//'Assigned To' => Array('crmentity'=>'smownerid'),
-				'Folder Name' => Array('attachmentsfolder'=>'folderid'),
-				'Folder Color' => Array('attachmentsfolder'=>'uicolor'),
+				'Assigned To' => Array('crmentity'=>'smownerid'),
+				'Folder Name' => Array('attachmentsfolder'=>'folderid')
 				);
 	var $list_fields_name = Array(
 					'Title'=>'notes_title',
 					'File Name'=>'filename',
 					'Modified Time'=>'modifiedtime',
-					//'Assigned To'=>'assigned_user_id',
-					'Folder Name' => 'folderid',
-					'Folder Color' => 'uicolor',
-				     );
+					'Assigned To'=>'assigned_user_id',
+					'Folder Name' => 'folderid'
+					 );
 
 	var $search_fields = Array(
 					'Title' => Array('notes'=>'notes_title'),
-					'Folder Name' => Array('attachmentsfolder'=>'foldername'),
-					'Code affaire' => Array('notes'=>'codeaffaire'),
-					'Created time' => Array('crmentity'=>'createdtime'),
-					//'File Name' => Array('notes'=>'filename'),
-					//'Assigned To' => Array('crmentity'=>'smownerid'),
+					'File Name' => Array('notes'=>'filename'),
+					'Assigned To' => Array('crmentity'=>'smownerid'),
+					'Folder Name' => Array('attachmentsfolder'=>'foldername')
 		);
 
 	var $search_fields_name = Array(
 					'Title' => 'notes_title',
-					'Folder Name' => 'folderid',
-					'Code affaire' => 'codeaffaire',
-					'Created time' => 'createdtime',
-					//'File Name' => 'filename',
-					//'Assigned To' => 'assigned_user_id',
+					'File Name' => 'filename',
+					'Assigned To' => 'assigned_user_id',
+					'Folder Name' => 'folderid'
 	);
 	var $list_link_field= 'notes_title';
 	var $old_filename = '';
 	//var $groupTable = Array('vtiger_notegrouprelation','notesid');
 
-	var $mandatory_fields = Array('notes_title','createdtime' ,'modifiedtime','filename','filesize','filetype','filedownloadcount','assigned_user_id');
+	var $mandatory_fields = Array('notes_title','createdtime' ,'modifiedtime','filename','filesize','filetype','filedownloadcount','assigned_user_id','document_source','notecontent','filelocationtype','folderid');
 
-	
-	/* ED141013*/
-	var $related_module_table_index = array(
-		'Contacts' => array('table_name' => 'vtiger_senotesrel', 'table_index' => 'crmid', 'rel_index' => 'notesid'),
-		'Campaigns' => array('table_name' => 'vtiger_senotesrel', 'table_index' => 'crmid', 'rel_index' => 'notesid'),
-	);
-	
 	//Added these variables which are used as default order by and sortorder in ListView
 	var $default_order_by = 'title';
 	var $default_sort_order = 'ASC';
@@ -167,7 +143,7 @@ class Documents extends CRMEntity {
 			$filedownloadcount = null;
 		}
 		$query = "UPDATE vtiger_notes SET filename = ? ,filesize = ?, filetype = ? , filelocationtype = ? , filedownloadcount = ? WHERE notesid = ?";
- 		$re=$adb->pquery($query,array(decode_html($filename),$filesize,$filetype,$filelocationtype,$filedownloadcount,$this->id));
+		$re=$adb->pquery($query,array(decode_html($filename),$filesize,$filetype,$filelocationtype,$filedownloadcount,$this->id));
 		//Inserting into attachments table
 		if($filelocationtype == 'I') {
 			$this->insertIntoAttachment($this->id,'Documents');
@@ -176,11 +152,11 @@ class Documents extends CRMEntity {
 			$qparams = array($this->id);
 			$adb->pquery($query, $qparams);
 		}
-        //set the column_fields so that its available in the event handlers
-        $this->column_fields['filename'] = $filename;
-        $this->column_fields['filesize'] = $filesize;
-        $this->column_fields['filetype'] = $filetype;
-        $this->column_fields['filedownloadcount'] = $filedownloadcount;
+		//set the column_fields so that its available in the event handlers
+		$this->column_fields['filename'] = $filename;
+		$this->column_fields['filesize'] = $filesize;
+		$this->column_fields['filetype'] = $filetype;
+		$this->column_fields['filedownloadcount'] = $filedownloadcount;
 	}
 
 
@@ -312,27 +288,26 @@ class Documents extends CRMEntity {
 			$query .= "  WHERE ".$where_auto;
 
 		$log->debug("Exiting create_export_query method ...");
-		        return $query;
+				return $query;
 	}
 
 	function del_create_def_folder($query)
 	{
 		global $adb;
-		$dbQuery = $query." and vtiger_attachmentsfolder.folderid = 0";
+		$dbQuery = $query." and vtiger_attachmentsfolderfolderid.folderid = 0";
 		$dbresult = $adb->pquery($dbQuery,array());
 		$noofnotes = $adb->num_rows($dbresult);
 		if($noofnotes > 0)
 		{
-            $folderQuery = "select folderid from vtiger_attachmentsfolder";
-            $folderresult = $adb->pquery($folderQuery,array());
-            $noofdeffolders = $adb->num_rows($folderresult);
+			$folderQuery = "select folderid from vtiger_attachmentsfolder";
+			$folderresult = $adb->pquery($folderQuery,array());
+			$noofdeffolders = $adb->num_rows($folderresult);
 
-            if($noofdeffolders == 0)
-            {
-			    $insertQuery = "insert into vtiger_attachmentsfolder (`folderid`, `foldername`, `description`, `createdby`, `sequence`) /*ED141010*/
-				values (0,'Default','Contains all attachments for which a folder is not set',1,0)";
-			    $insertresult = $adb->pquery($insertQuery,array());
-            }
+			if($noofdeffolders == 0)
+			{
+				$insertQuery = "insert into vtiger_attachmentsfolder values (0,'Default','Contains all attachments for which a folder is not set',1,0)";
+				$insertresult = $adb->pquery($insertQuery,array());
+			}
 		}
 
 	}
@@ -359,18 +334,22 @@ class Documents extends CRMEntity {
 		$query = "from $moduletable
 			inner join vtiger_crmentity on vtiger_crmentity.crmid=$moduletable.$moduleindex";
 		if ($queryplanner->requireTable("vtiger_attachmentsfolder")){
-		    $query .= " inner join vtiger_attachmentsfolder on vtiger_attachmentsfolder.folderid=$moduletable.folderid";
+			$query .= " inner join vtiger_attachmentsfolder on vtiger_attachmentsfolder.folderid=$moduletable.folderid";
 		}
 		if ($queryplanner->requireTable("vtiger_groups".$module)){
-		    $query .= " left join vtiger_groups as vtiger_groups".$module." on vtiger_groups".$module.".groupid = vtiger_crmentity.smownerid";
+			$query .= " left join vtiger_groups as vtiger_groups".$module." on vtiger_groups".$module.".groupid = vtiger_crmentity.smownerid";
+		}
+		if($queryplanner->requireTable('vtiger_createdby'.$module)){
+			$query .= " LEFT JOIN vtiger_users AS vtiger_createdby$module ON vtiger_createdby$module.id = vtiger_crmentity.smcreatorid";
 		}
 		if ($queryplanner->requireTable("vtiger_users".$module)){
-		    $query .= " left join vtiger_users as vtiger_users".$module." on vtiger_users".$module.".id = vtiger_crmentity.smownerid";
+			$query .= " left join vtiger_users as vtiger_users".$module." on vtiger_users".$module.".id = vtiger_crmentity.smownerid";
 		}
 		$query .= " left join vtiger_groups on vtiger_groups.groupid = vtiger_crmentity.smownerid";
+		$query .= " left join vtiger_notescf on vtiger_notes.notesid = vtiger_notescf.notesid";
 		$query .= " left join vtiger_users on vtiger_users.id = vtiger_crmentity.smownerid";
 		if ($queryplanner->requireTable("vtiger_lastModifiedBy".$module)){
-		    $query .= " left join vtiger_users as vtiger_lastModifiedBy".$module." on vtiger_lastModifiedBy".$module.".id = vtiger_crmentity.modifiedby ";
+			$query .= " left join vtiger_users as vtiger_lastModifiedBy".$module." on vtiger_lastModifiedBy".$module.".id = vtiger_crmentity.modifiedby ";
 		}
 		return $query;
 
@@ -383,31 +362,34 @@ class Documents extends CRMEntity {
 	 * returns the query string formed on fetching the related data for report for secondary module
 	 */
 	function generateReportsSecQuery($module,$secmodule,$queryplanner) {
-		
+
 		$matrix = $queryplanner->newDependencyMatrix();
-		
 		$matrix->setDependency("vtiger_crmentityDocuments",array("vtiger_groupsDocuments","vtiger_usersDocuments","vtiger_lastModifiedByDocuments"));
-		$matrix->setDependency("vtiger_notes",array("vtiger_crmentityDocuments","vtiger_attachmentsfolder"));
-		
+
 		if (!$queryplanner->requireTable('vtiger_notes', $matrix)) {
 			return '';
 		}
+		$matrix->setDependency("vtiger_notes",array("vtiger_crmentityDocuments","vtiger_attachmentsfolder"));
 		// TODO Support query planner
 		$query = $this->getRelationQuery($module,$secmodule,"vtiger_notes","notesid", $queryplanner);
+		$query .= " left join vtiger_notescf on vtiger_notes.notesid = vtiger_notescf.notesid";
 		if ($queryplanner->requireTable("vtiger_crmentityDocuments",$matrix)){
-		    $query .=" left join vtiger_crmentity as vtiger_crmentityDocuments on vtiger_crmentityDocuments.crmid=vtiger_notes.notesid and vtiger_crmentityDocuments.deleted=0";
+			$query .=" left join vtiger_crmentity as vtiger_crmentityDocuments on vtiger_crmentityDocuments.crmid=vtiger_notes.notesid and vtiger_crmentityDocuments.deleted=0";
 		}
 		if ($queryplanner->requireTable("vtiger_attachmentsfolder")){
-		    $query .=" left join vtiger_attachmentsfolder on vtiger_attachmentsfolder.folderid=vtiger_notes.folderid";
+			$query .=" left join vtiger_attachmentsfolder on vtiger_attachmentsfolder.folderid=vtiger_notes.folderid";
 		}
 		if ($queryplanner->requireTable("vtiger_groupsDocuments")){
-		    $query .=" left join vtiger_groups as vtiger_groupsDocuments on vtiger_groupsDocuments.groupid = vtiger_crmentityDocuments.smownerid";
+			$query .=" left join vtiger_groups as vtiger_groupsDocuments on vtiger_groupsDocuments.groupid = vtiger_crmentityDocuments.smownerid";
 		}
 		if ($queryplanner->requireTable("vtiger_usersDocuments")){
-		    $query .=" left join vtiger_users as vtiger_usersDocuments on vtiger_usersDocuments.id = vtiger_crmentityDocuments.smownerid";
+			$query .=" left join vtiger_users as vtiger_usersDocuments on vtiger_usersDocuments.id = vtiger_crmentityDocuments.smownerid";
 		}
 		if ($queryplanner->requireTable("vtiger_lastModifiedByDocuments")){
-		    $query .=" left join vtiger_users as vtiger_lastModifiedByDocuments on vtiger_lastModifiedByDocuments.id = vtiger_crmentityDocuments.modifiedby ";
+			$query .=" left join vtiger_users as vtiger_lastModifiedByDocuments on vtiger_lastModifiedByDocuments.id = vtiger_crmentityDocuments.modifiedby ";
+		}
+		if ($queryplanner->requireTable("vtiger_createdbyDocuments")){
+			$query .= " left join vtiger_users as vtiger_createdbyDocuments on vtiger_createdbyDocuments.id = vtiger_crmentityDocuments.smcreatorid ";
 		}
 		return $query;
 	}
@@ -418,11 +400,7 @@ class Documents extends CRMEntity {
 	 * returns the array with table names and fieldnames storing relations between module and this module
 	 */
 	function setRelationTables($secmodule){
-		$rel_tables = array (
-			/* ED141013 pas sur que ce soit utilisŽ */
-			"Contacts" => array("vtiger_senotesrel"=>array("crmid","notesid"),"vtiger_contactdetails"=>"contactid"),
-			"Campaigns" => array("vtiger_senotesrel"=>array("crmid","notesid"),"vtiger_campaign"=>"campaign_no"),
-		);
+		$rel_tables = array();
 		return $rel_tables[$secmodule];
 	}
 
@@ -456,16 +434,9 @@ class Documents extends CRMEntity {
 			$this->db->pquery($sql, array($id, $return_id, $return_id));
 		} else {
 			$sql = 'DELETE FROM vtiger_senotesrel WHERE notesid = ? AND crmid = ?';
-			$params = array($id, $return_id);
-			if($return_module === 'Documents'){
-				$sql .= ' OR notesid = ? AND crmid = ?';
-				$params = array($return_id, $id);
-			}
-			$this->db->pquery($sql, $params);
+			$this->db->pquery($sql, array($id, $return_id));
 
-			$sql = 'DELETE FROM vtiger_crmentityrel WHERE (crmid=? AND relmodule=? AND relcrmid=?) OR (relcrmid=? AND module=? AND crmid=?)';
-			$params = array($id, $return_module, $return_id, $id, $return_module, $return_id);
-			$this->db->pquery($sql, $params);
+			parent::unlinkRelationship($id, $return_module, $return_id);
 		}
 	}
 
@@ -546,303 +517,58 @@ class Documents extends CRMEntity {
 			return $query;
 		}
 	}
-	
+
 	/**
 	 * Function to check the module active and user action permissions before showing as link in other modules
 	 * like in more actions of detail view.
 	 */
 	static function isLinkPermitted($linkData) {
 		$moduleName = "Documents";
-		if(vtlib_isModuleActive($moduleName) && isPermitted($moduleName, 'EditView') == 'yes') {
+		if(vtlib_isModuleActive($moduleName) && isPermitted($moduleName, 'CreateView') == 'yes') {
 			return true;
 		}
 		return false;
 	}
-	
-	
-	/** Returns a list of the associated contacts
-	* ED141013
-	*/
-	function get_contacts($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-	       global $log, $singlepane_view,$currentModule,$current_user;
-	       $log->debug("Entering get_contacts(".$id.") method ...");
-	       $this_module = $currentModule;
-	
-	       $related_module = vtlib_getModuleNameById($rel_tab_id);
-	       require_once("modules/$related_module/$related_module.php");
-	       $other = new $related_module();
-	       vtlib_setup_modulevars($related_module, $other);
-	       $singular_modname = vtlib_toSingular($related_module);
-	
-	       $parenttab = getParentTab();
-	
-	       if($singlepane_view == 'true')
-		       $returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-	       else
-		       $returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
-	
-	       $button = '';
-	
-	       if($actions && getFieldVisibilityPermission($related_module, $current_user->id, 'account_id','readwrite') == '0') {
-		       if(is_string($actions)) $actions = explode(',', strtoupper($actions));
-		       if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
-			       $button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
-		       }
-		       if(in_array('ADD', $actions) && isPermitted($related_module,1, '') == 'yes') {
-			       $button .= "<input title='".getTranslatedString('LBL_ADD_NEW'). " ". getTranslatedString($singular_modname) ."' class='crmbutton small create'" .
-				       " onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
-				       " value='". getTranslatedString('LBL_ADD_NEW'). " " . getTranslatedString($singular_modname) ."'>&nbsp;";
-		       }
-	       }
-	       $userNameSql = getSqlForNameInDisplayFormat(array('first_name'=> 'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
-	       $query = "SELECT vtiger_contactdetails.*,
-				vtiger_crmentity.crmid,
-				vtiger_crmentity.smownerid,
-				vtiger_account.accountname,
-				case when (vtiger_users.user_name not like '') then $userNameSql else vtiger_groups.groupname end as user_name
-				FROM vtiger_contactdetails
-				
-				/* liste les contactid et les accountid, sinon la jointure est très longue */
-				INNER JOIN ( 
-				    SELECT vtiger_contactdetails.contactid, vtiger_contactdetails.contactid AS crmid
-				    FROM vtiger_contactdetails
-				    UNION
-				    SELECT vtiger_contactdetails.contactid, vtiger_contactdetails.accountid
-				    FROM vtiger_contactdetails
-				    WHERE vtiger_contactdetails.accountid IS NOT NULL
-				    ) contacts_relcrmid
-				    ON contacts_relcrmid.contactid = vtiger_contactdetails.contactid
-				INNER JOIN vtiger_senotesrel 
-				ON vtiger_senotesrel.crmid = contacts_relcrmid.crmid
-				
-				LEFT JOIN vtiger_account ON vtiger_account.accountid = vtiger_contactdetails.accountid
-				INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = vtiger_contactdetails.contactid
-				INNER JOIN vtiger_contactaddress ON vtiger_contactdetails.contactid = vtiger_contactaddress.contactaddressid
-				INNER JOIN vtiger_contactsubdetails ON vtiger_contactdetails.contactid = vtiger_contactsubdetails.contactsubscriptionid
-				INNER JOIN vtiger_customerdetails ON vtiger_contactdetails.contactid = vtiger_customerdetails.customerid
-				INNER JOIN vtiger_contactscf ON vtiger_contactdetails.contactid = vtiger_contactscf.contactid
-				LEFT JOIN vtiger_groups	ON vtiger_groups.groupid = vtiger_crmentity.smownerid
-				LEFT JOIN vtiger_users ON vtiger_crmentity.smownerid = vtiger_users.id
-				WHERE vtiger_crmentity.deleted = 0
-				AND vtiger_senotesrel.notesid = ".$id
-		;
-		
-	       $return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-	
-	       if($return_value == null) $return_value = Array();
-	       $return_value['CUSTOM_BUTTON'] = $button;
-	
-	       $log->debug("Exiting get_contacts method ...");
-	       
-	       /*print_r($query);
-		$db = PearDatabase::getInstance();	$db->setDebug(true);
-		echo_callstack();*/
-	
-	       return $return_value;
-	}
 
-	/** Returns a list of the associated campaigns, ...
-	 * saved in vtiger_senotesrel
-	* ED141018
-	*/
-	function get_related_list($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-	       global $log, $singlepane_view,$currentModule,$current_user;
-	       $log->debug("Entering Documents get_related_list(".$id.") method ...");
-	       $this_module = $currentModule;
-	
-	       $related_module = vtlib_getModuleNameById($rel_tab_id);
-	       require_once("modules/$related_module/$related_module.php");
-	       $other = new $related_module();
-	       vtlib_setup_modulevars($related_module, $other);
-	       $singular_modname = vtlib_toSingular($related_module);
-	
-	       $parenttab = getParentTab();
-	
-	       if($singlepane_view == 'true')
-		       $returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-	       else
-		       $returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
-	
-			if($other->customFieldTable)
-				$joinQuery = 'LEFT JOIN '.$other->customFieldTable[0].'
-					ON '.$other->customFieldTable[0].'.'.$other->customFieldTable[1].' = vtiger_crmentity.crmid';
-			else
-				$joinQuery = '';
-			$button = '';
-			$userNameSql = getSqlForNameInDisplayFormat(array('first_name'=> 'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
-			$query = "SELECT $other->table_name.*,
-				vtiger_crmentity.crmid,
-				vtiger_crmentity.smownerid,
-				case when (vtiger_users.user_name not like '') then $userNameSql else vtiger_groups.groupname end as user_name
-				FROM $other->table_name
-				INNER JOIN vtiger_senotesrel
-					ON vtiger_senotesrel.crmid = $other->table_name.$other->table_index				
-				INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = $other->table_name.$other->table_index
-				$joinQuery
-				LEFT JOIN vtiger_groups	ON vtiger_groups.groupid = vtiger_crmentity.smownerid
-				LEFT JOIN vtiger_users ON vtiger_crmentity.smownerid = vtiger_users.id
-				WHERE vtiger_crmentity.deleted = 0
-				AND vtiger_senotesrel.notesid = ".$id
-		;
-		
-	       $return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-	
-	       if($return_value == null) $return_value = Array();
-	       $return_value['CUSTOM_BUTTON'] = $button;
-	
-	       $log->debug("Exiting Documents get_related_list method ...");
-	       
-	       /*print_r($query);
-		$db = PearDatabase::getInstance();	$db->setDebug(true);
-		echo_callstack();*/
-	
-	       return $return_value;
-	}
-	/** Returns a list of the associated invoices, ...
-	 * saved in vtiger_invoicecf.notesid
-	* ED150708
-	*/
-	function get_invoices($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-	       global $log, $singlepane_view,$currentModule,$current_user;
-	       $log->debug("Entering Documents get_invoices(".$id.") method ...");
-	       $this_module = $currentModule;
-	
-	       $related_module = vtlib_getModuleNameById($rel_tab_id);
-	       require_once("modules/$related_module/$related_module.php");
-	       $other = new $related_module();
-	       vtlib_setup_modulevars($related_module, $other);
-	       $singular_modname = vtlib_toSingular($related_module);
-	
-	       $parenttab = getParentTab();
-	
-	       if($singlepane_view == 'true')
-		       $returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-	       else
-		       $returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
-	
-	       $button = '';
-	       $userNameSql = getSqlForNameInDisplayFormat(array('first_name'=> 'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
-	       $query = "SELECT vtiger_invoice.*, vtiger_invoicecf.*,
-		       vtiger_crmentity.crmid,
-		       vtiger_crmentity.smownerid,
-		       case when (vtiger_users.user_name not like '') then $userNameSql else vtiger_groups.groupname end as user_name
-		       FROM vtiger_invoice
-			   INNER JOIN vtiger_invoicecf
-				ON vtiger_invoicecf.invoiceid = vtiger_invoice.invoiceid	
-			
-		       INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = $other->table_name.$other->table_index
-		       LEFT JOIN vtiger_groups	ON vtiger_groups.groupid = vtiger_crmentity.smownerid
-		       LEFT JOIN vtiger_users ON vtiger_crmentity.smownerid = vtiger_users.id
-		       WHERE vtiger_crmentity.deleted = 0
-		       AND vtiger_invoicecf.notesid = ".$id
-		;
-		
-	       $return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-	
-	       if($return_value == null) $return_value = Array();
-	       $return_value['CUSTOM_BUTTON'] = $button;
-	
-	       $log->debug("Exiting Documents get_invoices method ...");
-	       
-	       /*print_r($query);
-		$db = PearDatabase::getInstance();	$db->setDebug(true);
-		echo_callstack();*/
-	
-	       return $return_value;
-	}
-
-	/* addRelation
+	/**
+	 * Function to get query for related list in Documents module
 	 */
-	function save_related_module($module, $crmid, $with_module, $with_crmids) {
-		
-		$adb = PearDatabase::getInstance();
-		
-		if(!is_array($with_crmids)) $with_crmids = Array($with_crmids);
-		foreach($with_crmids as $with_crmid) {
-			//if($with_module == 'Contacts') {
-				$adb->pquery("INSERT INTO vtiger_senotesrel (crmid, notesid, dateapplication)
-					     VALUES(?,?, NOW())", array($with_crmid, $crmid));
-
-			//} else {
-			//	parent::save_related_module($module, $crmid, $with_module, $with_crmid);
-			//	//parent::save_related_module($with_module, $with_crmid, $module, $crmid);
-			//}
-		}
-	}
-
-	 /**
-	 * Function to get Documents related Products
-	 * @param  integer   $id  - contactid
-	 * returns related Products record in array format
-	 */
-	 function get_products($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-		global $log, $singlepane_view,$currentModule,$current_user;
-		$log->debug("Entering get_products(".$id.") method ...");
-		$this_module = $currentModule;
-
+	function get_related_list($id, $cur_tab_id, $rel_tab_id) {
 		$related_module = vtlib_getModuleNameById($rel_tab_id);
-		require_once("modules/$related_module/$related_module.php");
-		$other = new $related_module();
+		$other = CRMEntity::getInstance($related_module);
+		vtlib_setup_modulevars('Documents', $this);
 		vtlib_setup_modulevars($related_module, $other);
-		$singular_modname = vtlib_toSingular($related_module);
 
-		$parenttab = getParentTab();
+		$returnset = "&return_module=Documents&return_action=CallRelatedList&return_id=".$id;
 
-		if($singlepane_view == 'true')
-			$returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-		else
-			$returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
+		$query = "SELECT vtiger_crmentity.*, $other->table_name.*";
 
-		$button = '';
+		$userNameSql = getSqlForNameInDisplayFormat(array('first_name'=>'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
 
-		if($actions) {
-			if(is_string($actions)) $actions = explode(',', strtoupper($actions));
-			if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
-			}
-			if(in_array('ADD', $actions) && isPermitted($related_module,1, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_ADD_NEW'). " ". getTranslatedString($singular_modname) ."' class='crmbutton small create'" .
-					" onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
-					" value='". getTranslatedString('LBL_ADD_NEW'). " " . getTranslatedString($singular_modname) ."'>&nbsp;";
+		if (!empty($other->related_tables)) {
+			foreach ($other->related_tables as $tname => $relmap) {
+				$query .= ", $tname.*";
+				if (empty($relmap[1]))
+					$relmap[1] = $other->table_name;
+				if (empty($relmap[2]))
+					$relmap[2] = $relmap[0];
+				$more_relation .= " LEFT JOIN $tname ON $tname.$relmap[0] = $relmap[1].$relmap[2]";
 			}
 		}
+		$query .= " FROM $other->table_name";
+		$query .= " INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = $other->table_name.$other->table_index";
+		$query .= " INNER JOIN vtiger_senotesrel ON vtiger_senotesrel.crmid = vtiger_crmentity.crmid ".$more_relation;
+		$query .= " LEFT JOIN vtiger_users ON vtiger_users.id = vtiger_crmentity.smownerid";
+		$query .= " LEFT JOIN vtiger_groups ON vtiger_groups.groupid = vtiger_crmentity.smownerid";
+		$query .= " WHERE vtiger_crmentity.deleted = 0 AND vtiger_senotesrel.notesid=$id";
 
-		$query = 'SELECT vtiger_products.productid, vtiger_products.productname, vtiger_products.productcode,
-		 		  vtiger_products.commissionrate, vtiger_products.qty_per_unit, vtiger_products.unit_price,
-				  vtiger_crmentity.crmid, vtiger_crmentity.smownerid,
-				FROM vtiger_products
-				INNER JOIN vtiger_inventoryproductrel
-					ON vtiger_inventoryproductrel.productid=vtiger_products.productid
-				INNER JOIN vtiger_productcf
-					ON vtiger_products.productid = vtiger_productcf.productid 
-				INNER JOIN vtiger_crmentity
-					ON vtiger_crmentity.crmid = vtiger_products.productid
-			   WHERE vtiger_contactdetails.contactid = '.$id.' and vtiger_crmentity.deleted = 0';
+		//eliminate lead converted 
+		if($related_module == 'Leads') {
+			$query .= " AND vtiger_leaddetails.converted=0 ";
+		}
 
-		$return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-
-		if($return_value == null) $return_value = Array();
-		$return_value['CUSTOM_BUTTON'] = $button;
-
-		$log->debug("Exiting get_products method ...");
+		$return_value = GetRelatedList('Documents', $related_module, $other, $query, '', $returnset);
 		return $return_value;
-	 }
-	
-	/* ED150630
-	 * Compteur de l'entité
-	 * Différencie les compteurs suivant le dossier
-	 */
-	function setModuleSeqNumber($mode, $module, $req_str = '', $req_no = '') {
-		if(strpos($module, '_') === FALSE){
-			if(!$this->column_fields['folderid'])
-				die('folderid manquant');
-			switch($this->column_fields['folderid']){
-			 case COUPON_FOLDERID :
-				$module .= '_' . COUPON_FOLDERNAME;
-				break;
-			}
-		}
-		return parent::setModuleSeqNumber($mode, $module, $req_str, $req_no);
 	}
 }
 ?>

@@ -21,4 +21,9 @@ $languageStrings = array(
 	'LTFAQ'                        => 'TudásTár bejegyzéseim'    , 
 	'UA'                           => 'Rám váró Tevékenységek' , 
 	'PA'                           => 'Befejezetlen Tevékenységek', 
+        'Home'                         => 'Műszerfal'                   ,
+
+  'LBL_SAVE_ORDER' => 'A Mentés Érdekében',
+  'LBL_ADD_NEW_DASHBOARD' => 'Új műszerfal',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'Maximum 30 karakter engedélyezett a műszerfal nevét.',
 );

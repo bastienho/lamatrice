@@ -10,38 +10,6 @@
 
 class Campaigns_RelationListView_Model extends Vtiger_RelationListView_Model {
 
-	
-	/* Retourne les en-têtes des colonnes des contacts
-	 * Ajoute les champs de la relation
-	 * */
-	public function getHeaders() {
-		$headerFields = array();
-		
-		$relationModel = $this->getRelationModel();
-		$relatedModuleModel = $relationModel->getRelationModuleModel();
-		
-		//var_dump($relatedModuleModel->name);
-		
-		switch($relatedModuleModel->name){
-		  case "Contacts": //TODO regrouper avec Contacts/models/RelationListView.php
-		    
-		      $headerFieldNames = array(
-			  'isgroup', 'firstname', 'lastname', 'contacttype', 'mailingzip', 'mailingcity', 'mailingcountry'
-		      );
-		      foreach($headerFieldNames as $fieldName) {
-			  $headerFields[$fieldName] = $relatedModuleModel->getField($fieldName);
-		      }
-		      
-		    break;
-		  
-		  default:
-		    return parent::getHeaders();
-		}
-
-		return $headerFields;
-	}
-	
-	
 	/**
 	 * Function to get the links for related list
 	 * @return <Array> List of action models <Vtiger_Link_Model>
@@ -88,8 +56,8 @@ class Campaigns_RelationListView_Model extends Vtiger_RelationListView_Model {
 			$relatedRecordIdsList = array_keys($relatedRecordModelsList);
 
 			$query = "SELECT campaignrelstatus, $fieldName FROM $tableName
-				INNER JOIN vtiger_campaignrelstatus ON vtiger_campaignrelstatus.campaignrelstatusid = $tableName.campaignrelstatusid
-				WHERE $fieldName IN (". generateQuestionMarks($relatedRecordIdsList).") AND campaignid = ?";
+						INNER JOIN vtiger_campaignrelstatus ON vtiger_campaignrelstatus.campaignrelstatusid = $tableName.campaignrelstatusid
+						WHERE $fieldName IN (". generateQuestionMarks($relatedRecordIdsList).") AND campaignid = ?";
 			array_push($relatedRecordIdsList, $parentRecordModel->getId());
 
 			$result = $db->pquery($query, $relatedRecordIdsList);
@@ -104,40 +72,5 @@ class Campaigns_RelationListView_Model extends Vtiger_RelationListView_Model {
 			}
 		}
 		return $relatedRecordModelsList;
-	}
-	
-	/* Retourne les en-têtes des colonnes des contacts
-	 * Ajoute les champs de la relation
-	 * ED140907
-	 * TODO Fonction à refaire
-	 * */
-	public static function get_related_fields($headerFields = false, $relationModel = false) {
-		if(!$headerFields)
-		    $headerFields = array();
-		    
-		//Added to support dateapplication
-		if(!isset($headerFields['dateapplication'])){
-			$field = new Vtiger_Field_Model();
-			$field->set('name', 'dateapplication');
-			$field->set('column', strtolower( 'dateapplication' ));
-			$field->set('label', 'Date d\'affectation');
-			$field->set('typeofdata', 'DATETIME');
-			$field->set('uitype', 6);
-			
-			array_push($headerFields, $field);
-		}
-		
-		if(!isset($headerFields['rel_data'])){
-			//Added to support data
-			$field = new Vtiger_Field_Model();
-			$field->set('name', 'rel_data');
-			$field->set('column', 'data');
-			$field->set('label', 'Information');
-			$field->set('typeofdata', 'VARCHAR(255)');
-			$field->set('uitype', 2);
-				
-			array_push($headerFields, $field);
-		}
-		return $headerFields;
 	}
 }

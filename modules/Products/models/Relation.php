@@ -9,7 +9,57 @@
  *************************************************************************************/
 
 class Products_Relation_Model extends Vtiger_Relation_Model {
+	
+	/**
+	 * Function returns the Query for the relationhips
+	 * @param <Vtiger_Record_Model> $recordModel
+	 * @param type $actions
+	 * @return <String>
+	 */
+	public function getQuery($recordModel, $actions=false){
+		$parentModuleModel = $this->getParentModuleModel();
+		$relatedModuleModel = $this->getRelationModuleModel();
+		$relatedModuleName = $relatedModuleModel->get('name');
+		$parentModuleName = $parentModuleModel->get('name');
+		$functionName = $this->get('name');
+		$focus = CRMEntity::getInstance($parentModuleName);
+		$focus->id = $recordModel->getId();
+		if(method_exists($parentModuleModel, $functionName)) {
+			$query = $parentModuleModel->$functionName($recordModel, $relatedModuleModel);
+		} else {
+            //For get_dependent_list fourth parameter should be relation id. So we are replacing actions by relation id if it is not given
+            if(!$actions && $functionName == "get_dependents_list") {
+                $actions = $this->getId();
+            }
+			$result = $focus->$functionName($recordModel->getId(), $parentModuleModel->getId(),
+											$relatedModuleModel->getId(), $actions);
+			$query = $result['query'];
+		}
 
+		//modify query if any module has summary fields, those fields we are displayed in related list of that module
+		$relatedListFields = $relatedModuleModel->getConfigureRelatedListFields();
+		if(count($relatedListFields) > 0 ) {
+			$currentUser = Users_Record_Model::getCurrentUserModel();
+			$queryGenerator = new QueryGenerator($relatedModuleName, $currentUser);
+			$queryGenerator->setFields($relatedListFields);
+			$selectColumnSql = $queryGenerator->getSelectClauseColumnSQL();
+			$newQuery = spliti('FROM', $query);
+			$selectColumnSql = 'SELECT DISTINCT vtiger_crmentity.crmid, '.$selectColumnSql;
+			$query = $selectColumnSql.' FROM '.$newQuery[1];
+		}
+		if($functionName == 'get_product_pricebooks'){
+			$newQuery = spliti('FROM', $query);
+			$selectColumnSql = $newQuery[0].' ,vtiger_pricebookproductrel.listprice, vtiger_pricebook.currency_id, vtiger_products.unit_price';
+			$query = $selectColumnSql.' FROM '.$newQuery[1];
+		}
+		if($functionName == 'get_service_pricebooks'){
+			$newQuery = spliti('FROM', $query);
+			$selectColumnSql = $newQuery[0].' ,vtiger_pricebookproductrel.listprice, vtiger_pricebook.currency_id, vtiger_service.unit_price';
+			$query = $selectColumnSql.' FROM '.$newQuery[1];
+		}
+		return $query;
+	}
+	
 	/**
 	 * Function that deletes PriceBooks related records information
 	 * @param <Integer> $sourceRecordId - Product/Service Id
@@ -22,19 +72,16 @@ class Products_Relation_Model extends Vtiger_Relation_Model {
 			//Description: deleteListPrice function is deleting the relation between Pricebook and Product/Service 
 			$priceBookModel = Vtiger_Record_Model::getInstanceById($relatedRecordId, $relatedModuleName);
 			$priceBookModel->deleteListPrice($sourceRecordId);
-		} else if($sourceModuleName == $relatedModuleName){
+			$relatedModuleFocus = CRMEntity::getInstance($relatedModuleName);
+			$relatedModuleFocus->trackUnLinkedInfo($sourceModuleName, $sourceRecordId, $relatedModuleName, $relatedRecordId);
+		} else if($sourceModuleName == $relatedModuleName && $this->get('source')!='custom'){
 			$this->deleteProductToProductRelation($sourceRecordId, $relatedRecordId);
 		} else {
 			parent::deleteRelation($sourceRecordId, $relatedRecordId);
 		}
-
-		if ($sourceModuleName == "Products" && $relatedModuleName == "Products") {
-			//TMP Udate stock !!
-			autoUpdateLotQtyInStock($sourceRecordId);
-		}
 	}
-    
-    /**
+	
+	/**
 	 * Function to delete the product to product relation(product bundles)
 	 * @param type $sourceRecordId
 	 * @param type $relatedRecordId true / false
@@ -74,40 +121,41 @@ class Products_Relation_Model extends Vtiger_Relation_Model {
 			}
 		}
 	}
+	
+	/**
+	 * Function to add Products/Services-PriceBooks Relation
+	 * @param <Integer> $sourceRecordId
+	 * @param <Integer> $destinationRecordId
+	 * @param <Integer> $listPrice
+	 */
+	public function addListPrice($sourceRecordId, $destinationRecordId, $listPrice) {
+		$sourceModuleName = $this->getParentModuleModel()->get('name');
+		$relatedModuleName = $this->getRelationModuleModel()->get('name');
+		$relationModuleModel = Vtiger_Record_Model::getInstanceById($destinationRecordId, $relatedModuleName);
+		
+		$productModel = Vtiger_Record_Model::getInstanceById($sourceRecordId, $sourceModuleName);
+		$productModel->updateListPrice($destinationRecordId, $listPrice, $relationModuleModel->get('currency_id'));
+	}
 
-	public function addRelation($sourcerecordId, $destinationRecordId) {
-		parent::addRelation($sourcerecordId, $destinationRecordId);
-		$sourceModule = $this->getParentModuleModel();
-		$sourceModuleName = $sourceModule->get('name');
-		$sourceModuleFocus = CRMEntity::getInstance($sourceModuleName);
-		$destinationModuleName = $this->getRelationModuleModel()->get('name');
-		if ($sourceModuleName == "Products" && $destinationModuleName == "Products") {
-			autoUpdateLotQtyInStock($sourcerecordId);
-		}
+	public function updateShowBundlesOption($recordId, $value) {
+		$sourceModuleName = $this->getParentModuleModel()->get('name');
+
+		$productRecordModel = Vtiger_Record_Model::getInstanceById($recordId, $sourceModuleName);
+		$productRecordModel->updateShowBundlesOption($value);
 	}
 
 	/**
-	 * Function to get filtered list of records linked to an other module
-	 * @return <array> Relation details
-	 * ED140906
+	 * Function to update Product bundles relation
+	 * @param <Integer> $sourceRecordId
+	 * @param <Integer> $destinationRecordId
+	 * @param <Integer> $quantity
 	 */
-	public function getModulesInfoForDetailView() {
-		return array(
-			'SalesOrder' => array('fieldName' => 'productid', 'tableName' => 'vtiger_inventoryproductrel'
-					   , 'sourceFieldName' => 'vtiger_products.productid' //WHERE %s IN
-					   , 'sourceFieldNameInRelation' => 'vtiger_inventoryproductrel.productid' // WHERE sourceFieldName IN ( SELECT %s FROM relationTableName JOIN %sub
-					   , 'relationTableName' => 'vtiger_inventoryproductrel' // FROM %s JOIN %sub
-					   , 'relatedFieldName' => 'salesorderid' //  JOIN %sub ON relationTableName.%s = %sub.relatedSourceFieldName
-					   , 'relatedSourceFieldName' => 'id'),
-			'Documents' => array('fieldName' => 'notesid', 'tableName' => 'vtiger_senotesrel'
-					   , 'sourceFieldName' => 'vtiger_products.productid' //WHERE %s IN
-					   , 'sourceFieldNameInRelation' => 'vtiger_senotesrel.crmid' // WHERE sourceFieldName IN ( SELECT %s FROM relationTableName JOIN %sub
-					   , 'relationTableName' => 'vtiger_senotesrel' // FROM %s JOIN %sub
-					   , 'relatedFieldName' => 'notesid' //  JOIN %sub ON relationTableName.%s = %sub.relatedSourceFieldName
-					   , 'relatedSourceFieldName' => 'notesid'
-					   , 'keyDateFieldName' => 'dateapplication'//clé primaire en 3 champs, incluant une date
-					   ),
-		);
-	}
+	public function updateQuantity($sourceRecordId, $destinationRecordId, $quantity) {
+		$sourceModuleName = $this->getParentModuleModel()->get('name');
+		$relatedModuleName = $this->getRelationModuleModel()->get('name');
+		$relationModuleModel = Vtiger_Record_Model::getInstanceById($destinationRecordId, $relatedModuleName);
 
+		$productModel = Vtiger_Record_Model::getInstanceById($sourceRecordId, $sourceModuleName);
+		$productModel->updateSubProductQuantity($destinationRecordId, $quantity);
+	}
 }

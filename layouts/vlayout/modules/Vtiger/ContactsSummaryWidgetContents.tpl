@@ -20,13 +20,8 @@
 								{$RELATED_RECORD->getDisplayValue('lastname')}
 							</a>
 						</div>
-						{if $RELATED_RECORD->getDisplayValue('email') neq 'NULL'}
-							<div>{$RELATED_RECORD->getDisplayValue('email')}</div>
-						{/if}
-						{assign var=PHONE value=$RELATED_RECORD->getDisplayValue('phone')}
-						{if $PHONE && $PHONE neq 'NULL'}
-							<div class="textOverflowEllipsis" title="{$PHONE}">{$PHONE}</div>
-						{/if}
+						<div>{$RELATED_RECORD->getDisplayValue('email')}</div>
+						<div class="textOverflowEllipsis" title="{$RELATED_RECORD->getDisplayValue('phone')}">{$RELATED_RECORD->getDisplayValue('phone')}</div>
 					</div>
 				</li>
 			</ul>

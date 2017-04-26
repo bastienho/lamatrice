@@ -7,8 +7,7 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  ************************************************************************************/
-require_once('data/CRMEntity.php');
-require_once('data/Tracker.php');
+require_once('modules/Vtiger/CRMEntity.php');
 
 class SMSNotifierBase extends CRMEntity {
 	var $db, $log; // Used in class functions of CRMEntity
@@ -189,31 +188,31 @@ class SMSNotifierBase extends CRMEntity {
 		$sec_query = '';
 		$tabid = getTabid($module);
 
-		if($is_admin==false && $profileGlobalPermission[1] == 1 && $profileGlobalPermission[2] == 1 
+		if($is_admin==false && $profileGlobalPermission[1] == 1 && $profileGlobalPermission[2] == 1
 			&& $defaultOrgSharingPermission[$tabid] == 3) {
 
-				$sec_query .= " AND (vtiger_crmentity.smownerid in($current_user->id) OR vtiger_crmentity.smownerid IN 
+				$sec_query .= " AND (vtiger_crmentity.smownerid in($current_user->id) OR vtiger_crmentity.smownerid IN
 					(
-						SELECT vtiger_user2role.userid FROM vtiger_user2role 
-						INNER JOIN vtiger_users ON vtiger_users.id=vtiger_user2role.userid 
-						INNER JOIN vtiger_role ON vtiger_role.roleid=vtiger_user2role.roleid 
+						SELECT vtiger_user2role.userid FROM vtiger_user2role
+						INNER JOIN vtiger_users ON vtiger_users.id=vtiger_user2role.userid
+						INNER JOIN vtiger_role ON vtiger_role.roleid=vtiger_user2role.roleid
 						WHERE vtiger_role.parentrole LIKE '".$current_user_parent_role_seq."::%'
-					) 
-					OR vtiger_crmentity.smownerid IN 
+					)
+					OR vtiger_crmentity.smownerid IN
 					(
-						SELECT shareduserid FROM vtiger_tmp_read_user_sharing_per 
+						SELECT shareduserid FROM vtiger_tmp_read_user_sharing_per
 						WHERE userid=".$current_user->id." AND tabid=".$tabid."
-					) 
-					OR 
+					)
+					OR
 						(";
-		
+
 					// Build the query based on the group association of current user.
 					if(sizeof($current_user_groups) > 0) {
 						$sec_query .= " vtiger_groups.groupid IN (". implode(",", $current_user_groups) .") OR ";
 					}
-					$sec_query .= " vtiger_groups.groupid IN 
+					$sec_query .= " vtiger_groups.groupid IN
 						(
-							SELECT vtiger_tmp_read_group_sharing_per.sharedgroupid 
+							SELECT vtiger_tmp_read_group_sharing_per.sharedgroupid
 							FROM vtiger_tmp_read_group_sharing_per
 							WHERE userid=".$current_user->id." and tabid=".$tabid."
 						)";
@@ -344,10 +343,10 @@ class SMSNotifierBase extends CRMEntity {
 	 */
 	function vtlib_handler($modulename, $event_type) {
 		
-		//adds sharing accsess 
-        $SMSNotifierModule  = Vtiger_Module::getInstance('SMSNotifier'); 
+		//adds sharing accsess
+        $SMSNotifierModule  = Vtiger_Module::getInstance('SMSNotifier');
         Vtiger_Access::setDefaultSharing($SMSNotifierModule);
- 
+
 		$registerLinks = false;
 		$unregisterLinks = false;
 		
@@ -366,7 +365,7 @@ class SMSNotifierBase extends CRMEntity {
 			$registerLinks = true;
 			
 		} else if($event_type == 'module.preuninstall') {
-			// TODO Handle actions when this module is about to be deleted.
+			$unregisterLinks = true;
 		} else if($event_type == 'module.preupdate') {
 			// TODO Handle actions before this module is updated.
 		} else if($event_type == 'module.postupdate') {
@@ -380,15 +379,15 @@ class SMSNotifierBase extends CRMEntity {
 			
 			$leadsModuleInstance = Vtiger_Module::getInstance('Leads');
 			$leadsModuleInstance->deleteLink('LISTVIEWBASIC', 'Send SMS');
-			$leadsModuleInstance->deleteLink('DETAILVIEWBASIC', 'Send SMS');
+			$leadsModuleInstance->deleteLink('DETAILVIEW', 'Send SMS');
 			
 			$contactsModuleInstance = Vtiger_Module::getInstance('Contacts');
 			$contactsModuleInstance->deleteLink('LISTVIEWBASIC', 'Send SMS');
-			$contactsModuleInstance->deleteLink('DETAILVIEWBASIC', 'Send SMS');
+			$contactsModuleInstance->deleteLink('DETAILVIEW', 'Send SMS');
 
 			$accountsModuleInstance = Vtiger_Module::getInstance('Accounts');
 			$accountsModuleInstance->deleteLink('LISTVIEWBASIC', 'Send SMS');
-			$accountsModuleInstance->deleteLink('DETAILVIEWBASIC', 'Send SMS');
+			$accountsModuleInstance->deleteLink('DETAILVIEW', 'Send SMS');
 		}
 		
 		if($registerLinks) {
@@ -399,25 +398,22 @@ class SMSNotifierBase extends CRMEntity {
 			$leadsModuleInstance = Vtiger_Module::getInstance('Leads');
 			
 			$leadsModuleInstance->addLink("LISTVIEWBASIC", "Send SMS", "SMSNotifierCommon.displaySelectWizard(this, '\$MODULE\$');");
-			$leadsModuleInstance->addLink("DETAILVIEWBASIC", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
+			$leadsModuleInstance->addLink("DETAILVIEW", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
 			
 			$contactsModuleInstance = Vtiger_Module::getInstance('Contacts');
 			$contactsModuleInstance->addLink('LISTVIEWBASIC', 'Send SMS', "SMSNotifierCommon.displaySelectWizard(this, '\$MODULE\$');");
-			$contactsModuleInstance->addLink("DETAILVIEWBASIC", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
+			$contactsModuleInstance->addLink("DETAILVIEW", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
 	
 			$accountsModuleInstance = Vtiger_Module::getInstance('Accounts');
 			$accountsModuleInstance->addLink('LISTVIEWBASIC', 'Send SMS', "SMSNotifierCommon.displaySelectWizard(this, '\$MODULE\$');");
-			$accountsModuleInstance->addLink("DETAILVIEWBASIC", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
+			$accountsModuleInstance->addLink("DETAILVIEW", "Send SMS", "javascript:SMSNotifierCommon.displaySelectWizard_DetailView('\$MODULE\$', '\$RECORD\$');");
 		}
-		
-		
-		
 	}
 
 	function getListButtons($app_strings) {
 		$list_buttons = Array();
 
-		if(isPermitted('SMSNotifier','Delete','') == 'yes') $list_buttons['del'] = $app_strings[LBL_MASS_DELETE];
+		if(isPermitted('SMSNotifier','Delete','') == 'yes') $list_buttons['del'] = $app_strings['LBL_MASS_DELETE'];
 
 		return $list_buttons;
 	}

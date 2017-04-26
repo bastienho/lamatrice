@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -90,20 +90,20 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 				array(
 						'linktype' => 'LISTVIEWRECORD',
 						'linklabel' => 'LBL_SHOW_FORM',
-						'linkurl' => "javascript:Settings_Webforms_List_Js.showForm(event,'".$this->getShowFormUrl()."');",
-						'linkicon' => 'icon-picture'
+						'linkurl' => "javascript:Settings_Webforms_List_Js.showForm(event,'".$this->getId()."');",
+						'linkicon' => 'fa fa-picture-o icon-picture'
 				),
 				array(
 						'linktype' => 'LISTVIEWRECORD',
 						'linklabel' => 'LBL_EDIT',
 						'linkurl' => $this->getEditViewUrl(),
-						'linkicon' => 'icon-pencil'
+						'linkicon' => 'fa fa-pencil icon-pencil'
 				),
 				array(
 						'linktype' => 'LISTVIEWRECORD',
 						'linklabel' => 'LBL_DELETE',
 						'linkurl' => "javascript:Settings_Vtiger_List_Js.triggerDelete(event,'".$this->getDeleteUrl()."');",
-						'linkicon' => 'icon-trash'
+						'linkicon' => 'fa fa-trash icon-trash'
 				)
 		);
 		foreach($recordLinks as $recordLink) {
@@ -132,7 +132,7 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 				array(
 						'linktype' => 'DETAILVIEWBASIC',
 						'linklabel' => vtranslate('LBL_SHOW_FORM', $moduleModel->getParentName(). ':' .$moduleModel->getName()),
-						'linkurl' => 'javascript:Settings_Webforms_Detail_Js.showForm("'.$this->getShowFormUrl().'")',
+						'linkurl' => 'javascript:Settings_Webforms_Detail_Js.showForm("'.$this->getId().'")',
 						'linkicon' => 'icon-picture'
 				),
 				array(
@@ -153,7 +153,7 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 	 * Function to get list of Selected Fields from target module for this record instance
 	 * @return <Array> list of field models <Settings_Webforms_Field_Model>
 	 */
-	public function getSelectedFieldsList() {
+	public function getSelectedFieldsList($mode='') {
 		if (!$this->selectedFields) {
 			$targetModule = $this->get('targetmodule');
 			if ($targetModule) {
@@ -161,7 +161,7 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 				$targetModuleModel = Vtiger_Module_Model::getInstance($targetModule);
 				$allFields = $targetModuleModel->getFields();
 
-				$result = $db->pquery("SELECT * FROM vtiger_webforms_field WHERE webformid = ?", array($this->getId()));
+				$result = $db->pquery("SELECT * FROM vtiger_webforms_field WHERE webformid = ? ORDER BY sequence", array($this->getId()));
 				$numOfRows = $db->num_rows($result);
 
 				for($i=0; $i<$numOfRows; $i++) {
@@ -170,11 +170,27 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 					if (array_key_exists($fieldName, $allFields)) {
 						$fieldModel = $allFields[$fieldName];
 
+						//Check for hidden fields made as mandatory from layout editor,to unset hidden option
+						$mandatoryStatus = $fieldModel->isMandatory(true);
+						$hiddenStatus = $fieldData['hidden'];
+						$fieldValue = trim($fieldData['defaultvalue']);
+						$fieldType = $fieldModel->getFieldDataType();
+						if(($mandatoryStatus == 1) and ($hiddenStatus == 1) and ($fieldValue == "") and ($fieldType != "boolean")){
+							$fieldData['hidden'] = 0;
+						}
+						if(($fieldType == 'reference') && $mode != 'showForm'){
+							$explodeResult = explode("x",$fieldValue);
+							$fieldValue = $explodeResult[1];
+							if(!isRecordExists($fieldValue)){
+								$fieldValue = 0;
+							}
+						}
+
 						if ($fieldModel->isViewable()) {
 							foreach ($fieldData as $key => $value) {
 								$fieldModel->set($key, $value);
 							}
-							$fieldModel->set('fieldvalue', $fieldData['defaultvalue']);
+							$fieldModel->set('fieldvalue', $fieldValue);
 							$selectedFields[$fieldName] = $fieldModel;
 						}
 					}
@@ -204,11 +220,13 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 				if (in_array($fieldModel->get('uitype'), $restrictedFields) || !$fieldModel->isViewable()) {
 					continue;
 				}
-				$webformFieldInstnace = Settings_Webforms_ModuleField_Model::getInstanceFromFieldObject($fieldModel);
-				if ($fieldModel->getDefaultFieldValue()) {
-					$webformFieldInstnace->set('fieldvalue', $fieldModel->getDefaultFieldValue());
+				if($fieldModel->isEditable()){
+					$webformFieldInstnace = Settings_Webforms_ModuleField_Model::getInstanceFromFieldObject($fieldModel);
+					if ($fieldModel->getDefaultFieldValue()) {
+						$webformFieldInstnace->set('fieldvalue', $fieldModel->getDefaultFieldValue());
+					}
+					$webformFieldList[$webformFieldInstnace->getName()] = $webformFieldInstnace;
 				}
-				$webformFieldList[$webformFieldInstnace->getName()] = $webformFieldInstnace;
 			}
 			$targetModuleAllFieldsList[$blockLabel] = $webformFieldList;
 		}
@@ -231,27 +249,39 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 	}
 
 	/**
+	 * Function to set db insert value value for checkbox
+	 * @param <string> $fieldName
+	 */
+	public function setCheckBoxValue($fieldName) {
+		if($this->get($fieldName) == "on"){
+			$this->set($fieldName,1);
+		} else {
+			$this->set($fieldName,0);
+		}
+	}
+
+	/**
 	 * Function to save the record
 	 */
 	public function save() {
+		$currentUser = Users_Record_Model::getCurrentUserModel();
 		$mode = $this->get('mode');
-		$db = PearDatabase::getInstance();
-		
-		if($this->get('enabled') == "on"){
-			$this->set('enabled',1);
-		} else {
-			$this->set('enabled',0);
-		}
 
+		$db = PearDatabase::getInstance();		
+		$this->setCheckBoxValue('enabled');
+		$this->setCheckBoxValue('captcha');
+		$this->setCheckBoxValue('roundrobin');
+		if(is_array($this->get('roundrobin_userid'))){
+			$roundrobinUsersList = json_encode($this->get('roundrobin_userid'),JSON_FORCE_OBJECT);
+		}
 		//Saving data about webform
 		if ($mode) {
-			$updateQuery = "UPDATE vtiger_webforms SET description = ?, returnurl = ?, ownerid = ?, enabled = ? WHERE id = ?";
-			$params = array($this->get('description'), $this->get('returnurl'), $this->get('ownerid'), $this->get('enabled'), $this->getId());
-
+			$updateQuery = "UPDATE vtiger_webforms SET description = ?, returnurl = ?, ownerid = ?, enabled = ?, captcha = ? , roundrobin = ?, roundrobin_userid = ?, roundrobin_logic = ? ,targetmodule = ? WHERE id = ?";
+			$params = array($this->get('description'), $this->get('returnurl'), $this->get('ownerid'), $this->get('enabled'), $this->get('captcha'),  $this->get('roundrobin'), $roundrobinUsersList, 0, $this->get('targetmodule'),$this->getId()); 
 			$db->pquery($updateQuery, $params);
 		} else {
-			$insertQuery = "INSERT INTO vtiger_webforms(name, targetmodule, publicid, enabled, description, ownerid, returnurl) VALUES(?, ?, ?, ?, ?, ?, ?)";
-			$params = array($this->getName(), $this->get('targetmodule'), $this->generatePublicId(), $this->get('enabled'),  $this->get('description'), $this->get('ownerid'), $this->get('returnurl'));
+			$insertQuery = "INSERT INTO vtiger_webforms(name, targetmodule, publicid, enabled, description, ownerid, returnurl, captcha, roundrobin, roundrobin_userid, roundrobin_logic) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+			$params = array($this->getName(), $this->get('targetmodule'), $this->generatePublicId(), $this->get('enabled'),  $this->get('description'), $this->get('ownerid'), $this->get('returnurl'), $this->get('captcha'), $this->get('roundrobin'),$roundrobinUsersList,0);
 
 			$db->pquery($insertQuery, $params);
 			$this->set('id', $db->getLastInsertID());
@@ -264,7 +294,7 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 		$selectedFieldsData = $this->get('selectedFieldsData');
 		$sourceModuleModel = Vtiger_Module_Model::getInstance($this->get('targetmodule'));
 
-		$fieldInsertQuery = "INSERT INTO vtiger_webforms_field(webformid, fieldname, neutralizedfield, defaultvalue, required) VALUES(?, ?, ?, ?, ?)";
+		$fieldInsertQuery = "INSERT INTO vtiger_webforms_field(webformid, fieldname, neutralizedfield, defaultvalue, required, sequence, hidden) VALUES(?, ?, ?, ?, ?, ?, ?)";
 		foreach ($selectedFieldsData as $fieldName => $fieldDetails) {
 			$params = array($this->getId());
 			$neutralizedField = $fieldName;
@@ -287,21 +317,26 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 			if ($dataType === 'date') {
 				$fieldDefaultValue = Vtiger_Date_UIType::getDBInsertedValue($fieldDefaultValue);
 			}
-	
+
 			if ($dataType === 'time') {
 				$fieldDefaultValue = Vtiger_Time_UIType::getTimeValueWithSeconds($fieldDefaultValue);
 			}
 
-			//Handling CheckBox value
-			if ($dataType === 'boolean') {
-				if ($fieldDefaultValue) {
-					$fieldDefaultValue = 'on';
-				} else {
-					$fieldDefaultValue = '';
-				}
+			if ($dataType === 'reference') {
+				$referenceModule = $fieldDetails['referenceModule'];
+				$referenceObject = VtigerWebserviceObject::fromName($db,$referenceModule);
+				$referenceEntityId = $referenceObject->getEntityId();
+				$fieldDefaultValue = $referenceEntityId."x".$fieldDefaultValue;
 			}
 
-			array_push($params, $fieldName, $neutralizedField, $fieldDefaultValue, $fieldDetails['required']);
+			if ($dataType === 'currency' && $fieldDefaultValue != null) {
+				$fieldDefaultValue = CurrencyField::convertToDBFormat($fieldDefaultValue);
+			}
+
+			if ($dataType === 'double') {
+				$fieldDefaultValue = CurrencyField::convertToDBFormat($fieldDefaultValue, NULL, true);
+			}
+			array_push($params, $fieldName, $neutralizedField, $fieldDefaultValue, $fieldDetails['required'], $fieldDetails['sequence'], $fieldDetails['hidden']);
 			$db->pquery($fieldInsertQuery, $params);
 	}
 	}
@@ -377,5 +412,17 @@ class Settings_Webforms_Record_Model extends Settings_Vtiger_Record_Model {
 		$fields = $this->getModule()->getFields();
 		$fieldModel = $fields[$key];
 		return $fieldModel->getDisplayValue($this->get($key));
+	}
+
+	/**
+	 * Function to check whether the captcha is enabled or not
+	 * @return <boolean> true/false
+	 */
+	public function isCaptchaEnabled() { 
+		if ($this->get('captcha') == '1') {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

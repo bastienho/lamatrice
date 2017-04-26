@@ -22,17 +22,36 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 		$linkTypes = array('LISTVIEWBASIC', 'LISTVIEW', 'LISTVIEWSETTING');
 		$links = Vtiger_Link_Model::getAllByType($moduleModel->getId(), $linkTypes, $linkParams);
 
-		$createPermission = Users_Privileges_Model::isPermitted($moduleModel->getName(), 'EditView');
+		$createPermission = Users_Privileges_Model::isPermitted($moduleModel->getName(), 'CreateView');
 		if($createPermission) {
+            $vtigerDocumentTypes = array(
+                array(
+                    'type' => 'I',
+                    'label' => 'LBL_INTERNAL_DOCUMENT_TYPE',
+                    'url' => 'index.php?module=Documents&view=EditAjax&type=I'
+                ),
+                array(
+                    'type' => 'E',
+                    'label' => 'LBL_EXTERNAL_DOCUMENT_TYPE',
+                    'url' => 'index.php?module=Documents&view=EditAjax&type=E'
+                ),
+                array(
+                    'type' => 'W',
+                    'label' => 'LBL_WEBDOCUMENT_TYPE',
+                    'url' => 'index.php?module=Documents&view=EditAjax&type=W'
+                )
+            );
 			$basicLinks = array(
 					array(
 							'linktype' => 'LISTVIEWBASIC',
-							'linklabel' => 'LBL_ADD_RECORD',
-							'linkurl' => 'javascript:Vtiger_List_Js.triggerAddRecord(event, "'.$moduleModel->getCreateRecordUrl().'")',
-							'linkicon' => ''
+							'linklabel' => 'Vtiger',
+							'linkurl' => $moduleModel->getCreateRecordUrl(),
+							'linkicon' => 'Vtiger.png',
+                            'linkdropdowns' => $vtigerDocumentTypes,
+                            'linkclass' => 'addDocumentToVtiger',
 					),
-					array(
-							'linktype' => 'LISTVIEWBASIC',
+                    array(
+                            'linktype' => 'LISTVIEWBASIC',
 							'linklabel' => 'LBL_ADD_FOLDER',
 							'linkurl' => 'javascript:Documents_List_Js.triggerAddFolder("'.$moduleModel->getAddFolderUrl().'")',
 							'linkicon' => ''
@@ -74,7 +93,18 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 
 		$linkTypes = array('LISTVIEWMASSACTION');
 		$links = Vtiger_Link_Model::getAllByType($moduleModel->getId(), $linkTypes, $linkParams);
-		
+        
+		//Opensource fix to make documents module mass editable
+        if($currentUserModel->hasModuleActionPermission($moduleModel->getId(), 'EditView')) {
+            $massActionLink = array(
+                    'linktype' => 'LISTVIEWMASSACTION',
+                    'linklabel' => 'LBL_EDIT',
+                    'linkurl' => 'javascript:Vtiger_List_Js.triggerMassEdit("index.php?module='.$moduleModel->get('name').'&view=MassActionAjax&mode=showMassEditForm");',
+                    'linkicon' => ''
+            );
+            $links['LISTVIEWMASSACTION'][] = Vtiger_Link_Model::getInstanceFromValues($massActionLink);
+        }
+        
 		if ($currentUserModel->hasModuleActionPermission($moduleModel->getId(), 'Delete')) {
 			$massActionLink = array(
 				'linktype' => 'LISTVIEWMASSACTION',
@@ -98,45 +128,7 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 		return $links;
 	}
 
-	/** 
-	 * Function to set the list view search conditions.
-	 * @param Vtiger_Paging_Model $pagingModel
-	 *
-	 * add folder filter
-	 */
-	protected function setListViewSearchConditions($pagingModel = false) {
-
-		$queryGenerator = $this->get('query_generator');
-
-		$folderKey = $this->get('folder_id');
-		$folderValue = $this->get('folder_value');
-		if(!empty($folderValue)) {
-		    $queryGenerator->addCondition($folderKey,$folderValue,'e'); //ED141018 Ici bug vtiger_attachmentsfolderfolderid		    
-		}
-		
-		$sourceModule = $this->get('src_module');
-		if(!empty($sourceModule)){
-			switch($sourceModule){
-			case 'Contacts':
-				//ED150628 : related to view
-				$src_viewname = $this->get('src_viewname');
-				if(!empty($src_viewname)){
-					$queryGenerator = $this->get('query_generator');
-					$viewQuery = $this->getRecordsQueryFromRequest();
-					$viewQuery = 'SELECT vtiger_senotesrel.notesid
-						FROM vtiger_senotesrel
-						JOIN (' . $viewQuery . ') source_contacts
-							ON vtiger_senotesrel.crmid = source_contacts.contactid';
-					$queryGenerator->addUserSearchConditions(array('search_field' => 'id', 'search_text' => $viewQuery, 'operator' => 'vwi'));
-				}
-				break;
-			}
-		}
-
-		parent::setListViewSearchConditions($pagingModel);
-	}
-	
-	/**
+    /**
 	 * Function to get the list view entries
 	 * @param Vtiger_Paging_Model $pagingModel
 	 * @return <Array> - Associative array of record id mapped to Vtiger_Record_Model instance.
@@ -148,32 +140,57 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 		$moduleName = $this->getModule()->get('name');
 		$moduleFocus = CRMEntity::getInstance($moduleName);
 		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
-		
+
+		$queryGenerator = $this->get('query_generator');
 		$listViewContoller = $this->get('listview_controller');
-		
-		$this->setListViewSearchConditions($pagingModel);
-		
-		$orderBy = $this->getForSql('orderby');
-		$sortOrder = $this->getForSql('sortorder');
 
-		//List view will be displayed on recently created/modified records
-		if(empty($orderBy) && empty($sortOrder) && $moduleName != "Users"){
-			$orderBy = 'modifiedtime';
-			$sortOrder = 'DESC';
+        $folderKey = $this->get('folder_id');
+        $folderValue = $this->get('folder_value');
+        if(!empty($folderValue)) {
+            // added to check if there are filter conditions already there then we need to add a glue between them
+            $glue = "";
+            if(count($queryGenerator->getWhereFields()) > 0) {
+                $glue = QueryGenerator::$AND;
+            }
+            $queryGenerator->addCondition($folderKey,$folderValue,'e',$glue);
+        }
+
+        $searchParams = $this->get('search_params');
+        if(empty($searchParams)) {
+            $searchParams = array();
+        }
+
+        $glue = "";
+        if(count($queryGenerator->getWhereFields()) > 0 && (count($searchParams)) == 1 && count($searchParams[0]) > 0) { // searchParams do exist but first array is empty, so added a check
+            $glue = QueryGenerator::$AND;
+        }
+        $queryGenerator->parseAdvFilterList($searchParams, $glue);
+
+		$searchKey = $this->get('search_key');
+		$searchValue = $this->get('search_value');
+		$operator = $this->get('operator');
+		if(!empty($searchKey)) {
+			$queryGenerator->addUserSearchConditions(array('search_field' => $searchKey, 'search_text' => $searchValue, 'operator' => $operator));
 		}
+        
+        $orderBy = $this->get('orderby');
+		$sortOrder = $this->get('sortorder');
 
-		if(!empty($orderBy)){
-		    $columnFieldMapping = $moduleModel->getColumnFieldMapping();
-		    $orderByFieldName = $columnFieldMapping[$orderBy];
-		    $orderByFieldModel = $moduleModel->getField($orderByFieldName);
-		    if($orderByFieldModel && $orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::REFERENCE_TYPE){
-				//IF it is reference add it in the where fields so that from clause will be having join of the table
-				$queryGenerator = $this->get('query_generator');
-				$queryGenerator->addWhereField($orderByFieldName);
-				//$queryGenerator->whereFields[] = $orderByFieldName;
-		    }
-		}
-
+        if(!empty($orderBy)){
+			$queryGenerator = $this->get('query_generator');
+			$fieldModels = $queryGenerator->getModuleFields();
+			$orderByFieldModel = $fieldModels[$orderBy];
+            if($orderByFieldModel && ($orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::REFERENCE_TYPE ||
+					$orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::OWNER_TYPE)){
+                $queryGenerator->addWhereField($orderBy);
+            }
+        }
+        //Document source required in list view for managing delete 
+        $listViewFields = $queryGenerator->getFields(); 
+        if(!in_array('document_source', $listViewFields)){ 
+            $listViewFields[] = 'document_source'; 
+        }
+        $queryGenerator->setFields($listViewFields);
 		$listQuery = $this->getQuery();
 
 		$sourceModule = $this->get('src_module');
@@ -184,44 +201,39 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 					$listQuery = $overrideQuery;
 				}
 			}
+            //allow source module to modify the query
+            $sourceModuleModel = Vtiger_Module_Model::getInstance($sourceModule);
+            if(method_exists($sourceModuleModel, 'getQueryByModuleField')) {
+                $sourceOverrideQuery = $sourceModuleModel->getQueryByModuleField($moduleModel->getName(),$this->get('src_field'),$this->get('src_record'),$listQuery);
+                if(!empty($sourceOverrideQuery)) {
+                    $listQuery = $sourceOverrideQuery;
+                }
+            }
 		}
 
 		$startIndex = $pagingModel->getStartIndex();
 		$pageLimit = $pagingModel->getPageLimit();
 
-		if(!empty($orderBy)) {
-			if($orderByFieldModel && $orderByFieldModel->isReferenceField()){
-			    $referenceModules = $orderByFieldModel->getReferenceList();
-			    $referenceNameFieldOrderBy = array();
-			    foreach($referenceModules as $referenceModuleName) {
-					$referenceModuleModel = Vtiger_Module_Model::getInstance($referenceModuleName);
-					$referenceNameFields = $referenceModuleModel->getNameFields();
-			
-					$columnList = array();
-					foreach($referenceNameFields as $nameField) {
-						$fieldModel = $referenceModuleModel->getField($nameField);
-						$columnList[] = $fieldModel->get('table').$orderByFieldModel->getName().'.'.$fieldModel->get('column');
-					}
-					if(count($columnList) > 1) {
-						$referenceNameFieldOrderBy[] = getSqlForNameInDisplayFormat(array('first_name'=>$columnList[0],'last_name'=>$columnList[1]),'Users').' '.$sortOrder;
-					} else {
-						$referenceNameFieldOrderBy[] = implode('', $columnList).' '.$sortOrder ;
-					}
-			    }
-			    $listQuery .= ' ORDER BY '. implode(',',$referenceNameFieldOrderBy);
-			}else{
-			    $listQuery .= ' ORDER BY '. $orderBy . ' ' .$sortOrder;
-			}
+		if(!empty($orderBy) && $orderByFieldModel) {
+			$listQuery .= ' ORDER BY '.$queryGenerator->getOrderByColumn($orderBy).' '.$sortOrder;
+		} else if(empty($orderBy) && empty($sortOrder)){
+			//List view will be displayed on recently created/modified records
+			$listQuery .= ' ORDER BY vtiger_crmentity.modifiedtime DESC';
 		}
+
 		$viewid = ListViewSession::getCurrentView($moduleName);
+        if(empty($viewid)){
+            $viewid = $pagingModel->get('viewid');
+        }
+        $_SESSION['lvs'][$moduleName][$viewid]['start'] = $pagingModel->get('page');
 		ListViewSession::setSessionQuery($moduleName, $listQuery, $viewid);
 
 		$listQuery .= " LIMIT $startIndex,".($pageLimit+1);
 
 		$listResult = $db->pquery($listQuery, array());
-		
+
 		$listViewRecordModels = array();
-		$listViewEntries =  $listViewContoller->getListViewRecords($moduleFocus, $moduleName, $listResult, $this->get('view_context'));
+		$listViewEntries =  $listViewContoller->getListViewRecords($moduleFocus,$moduleName, $listResult);
 
 		$pagingModel->calculatePageRange($listViewEntries);
 
@@ -236,22 +248,9 @@ class Documents_ListView_Model extends Vtiger_ListView_Model {
 		foreach($listViewEntries as $recordId => $record) {
 			$rawData = $db->query_result_rowdata($listResult, $index++);
 			$record['id'] = $recordId;
-			$record['uicolor'] = $rawData['uicolor'];
 			$listViewRecordModels[$recordId] = $moduleModel->getRecordFromArray($record, $rawData);
 		}
 		return $listViewRecordModels;
-	}
-	
-	function getQuery() {
-		$queryGenerator = $this->get('query_generator');
-		$listQuery = $queryGenerator->getQuery();
-		/* ED141010 get uicolor field also */
-		$matches = array();
-		if(strpos($listQuery,'vtiger_attachmentsfolderfolderid'))
-			$listQuery = preg_replace('/^SELECT\s/', 'SELECT vtiger_attachmentsfolderfolderid.uicolor, ', $listQuery, 1);
-		elseif(strpos($listQuery,'vtiger_attachmentsfolder'))
-			$listQuery = preg_replace('/^SELECT\s/', 'SELECT vtiger_attachmentsfolder.uicolor, ', $listQuery, 1);
-		return $listQuery;
 	}
 
 }

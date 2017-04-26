@@ -8,12 +8,16 @@
  * All Rights Reserved.
  ************************************************************************************/
 
-class Users_ListAjax_Action extends Users_List_View{
+class Users_ListAjax_Action extends Vtiger_BasicAjax_Action{
 	function __construct() {
 		parent::__construct();
-		$this->exposeMethod('getListViewCount');
-		$this->exposeMethod('getRecordsCount');
-		$this->exposeMethod('getPageCount');
+	}
+
+	function checkPermission(Vtiger_Request $request) {
+		$currentUser = Users_Record_Model::getCurrentUserModel();
+		if(!$currentUser->isAdminUser()) {
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED', 'Vtiger'));
+		}
 	}
 
 	function preProcess(Vtiger_Request $request) {

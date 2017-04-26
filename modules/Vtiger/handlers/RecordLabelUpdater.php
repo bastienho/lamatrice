@@ -15,11 +15,13 @@ class Vtiger_RecordLabelUpdater_Handler extends VTEventHandler {
 		global $adb;
 
 		if ($eventName == 'vtiger.entity.aftersave') {
-			$labelInfo = getEntityName($data->getModuleName(), $data->getId(), true);
+            $record = $data->getId();
+            $module = $data->getModuleName();
+			$labelInfo = getEntityName($module, $record, true);
 
 			if ($labelInfo) {
 				$label = decode_html($labelInfo[$data->getId()]);
-				$adb->pquery('UPDATE vtiger_crmentity SET label=? WHERE crmid=?', array($label, $data->getId()));
+				$adb->pquery('UPDATE vtiger_crmentity SET label=? WHERE crmid=?', array($label, $record));
 			}
 		}
 	}

@@ -8,7 +8,8 @@
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
-	//DetailView Actions
+	'SalesOrder'    =>  'Sales Orders',
+    //DetailView Actions
 	'SINGLE_SalesOrder' => 'Sales Order',
 	'LBL_EXPORT_TO_PDF' => 'Export to PDF',
     'LBL_SEND_MAIL_PDF' => 'Send Email with PDF',

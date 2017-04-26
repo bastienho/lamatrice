@@ -19,6 +19,7 @@ $languageStrings = array(
 	'LBL_ASSIGN_ROLE' => 'Assign Role',
 	'LBL_CHOOSE_PROFILES' => 'Choose profiles',
 	'LBL_COPY_PRIVILEGES_FROM' => 'Copy privileges from',
+    'LBL_TRANSFER_TO_OTHER_ROLE' =>'Transfer ownership to other role',
 	
 	//Edit View
 	'LBL_PROFILE' => 'Profile',
@@ -34,6 +35,10 @@ $languageStrings = array(
 	'LBL_ALL_USERS' => 'All Users',
 	'LBL_USERS_WITH_LOWER_LEVEL' => 'Users having Subordinate Role',
 	'LBL_USERS_WITH_SAME_OR_LOWER_LEVEL' => 'Users having Same Role or Subordinate Role',
+    
+    /*Vtiger7 String*/
+    'LBL_EDIT_ROLE' => 'Edit Role',
+	'LBL_CREATE_ROLE' => 'Create Role',
 );
 
 $jsLanguageStrings = array(

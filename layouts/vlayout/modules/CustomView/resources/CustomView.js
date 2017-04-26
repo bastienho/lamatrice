@@ -15,22 +15,17 @@ var Vtiger_CustomView_Js = {
 
 	//This will store the columns selection container
 	columnSelectElement : false,
+
 	//This will store the input hidden selectedColumnsList element
 	selectedColumnsList : false,
 
-	//ED150622
-	//This will store the "order by" fields selection container
-	orderByFieldsSelectElement : false,
-	//This will store the input hidden selectedOrderByFieldsList element
-	selectedOrderByFieldsList : false,
-
 	loadFilterView : function(url) {
-		jQuery('#loadingListViewModal').modal();
+		var progressIndicatorElement = jQuery.progressIndicator();
 		AppConnector.request(url).then(
 			function(data){
 				app.hideModalWindow();
 				var contents = jQuery(".contentsDiv").html(data);
-				jQuery('div.modal-backdrop').remove();
+				progressIndicatorElement.progressIndicator({'mode' : 'hide'});
 				Vtiger_CustomView_Js.registerEvents();
 				Vtiger_CustomView_Js.advanceFilterInstance = Vtiger_AdvanceFilter_Js.getInstance(jQuery('.filterContainer',contents));
 			},
@@ -63,12 +58,6 @@ var Vtiger_CustomView_Js = {
 		return Vtiger_CustomView_Js.columnListSelect2Element;
 	},
 
-	/** ED150622
-	 */
-	getOrderByFieldsListSelect2Element : function() {
-		return Vtiger_CustomView_Js.orderByFieldsListSelect2Element;
-	},
-
 	/**
 	 * Function to get the view columns selection element
 	 * @return : jQuery object of view columns selection element
@@ -80,17 +69,6 @@ var Vtiger_CustomView_Js = {
 		return Vtiger_CustomView_Js.columnSelectElement;
 	},
 
-	/** ED150622
-	 * Function to get the view "order by" fields selection element
-	 * @return : jQuery object of view fields selection element
-	 */
-	getOrderByFieldsSelectElement : function() {
-		if(Vtiger_CustomView_Js.orderByFieldsSelectElement == false) {
-			Vtiger_CustomView_Js.orderByFieldsSelectElement = jQuery('#viewOrderByFieldsSelect');
-		}
-		return Vtiger_CustomView_Js.orderByFieldsSelectElement;
-	},
-
 	/**
 	 * Function to get the selected columns list
 	 * @return : jQuery object of selectedColumnsList
@@ -100,17 +78,6 @@ var Vtiger_CustomView_Js = {
 			Vtiger_CustomView_Js.selectedColumnsList = jQuery('#selectedColumnsList');
 		}
 		return Vtiger_CustomView_Js.selectedColumnsList;
-	},
-
-	/** ED150622
-	 * Function to get the selected "order by" columns list
-	 * @return : jQuery object of selectedOrderByFieldsList
-	 */
-	getSelectedOrderByFieldsList : function() {
-		if(Vtiger_CustomView_Js.selectedOrderByFieldsList == false) {
-			Vtiger_CustomView_Js.selectedOrderByFieldsList = jQuery('#selectedOrderByFieldsList');
-		}
-		return Vtiger_CustomView_Js.selectedOrderByFieldsList;
 	},
 
 	/**
@@ -128,34 +95,6 @@ var Vtiger_CustomView_Js = {
             });
 	},
 
-	/** ED150622
-	 * Function to regiser the event to make the columns list sortable
-	 */
-	makeOrderByFieldsListSortable : function() {
-		var select2Element = Vtiger_CustomView_Js.getOrderByFieldsListSelect2Element();
-		//TODO : peform the selection operation in context this might break if you have multi select element in advance filter
-		//The sorting is only available when Select2 is attached to a hidden input field.
-		var chozenChoiceElement = select2Element.find('ul.select2-choices');
-		chozenChoiceElement.sortable({
-                'containment': chozenChoiceElement,
-                start: function() { Vtiger_CustomView_Js.getSelectedOrderByFieldsList().select2("onSortStart"); },
-                update: function() { Vtiger_CustomView_Js.getSelectedOrderByFieldsList().select2("onSortEnd"); }
-            });
-	},
-	
-	/** ED150622
-	 * Function to regiser the event to make the conditions list sortable
-	 */
-	makeConditionsSortable : function() {
-		var $conditionList = jQuery('.filterContainer .conditionList');
-		$conditionList.sortable({
-			'handle' : '.sort-handler',
-			//'containment': '.conditionGroup',
-			//start: function() { Vtiger_CustomView_Js.getSelectedOrderByFieldsList().select2("onSortStart"); },
-			//update: function() { Vtiger_CustomView_Js.getSelectedOrderByFieldsList().select2("onSortEnd"); }
-		});
-	},
-
 	/**
 	 * Function which will get the selected columns with order preserved
 	 * @return : array of selected values in order
@@ -163,31 +102,6 @@ var Vtiger_CustomView_Js = {
 	getSelectedColumns : function() {
 		var columnListSelectElement = Vtiger_CustomView_Js.getColumnSelectElement();
 		var select2Element = Vtiger_CustomView_Js.getColumnListSelect2Element();
-
-		var selectedValuesByOrder = new Array();
-		var selectedOptions = columnListSelectElement.find('option:selected');
-
-		var orderedSelect2Options = select2Element.find('li.select2-search-choice').find('div');
-		orderedSelect2Options.each(function(index,element){
-			var chosenOption = jQuery(element);
-			selectedOptions.each(function(optionIndex, domOption){
-				var option = jQuery(domOption);
-				if(option.html() == chosenOption.html()) {
-					selectedValuesByOrder.push(option.val());
-					return false;
-				}
-			});
-		});
-		return selectedValuesByOrder;
-	},
-
-	/**
-	 * Function which will get the selected "order by" fields with order preserved
-	 * @return : array of selected values in order
-	 */
-	getSelectedOrderByFields : function() {
-		var columnListSelectElement = Vtiger_CustomView_Js.getOrderByFieldsSelectElement();
-		var select2Element = Vtiger_CustomView_Js.getOrderByFieldsListSelect2Element();
 
 		var selectedValuesByOrder = new Array();
 		var selectedOptions = columnListSelectElement.find('option:selected');
@@ -287,80 +201,14 @@ var Vtiger_CustomView_Js = {
 		app.changeSelectElementView(selectElement, 'select2', {maximumSelectionSize: 12,dropdownCss : {'z-index' : 0}});
 	},
 
-	/** ED150622
-	 * Function which will register the select2 elements for order by columns selection
-	 */
-	registerSelect2ElementForOrderByFieldsSelection : function() {
-		var selectElement = Vtiger_CustomView_Js.getOrderByFieldsSelectElement();
-		app.changeSelectElementView(selectElement, 'select2', {maximumSelectionSize: 12,dropdownCss : {'z-index' : 0}});
-	},
-
-	/**
-	 * Function which will register the name changed event to show save copy button
-	 * ED150212
-	 */
-	registerNameChangedEvent : function() {
-		if (jQuery("#viewname").val())
-			jQuery("#viewname").bind("keypress", function(e){
-				if (e.keyCode != 13){
-					var $nameInput = $('#viewname')
-					, $lockstatusName = $nameInput.data('lockstatus-name')
-					, $customViewSubmitCopy = jQuery("#customViewSubmitCopy");
-					if ($lockstatusName && $customViewSubmitCopy.length) {
-						$customViewSubmitCopy
-							.find('input')
-								.attr('checked', 'checked').change()
-								.end()
-							.css({'opacity': '0.7'})
-							.children()
-								.css({'color': 'red'})
-						;
-					}
-					$customViewSubmitCopy.removeClass('hide');
-					$(this).unbind("keypress", arguments.callee);
-				}
-			});
-	},
-
-	/**
-	 * Function which will register save copy button event
-	 * ED150212
-	 */
-	registerSaveAsCopyEvent : function() {
-		if (jQuery("#viewname").val()){//not a new custom view
-			jQuery("#customViewSubmitCopy input").change(function(){
-				if ( this.checked ){
-					if ($("#lockstatus").val()) {
-						//unlock status
-						$("#lockstatus").val('');
-						//enable submit button
-						jQuery("#customViewSubmit").removeAttr('disabled')
-							.removeAttr('title');
-					}
-				}
-			});
-		}
-	},
-
 	registerEvents: function(){
 		Vtiger_CustomView_Js.registerSelect2ElementForColumnsSelection();
-		//ED150622
-		Vtiger_CustomView_Js.registerSelect2ElementForOrderByFieldsSelection();
-		
-		//ED150212
-		Vtiger_CustomView_Js.registerNameChangedEvent();
-		Vtiger_CustomView_Js.registerSaveAsCopyEvent();
-		
 		var contentsContainer = Vtiger_CustomView_Js.getContentsContainer();
 		jQuery('.stndrdFilterDateSelect').datepicker();
 		jQuery('.chzn-select').chosen();
 
 		var select2Element = app.getSelect2ElementFromSelect(Vtiger_CustomView_Js.getColumnSelectElement());
 		Vtiger_CustomView_Js.columnListSelect2Element = select2Element;
-		
-		//ED150622
-		select2Element = app.getSelect2ElementFromSelect(Vtiger_CustomView_Js.getOrderByFieldsSelectElement());
-		Vtiger_CustomView_Js.orderByFieldsListSelect2Element = select2Element;
 
 		//To arrange the chosen choices in the order that is selected
 		Vtiger_CustomView_Js.arrangeSelectChoicesInOrder();
@@ -370,40 +218,28 @@ var Vtiger_CustomView_Js = {
 		});
 
 		Vtiger_CustomView_Js.makeColumnListSortable();
-		//ED150622
-		Vtiger_CustomView_Js.makeOrderByFieldsListSortable();
-		//ED151112
-		Vtiger_CustomView_Js.makeConditionsSortable();
 
 		jQuery("#CustomView").submit(function(e) {
-			
-			//ED150212
-			// 'save as' checkbox
-			var saveAsCopy = contentsContainer.find("#customViewSubmitCopy input:checked").length;
-			
 			var selectElement = Vtiger_CustomView_Js.getColumnSelectElement();
 			var select2Element = app.getSelect2ElementFromSelect(selectElement);
 			var result = Vtiger_MultiSelect_Validator_Js.invokeValidation(selectElement);
 			if(result != true){
-				select2Element.validationEngine('showPrompt', result , 'error', 'bottomLeft',true);
+				select2Element.validationEngine('showPrompt', result , 'error','bottomLeft',true);
 				e.preventDefault();
 				return;
 			} else {
 				select2Element.validationEngine('hide');
 			}
-			
-			if(saveAsCopy)
-				$("#record").val('');
-			else {
-				var $nameInput = $('#viewname')
-				, $lockstatusName = $nameInput.data('lockstatus-name');
-				if ($lockstatusName && $lockstatusName != $nameInput.val()) {
-					var msg = app.vtranslate('JS_NAME_IS_LOCKED_NOT_CHANGEABLE');
-					$nameInput.validationEngine('showPrompt', msg , 'error','bottomLeft',true);
-					e.preventDefault();
-					return;
-				}
-			}
+            if(jQuery('#viewname').val().length > 40) {
+                var params = {
+                    title : app.vtranslate('JS_MESSAGE'),
+                    text : app.vtranslate('JS_VIEWNAME_ALERT')
+                }
+                Vtiger_Helper_Js.showPnotify(params);
+                e.preventDefault();
+                return;
+            }
+
 			//Mandatory Fields selection validation
 			//Any one Mandatory Field should select while creating custom view.
 			var mandatoryFieldsList = JSON.parse(jQuery('#mandatoryFieldsList').val());
@@ -442,9 +278,6 @@ var Vtiger_CustomView_Js = {
 				var advfilterlist = Vtiger_CustomView_Js.advanceFilterInstance.getValues();
 				jQuery('#advfilterlist').val(JSON.stringify(advfilterlist));
 				jQuery('input[name="columnslist"]', contentsContainer).val(JSON.stringify(Vtiger_CustomView_Js.getSelectedColumns()));
-				//ED150622
-				jQuery('input[name="orderbyfields"]', contentsContainer).val(JSON.stringify(Vtiger_CustomView_Js.getSelectedOrderByFields()));
-				
 				Vtiger_CustomView_Js.saveAndViewFilter();
 				return false;
 			} else {

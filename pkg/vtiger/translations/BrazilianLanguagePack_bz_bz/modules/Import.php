@@ -69,4 +69,35 @@ $languageStrings = array(
 	'LBL_DETAILS'                  => 'Details'                     , // TODO: Review
 	'skipped'                      => 'Skipped Records'             , // TODO: Review
 	'failed'                       => 'Failed Records'              , // TODO: Review
+    
+        'LBL_IMPORT_LINEITEMS_CURRENCY'=> 'Moeda (Itens de linha)',
+
+	'LBL_SKIP_THIS_STEP' => 'Pular esta etapa',
+	'LBL_UPLOAD_ICS' => 'Carregar arquivo ICS',
+	'LBL_ICS_FILE' => 'ICS Arquivo',
+	'LBL_IMPORT_FROM_ICS_FILE' => 'Importar do arquivo ICS',
+	'LBL_SELECT_ICS_FILE' => 'Selecione o arquivo ICS',
+
+  'LBL_USE_SAVED_MAPS' => 'O Uso De Mapas Guardados',
+  'LBL_IMPORT_MAP_FIELDS' => 'Mapa do coloumns para campos CRM',
+  'LBL_UPLOAD_CSV' => 'Upload do Arquivo CSV',
+  'LBL_UPLOAD_VCF' => 'Upload do Arquivo VCF',
+  'LBL_DUPLICATE_HANDLING' => 'Duplicado De Manipulação',
+  'LBL_FIELD_MAPPING' => 'Mapeamento Do Campo',
+  'LBL_IMPORT_FROM_CSV_FILE' => 'Importação de arquivo CSV',
+  'LBL_SELECT_IMPORT_FILE_FORMAT' => 'Onde você gostaria de importar ?',
+  'LBL_CSV_FILE' => 'Arquivo CSV',
+  'LBL_VCF_FILE' => 'Arquivo VCF',
+  'LBL_GOOGLE' => 'O Google',
+  'LBL_IMPORT_COMPLETED' => 'Importação Concluída',
+  'LBL_IMPORT_SUMMARY' => 'Importação resumo',
+  'LBL_DELETION_COMPLETED' => 'Exclusão Concluída',
+  'LBL_TOTAL_RECORDS_SCANNED' => 'Total de registros digitalizados',
+  'LBL_SKIP_BUTTON' => 'Pular',
+  'LBL_DUPLICATE_RECORD_HANDLING' => 'Registro duplicado tratamento',
+  'LBL_IMPORT_FROM_VCF_FILE' => 'Importação a partir de ficheiro VCF',
+  'LBL_SELECT_VCF_FILE' => 'Selecione arquivo VCF',
+  'LBL_DONE_BUTTON' => 'Feito',
+  'LBL_DELETION_SUMMARY' => 'Excluir o resumo',
+
 );

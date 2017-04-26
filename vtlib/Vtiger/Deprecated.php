@@ -438,10 +438,7 @@ class Vtiger_Deprecated {
 		$filePathParts = explode('/', $relativeFilePath);
 
 		if (stripos($realfilepath, $rootdirpath) !== 0 || in_array($filePathParts[0], $unsafeDirectories)) {
-				var_dump($realfilepath);
-				var_dump($filePathParts[0]);
-				var_dump($unsafeDirectories);
-			die("Sorry! Attempt to access restricted file.");
+			die('Sorry! Attempt to access restricted file. - '.$filepath);
 		}
 	}
 
@@ -470,10 +467,7 @@ class Vtiger_Deprecated {
 		$filePathParts = explode('/', $relativeFilePath);
 
 		if (stripos($realfilepath, $rootdirpath) !== 0 || !in_array($filePathParts[0], $safeDirectories)) {
-				var_dump($realfilepath);
-				var_dump($filePathParts[0]);
-				var_dump($unsafeDirectories);
-			die("Sorry! Attempt to access restricted file.");
+			die('Sorry! Attempt to access restricted file. - '.$filepath);
 		}
 
 	}
@@ -481,8 +475,7 @@ class Vtiger_Deprecated {
 	/** Function to check the file access is made within web root directory. */
 	static function checkFileAccess($filepath) {
 		if (!self::isFileAccessible($filepath)) {
-			var_dump($filepath);
-			die("Sorry! Attempt to access restricted file.");
+			die('Sorry! Attempt to access restricted file. - '.$filepath);
 		}
 	}
 
@@ -497,7 +490,6 @@ class Vtiger_Deprecated {
 		global $root_directory;
 		// Set the base directory to compare with
 		$use_root_directory = $root_directory;
-
 		if (empty($use_root_directory)) {
 			$use_root_directory = realpath(dirname(__FILE__) . '/../../.');
 		}
@@ -587,8 +579,9 @@ class Vtiger_Deprecated {
 
 		return $result;
 	}
-
-	function return_app_list_strings_language($language, $module='Vtiger') {
+    
+	static function return_app_list_strings_language($language, $module='Vtiger') {
+		require_once 'includes/runtime/LanguageHandler.php';
 		$strings = Vtiger_Language_Handler::getModuleStringsFromFile($language, $module);
 		return $strings['languageStrings'];
 	}

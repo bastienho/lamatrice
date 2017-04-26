@@ -616,14 +616,3 @@ table.fc-border-separate {
 	}
 	
 	
-/* ED141023 */
-.fc-view-year.fc-grid .fc-day-content {
-	padding: 2px 0;
-	width: 8px;
-}
-.fc-view-year.fc-grid .fc-sun {
-	background-color: #DDDDDD;
-}
-.fc-view-year.fc-grid .fc-state-highlight {
-	background: #eea;
-}

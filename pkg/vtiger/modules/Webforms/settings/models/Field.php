@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -48,8 +48,22 @@ class Settings_Webforms_Field_Model extends Vtiger_Field_Model {
 		}
 		return false;
 	}
-
-	/**
+    
+    /**
+	 * Function to get the value of a given property
+	 * @param <String> $propertyName
+	 * @return <Object>
+	 * @throws Exception
+	 */
+    public function get($propertyName) {
+		if($propertyName == 'fieldvalue' && $this->name == 'roundrobin_userid') {
+            $value = str_replace('&quot;', '"', $this->$propertyName);
+			return json_decode($value,true);
+		}
+		return parent::get($propertyName);
+	}
+	
+    /**
 	 * Function to get Picklist values
 	 * @return <Array> Picklist values
 	 */
@@ -75,7 +89,7 @@ class Settings_Webforms_Field_Model extends Vtiger_Field_Model {
 		return true;
 	}
     
-     /**
+    /**
      * Function which will check if empty piclist option should be given
      */
     public function isEmptyPicklistOptionAllowed() {

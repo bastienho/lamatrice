@@ -7,10 +7,7 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  *************************************************************************************/
-/*
- * ED150102
- * see also modules\Settings\Folders\models\Module.php
- */
+
 class Documents_Folder_Model extends Vtiger_Base_Model {
 
 	/**
@@ -20,8 +17,9 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 	public function checkDuplicate() {
 		$db = PearDatabase::getInstance();
 		$folderName = $this->getName();
-
-		$result = $db->pquery("SELECT 1 FROM vtiger_attachmentsfolder WHERE foldername = ?", array($folderName));
+		$folderId = $this->getId();
+		//added folder id check to support folder edit feature
+		$result = $db->pquery("SELECT 1 FROM vtiger_attachmentsfolder WHERE foldername = ? AND folderid != ?", array($folderName, $folderId));
 		$num_rows = $db->num_rows($result);
 		if ($num_rows > 0) {
 			return true;
@@ -29,34 +27,6 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 		return false;
 	}
 
-	/* ED141226
-	 *
-	 */
-	public function getAllWithUseCount(){
-		$db = PearDatabase::getInstance();
-
-		$query = "SELECT vtiger_attachmentsfolder.`folderid`, `foldername`, `description`, `createdby`, `sequence`, `uicolor`
-			, count(vtiger_notes.notesid) AS notes_counter
-			FROM `vtiger_attachmentsfolder`
-			LEFT JOIN vtiger_notes
-				ON vtiger_notes.folderid = `vtiger_attachmentsfolder`.folderid
-			GROUP BY `folderid`, `foldername`, `description`, `createdby`, `sequence`, `uicolor`
-			ORDER BY `sequence`, foldername
-			";
-		return $db->run_query_allrecords($query);
-	}
-	
-	public function isDeletable(){
-		$currentUserModel = Users_Record_Model::getCurrentUserModel();
-		$currentUserId = $currentUserModel->getId();
-		if($this->hasDocuments()
-		|| $this->getName() === 'Default'
-		|| (!$currentUserModel->isAdminUser() && $this->get('createdby') != $currentUserId)
-		)
-			return false;
-		return true;
-	}
-	
 	/**
 	 * Function returns whether documents are exist or not in that folder
 	 * @return true if exists else false
@@ -86,22 +56,25 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 		$db = PearDatabase::getInstance();
 		$folderName = $this->getName();
 		$folderDesc = $this->get('description');
-		$uicolor = $this->get('uicolor');
 
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		$currentUserId = $currentUserModel->getId();
 
-		$result = $db->pquery("SELECT max(sequence) AS max, max(folderid) AS max_folderid FROM vtiger_attachmentsfolder", array());
-		$sequence = $db->query_result($result, 0, 'max') + 1;
-		$folderId = $db->query_result($result,0,'max_folderid') + 1;
-		$params = array($folderId, $folderName, $folderDesc, $uicolor, $currentUserId, $sequence);
+		if($this->get('mode') != 'edit') {
+			$result = $db->pquery("SELECT max(sequence) AS max, max(folderid) AS max_folderid FROM vtiger_attachmentsfolder", array());
+			$sequence = $db->query_result($result, 0, 'max') + 1;
+			$folderId = $db->query_result($result,0,'max_folderid') + 1;
+			$params = array($folderId,$folderName, $folderDesc, $currentUserId, $sequence);
 
-		$db->pquery("INSERT INTO vtiger_attachmentsfolder(folderid, foldername, description, uicolor, createdby, sequence) VALUES(?, ?, ?, ?, ?, ?)", $params);
-		
-		$this->set('sequence', $sequence);
-		$this->set('createdby', $currentUserId);
-		$this->set('folderid',$folderId);
-		
+			$db->pquery("INSERT INTO vtiger_attachmentsfolder(folderid,foldername, description, createdby, sequence) VALUES(?, ?, ?, ?, ?)", $params);
+
+			$this->set('sequence', $sequence);
+			$this->set('createdby', $currentUserId);
+			$this->set('folderid',$folderId);
+		} else {
+			$db->pquery('UPDATE vtiger_attachmentsfolder SET foldername=?, description=? WHERE folderid=?', array($folderName, $folderDesc, $this->getId()));
+		}
+
 		return $this;
 	}
 
@@ -126,7 +99,7 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 
 	/**
 	 * Function returns an instance of Folder Model
-	 * @param folderId
+	 * @param foldername
 	 * @return Documents_Folder_Model
 	 */
 	public static function getInstanceById($folderId) {
@@ -134,24 +107,6 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 		$folderModel = Documents_Folder_Model::getInstance();
 
 		$result = $db->pquery("SELECT * FROM vtiger_attachmentsfolder WHERE folderid = ?", array($folderId));
-		$num_rows = $db->num_rows($result);
-		if ($num_rows > 0) {
-			$values = $db->query_result_rowdata($result, 0);
-			$folderModel->setData($values);
-		}
-		return $folderModel;
-	}
-
-	/** ED150912
-	 * Function returns an instance of Folder Model
-	 * @param foldername
-	 * @return Documents_Folder_Model
-	 */
-	public static function getInstanceByName($folderName) {
-		$db = PearDatabase::getInstance();
-		$folderModel = Documents_Folder_Model::getInstance();
-
-		$result = $db->pquery("SELECT * FROM vtiger_attachmentsfolder WHERE foldername = ?", array($folderName));
 		$num_rows = $db->num_rows($result);
 		if ($num_rows > 0) {
 			$values = $db->query_result_rowdata($result, 0);
@@ -202,13 +157,17 @@ class Documents_Folder_Model extends Vtiger_Base_Model {
 	function getDescription() {
 		return $this->get('description');
 	}
-	
+
 	/**
 	 * Function to get info array while saving a folder
 	 * @return Array  info array
 	 */
 	public function getInfoArray() {
-		return array('folderName' => $this->getName(),'folderid' => $this->getId(),'uicolor' => $this->get('uicolor'));
+		return array(
+			'folderName'=> $this->getName(),
+			'folderid'	=> $this->getId(),
+			'folderDesc'=> $this->getDescription()
+		);
 	}
 
 }

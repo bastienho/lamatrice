@@ -26,15 +26,13 @@ jQuery.Class('Settings_CustomRecordNumbering_Js', {}, {
 			jQuery('.saveButton').removeAttr('disabled');
 			var element = jQuery(e.currentTarget);
 			var params = {};
-			var sequenceModule = element.val()
-			,   sourceModule = element.find('option[value="'+sequenceModule+'"]').attr('data-module');
+			var sourceModule = element.val();
 
 			params = {
 				'module' : app.getModuleName(),
 				'parent' : app.getParentModuleName(),
 				'action' : "CustomRecordNumberingAjax",
 				'mode' : "getModuleCustomNumberingData",
-				'sequenceModule' : sequenceModule,
 				'sourceModule' : sourceModule
 			}
 			
@@ -60,11 +58,8 @@ jQuery.Class('Settings_CustomRecordNumbering_Js', {}, {
 		}
 		var editViewForm = this.getForm();
 		var params = {}
-		var element = editViewForm.find('[name="sourceModule"]')
-		,   sequenceModule = element.val()
-		,   $option = element.find('option[value="'+sequenceModule+'"]')
-		,   sourceModule = $option.attr('data-module')
-		,   sourceModuleLabel = $option.text();
+		var sourceModule = editViewForm.find('[name="sourceModule"]').val();
+		var sourceModuleLabel = editViewForm.find('option[value="'+sourceModule+'"]').text();
 		var prefix = editViewForm.find('[name="prefix"]');
 		var currentPrefix = jQuery.trim(prefix.val());
 		var oldPrefix = prefix.data('oldPrefix');
@@ -83,7 +78,6 @@ jQuery.Class('Settings_CustomRecordNumbering_Js', {}, {
 			'parent' : app.getParentModuleName(),
 			'action' : "CustomRecordNumberingAjax",
 			'mode' : "saveModuleCustomNumberingData",
-			'sequenceModule' : sequenceModule,
 			'sourceModule' : sourceModule,
 			'prefix' : currentPrefix,
 			'sequenceNumber' : sequenceNumber
@@ -119,18 +113,14 @@ jQuery.Class('Settings_CustomRecordNumbering_Js', {}, {
 		var editViewForm = this.getForm();
 		editViewForm.find('[name="updateRecordWithSequenceNumber"]').on('click',function(){
 			var params = {};
-			var element = editViewForm.find('[name="sourceModule"]')
-			,   sequenceModule = element.val()
-			,   $option = element.find('option[value="'+sequenceModule+'"]')
-			,   sourceModule = $option.attr('data-module')
-			,   sourceModuleLabel = $option.text();
+			var sourceModule = editViewForm.find('[name="sourceModule"]').val();
+			var sourceModuleLabel = editViewForm.find('option[value="'+sourceModule+'"]').text();
 			
 			params = {
 				'module' : app.getModuleName(),
 				'parent' : app.getParentModuleName(),
 				'action' : "CustomRecordNumberingAjax",
 				'mode' : "updateRecordsWithSequenceNumber",
-				'sequenceModule' : sequenceModule,
 				'sourceModule' : sourceModule
 			}
 			

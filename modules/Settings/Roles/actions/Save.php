@@ -13,7 +13,7 @@ class Settings_Roles_Save_Action extends Vtiger_Action_Controller {
 	public function checkPermission(Vtiger_Request $request) {
 		$currentUser = Users_Record_Model::getCurrentUserModel();
 		if(!$currentUser->isAdminUser()) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
 		}
 	}
 
@@ -66,9 +66,21 @@ class Settings_Roles_Save_Action extends Vtiger_Action_Controller {
 				$recordModel->set('profileIds', $roleProfiles);
 				$parentRole->addChildRole($recordModel);
 			}
+
+			//After role updation recreating user privilege files
+			if ($roleProfiles) {
+				foreach ($roleProfiles as $profileId) {
+					$profileRecordModel = Settings_Profiles_Record_Model::getInstanceById($profileId);
+					$profileRecordModel->recalculate(array($recordId));
+				}
+			}
 		}
 
 		$redirectUrl = $moduleModel->getDefaultUrl();
 		header("Location: $redirectUrl");
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

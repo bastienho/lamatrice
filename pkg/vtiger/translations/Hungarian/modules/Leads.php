@@ -40,14 +40,17 @@ $languageStrings = array(
 	'LBL_CONVERT_LEAD'             => 'Vevőjelöltet átalakít Kapcsolattá:', 
 	'LBL_TRANSFER_RELATED_RECORD'  => 'Kapcsolódó rekordokat áthelyez ide:', 
 	'LBL_CONVERT_LEAD_ERROR'       => 'A Vevőjelölt átalakításához a Cégek és a Kapcsolatok modulokból valamelyiknek engedélyezettnek kell lennie', 
-	'LBL_CONVERT_LEAD_ERROR_TITLE' => 'Letiltott modulok'           , 
-	'CANNOT_CONVERT'               => 'Nem alakítható át'        , 
-	'LBL_FOLLOWING_ARE_POSSIBLE_REASONS' => 'A következő okok lehetségesek', 
 	'LBL_LEADS_FIELD_MAPPING_INCOMPLETE' => 'Minden kötelező mező nincs bent a leképezésben', 
-	'LBL_MANDATORY_FIELDS_ARE_EMPTY' => 'Néhány a kötelező mezők közül üres', 
 	'LBL_LEADS_FIELD_MAPPING'      => 'Vevőjelöltek - Egyedi mezők leképezése', 
-	'LBL_CUSTOM_FIELD_MAPPING'     => 'Mező leképezés szerkesztése', 
-	'LBL_WEBFORMS'                 => 'Webes űrlap beállítása'  , 
+	'LBL_CUSTOM_FIELD_MAPPING'     => 'Ólom konverziós adatok megfeleltetése', 
+    'LBL_IMAGE_INFORMATION' => 'Profilkép',
+    'Lead Image' => 'Vezet a kép',
+	
+
+  'Phone' => 'Elsődleges Telefon',
+  'Secondary Email' => 'Másodlagos E-Mail',
+  'Email' => 'Elsődleges E-Mail',
+
 );
 $jsLanguageStrings = array(
 	'JS_SELECT_CONTACTS'           => 'Válassz Kapcsolatot a művelethez', 

@@ -34,8 +34,7 @@ class PriceBooks_RelationAjax_Action extends Vtiger_RelationAjax_Action {
 		$relationModel = Vtiger_Relation_Model::getInstance($sourceModuleModel, $relatedModuleModel);
 		foreach($relInfos as $relInfo) {
 			$price = CurrencyField::convertToDBFormat($relInfo['price'], null, true);
-			$priceUnit = $relInfo['priceunit'];//ED151226
-			$relationModel->addListPrice($sourceRecordId, $relInfo['id'], $price, $priceUnit);
+			$relationModel->addListPrice($sourceRecordId, $relInfo['id'], $price);
 		}
 	}
 	/*
@@ -53,8 +52,7 @@ class PriceBooks_RelationAjax_Action extends Vtiger_RelationAjax_Action {
 		$relatedModuleModel = Vtiger_Module_Model::getInstance($relatedModule);
 		$relationModel = Vtiger_Relation_Model::getInstance($sourceModuleModel, $relatedModuleModel);
 		foreach($relatedRecordIdList as $relatedRecordId) {
-			//ED151226 TODO $listPriceUnit
-			$relationModel->addRelation($sourceRecordId,$relatedRecordId, $listPrice);
+			$relationModel->addRelation($sourceRecordId,$relatedRecordId,$listPrice);
 		}
 	}
 

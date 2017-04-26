@@ -9,6 +9,27 @@
 
 Inventory_Edit_Js("PurchaseOrder_Edit_Js",{},{
 
+    billingShippingFields: {'bill' :{
+										'street':'',
+										'pobox':'',
+										'city'	:'',
+										'state':'',
+										'code'	:'',
+										'country':''
+								},
+                            'ship' :{
+                                        'street':'',
+										'pobox':'',
+										'city'	:'',
+										'state':'',
+										'code'	:'',
+										'country':''
+                                    }
+										
+								},
+    companyDetails: false,
+                              
+    
 	/**
 	 * Function to get popup params
 	 */
@@ -19,7 +40,7 @@ Inventory_Edit_Js("PurchaseOrder_Edit_Js",{},{
 		if(sourceFieldElement.attr('name') == 'contact_id') {
 			var form = this.getForm();
 			var parentIdElement  = form.find('[name="vendor_id"]');
-			if(parentIdElement.length > 0 && parentIdElement.val().length > 0) {
+			if(parentIdElement.length > 0 && parentIdElement.val().length > 0 && parentIdElement.val() != 0) {
 				var closestContainer = parentIdElement.closest('td');
 				params['related_parent_id'] = parentIdElement.val();
 				params['related_parent_module'] = closestContainer.find('[name="popupReferenceModule"]').val();
@@ -62,38 +83,49 @@ Inventory_Edit_Js("PurchaseOrder_Edit_Js",{},{
 		return aDeferred.promise();
 	},
 	
-	/**
-	 * Function which will register event for Reference Fields Selection
-	 */
-	registerReferenceSelectionEvent : function(container) {
-		this._super(container);
+    registerCopyCompanyAddress : function(){
 		var thisInstance = this;
-		
-		jQuery('input[name="vendor_id"]', container).on(Vtiger_Edit_Js.referenceSelectionEvent, function(e, data){
-			thisInstance.referenceSelectionEventHandler(data, container, !thisInstance.isEmptyAddress(container));
-			thisInstance.vendorSelectionEventHandler(data, container); //ED150716
+        var editViewForm = this.getForm();
+        jQuery('[name="copyCompanyAddress"]', editViewForm).on('click', function(e){
+            var addressType = (jQuery(e.currentTarget).data('target'));
+            var container = jQuery(e.currentTarget).closest('table');
+            
+            var moduleName = app.getModuleName();
+            var url = {
+                'mode': 'getCompanyDetails',
+                'action': 'CompanyDetails',
+                'module' : moduleName
+            }
+            
+            if(!thisInstance.companyDetails){
+                AppConnector.request(url).then(function(data){
+                    var response = data['result'];
+                    thisInstance.companyDetails = response;
+                    thisInstance.copyAddressFields(addressType, container);
+                },
+                function(error, err){
+                });
+            }else{
+                thisInstance.copyAddressFields(addressType, container);
+            }
 		});
+    }, 
+		
+    copyAddressFields: function(addressType, container){
+        var thisInstance = this;
+        var company = thisInstance.companyDetails;
+        var fields = thisInstance.billingShippingFields[addressType];
+        for(var key in fields){
+            container.find('[name="'+ addressType +'_' + key+'"]').val(company[key]);
+            container.find('[name="'+ addressType +'_' + key+'"]').trigger('change');
+        }
 	},
     
-	/** ED150716
-	 * Vendor Selection Event Handler
-	 * Set subject
-	 * 
-	 */
-	vendorSelectionEventHandler : function(data,container){
-		var thisInstance = this
-		, $subject = container.find('input[name="subject"]:first')
-		, poType = container.find('input[name="potype"]:first').val()
-		, subject = app.vtranslate('JS_SUBJECT_AUTO_POTYPE_' + poType) + ' ' + data.selectedName;
-		if ($subject.val() && $subject.attr('data-isauto') === undefined) 
-			return;
-		$subject.val(subject).attr('data-isauto', 1);
-	},
 	
 	registerEvents: function(){
 		this._super();
 		this.registerEventForCopyAddress();
+        this.registerCopyCompanyAddress();
 	}
 });
-
 

@@ -69,4 +69,35 @@ $languageStrings = array(
 	'LBL_DETAILS'                  => 'Details'                     , // TODO: Review
 	'skipped'                      => 'Skipped Records'             , // TODO: Review
 	'failed'                       => 'Failed Records'              , // TODO: Review
+    
+        'LBL_IMPORT_LINEITEMS_CURRENCY'=> 'Árfolyam (Sorok)',
+
+	'LBL_SKIP_THIS_STEP' => 'Ugorja át ezt a lépést',
+	'LBL_UPLOAD_ICS' => 'Feltöltés ICS fájl',
+	'LBL_ICS_FILE' => 'ICS fájl',
+	'LBL_IMPORT_FROM_ICS_FILE' => 'Importálás ICS fájl',
+	'LBL_SELECT_ICS_FILE' => 'Válassza ki ICS fájl',
+
+  'LBL_USE_SAVED_MAPS' => 'Használja Mentett Térképek',
+  'LBL_IMPORT_MAP_FIELDS' => 'A térképen a coloumns, hogy a CRM mezők',
+  'LBL_UPLOAD_CSV' => 'CSV-Fájl feltöltés',
+  'LBL_UPLOAD_VCF' => 'Feltöltés VCF Fájlt',
+  'LBL_DUPLICATE_HANDLING' => 'Ismétlődő Kezelése',
+  'LBL_FIELD_MAPPING' => 'Mező Feltérképezése',
+  'LBL_IMPORT_FROM_CSV_FILE' => 'Import CSV-fájl',
+  'LBL_SELECT_IMPORT_FILE_FORMAT' => 'Hová szeretne importálni ?',
+  'LBL_CSV_FILE' => 'CSV-Fájl',
+  'LBL_VCF_FILE' => 'VCF Fájlt',
+  'LBL_GOOGLE' => 'A Google',
+  'LBL_IMPORT_COMPLETED' => 'Az Importálás Befejeződött',
+  'LBL_IMPORT_SUMMARY' => 'Import összefoglaló',
+  'LBL_DELETION_COMPLETED' => 'Törlés Befejeződött',
+  'LBL_TOTAL_RECORDS_SCANNED' => 'Összes beolvasott rekordok',
+  'LBL_SKIP_BUTTON' => 'Ugrás',
+  'LBL_DUPLICATE_RECORD_HANDLING' => 'Duplikált bejegyzést kezelése',
+  'LBL_IMPORT_FROM_VCF_FILE' => 'Az importálás VCF fájlt',
+  'LBL_SELECT_VCF_FILE' => 'Válasszuk a VCF fájlt',
+  'LBL_DONE_BUTTON' => 'Kész',
+  'LBL_DELETION_SUMMARY' => 'Törlés összefoglaló',
+
 );

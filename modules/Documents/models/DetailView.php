@@ -13,17 +13,34 @@ class Documents_DetailView_Model extends Vtiger_DetailView_Model {
 	/**
 	 * Function to get the detail view links (links and widgets)
 	 * @param <array> $linkParams - parameters which will be used to calicaulate the params
-	 * @param boolean $countRelatedEntity - AV150619
 	 * @return <array> - array of link models in the format as below
 	 *                   array('linktype'=>list of link models);
 	 */
-	public function getDetailViewLinks($linkParams, $countRelatedEntity = false) {
+	public function getDetailViewLinks($linkParams) {
 		$currentUserModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 
-		$linkModelList = parent::getDetailViewLinks($linkParams, $countRelatedEntity);
+		$linkModelList = parent::getDetailViewLinks($linkParams);
 		$recordModel = $this->getRecord();
+        if($recordModel->get('filestatus') && $recordModel->get('filename')) {
+            $previewAvailable = true;
+            if($recordModel->get('filelocationtype') === 'I'){
+                if(!count($recordModel->getFileDetails()))
+                    $previewAvailable = false;
+            }
+            if($previewAvailable){
+                $filePreviewLinkModel = array(
+                            'linktype' => 'DETAILVIEWBASIC',
+                            'linklabel' => 'LBL_VIEW_FILE',
+                            'linkicon' => '',
+                            'linkurl' => 'Vtiger_Header_Js.previewFile(event,'.$recordModel->getId().')',
+                            'filelocationtype' => $recordModel->get('filelocationtype'),
+                            'filename' => $recordModel->get('filename'),
+                    );
+                $linkModelList['DETAILVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues($filePreviewLinkModel);
+            }
+		}
 
-		if ($recordModel->get('filestatus') && $recordModel->get('filename') && $recordModel->get('filelocationtype') === 'I') {
+		if ($recordModel->get('filestatus') && $recordModel->get('filename') && $recordModel->get('filelocationtype') === 'I' && count($recordModel->getFileDetails())) {
 			$basicActionLink = array(
 					'linktype' => 'DETAILVIEW',
 					'linklabel' => 'LBL_DOWNLOAD_FILE',
@@ -32,13 +49,16 @@ class Documents_DetailView_Model extends Vtiger_DetailView_Model {
 			);
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
 		}
-		$basicActionLink = array(
-				'linktype' => 'DETAILVIEW',
-				'linklabel' => 'LBL_CHECK_FILE_INTEGRITY',
-				'linkurl' => $recordModel->checkFileIntegrityURL(),
-				'linkicon' => ''
-		);
-		$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+        
+        if($recordModel->get('filelocationtype') === 'I') {
+            $basicActionLink = array(
+                    'linktype' => 'DETAILVIEW',
+                    'linklabel' => 'LBL_CHECK_FILE_INTEGRITY',
+                    'linkurl' => $recordModel->checkFileIntegrityURL(),
+                    'linkicon' => ''
+            );
+            $linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+        }
 
 		if ($recordModel->get('filestatus') && $recordModel->get('filename') && $recordModel->get('filelocationtype') === 'I') {
 			$emailModuleModel = Vtiger_Module_Model::getInstance('Emails');
@@ -57,103 +77,4 @@ class Documents_DetailView_Model extends Vtiger_DetailView_Model {
 		return $linkModelList;
 	}
 
-	/**
-	 * Function to get the detail view widgets
-	 * @return <Array> - List of widgets , where each widget is an Vtiger_Link_Model
-	 *
-	 * Ajout des blocks Widgets
-	 * La table _Links ne semble pas tre utilise pour initialiser le tableau
-	 * nécessite l'existence des fichiers Vtiger/%RelatedModule%SummaryWidgetContents.tpl (tout attach)
-	 */
-	public function getWidgets() {
-		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
-		$widgetLinks = parent::getWidgets();
-		
-		foreach($widgetLinks as $index => &$widgetLink)
-			if($widgetLink->get('linklabel') === 'LBL_UPDATES'){
-				unset($widgetLinks[$index]);
-				$widgetUpdatesLink = $widgetLink;
-				break;
-			}
-			
-		$productsInstance = Vtiger_Module_Model::getInstance('Products');
-		if($userPrivilegesModel->hasModuleActionPermission($productsInstance->getId(), 'DetailView')) {
-			$widgets[] = array(
-					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'Products',
-					'linkName'	=> $productsInstance->getName(),
-					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&relatedModule='.$productsInstance->getName().'&mode=showRelatedRecords&page=1&limit=20',
-					'action'	=> array('Select'),
-					'actionlabel'	=> array('Sélectionner'),
-					'actionURL' =>	$productsInstance->getListViewUrl()
-			);
-		}
-			
-		$campaignsInstance = Vtiger_Module_Model::getInstance('Campaigns');
-		if($userPrivilegesModel->hasModuleActionPermission($campaignsInstance->getId(), 'DetailView')) {
-			$widgets[] = array(
-					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'Campaigns',
-					'linkName'	=> $campaignsInstance->getName(),
-					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&relatedModule='.$campaignsInstance->getName().'&mode=showRelatedRecords&page=1&limit=10',
-					'action'	=> array('Select'),
-					'actionlabel'	=> array('Sélectionner'),
-					'actionURL' =>	$campaignsInstance->getListViewUrl()
-			);
-		}
-			
-		$servicesInstance = Vtiger_Module_Model::getInstance('Services');
-		if($userPrivilegesModel->hasModuleActionPermission($servicesInstance->getId(), 'DetailView')) {
-			$widgets[] = array(
-					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'Services',
-					'linkName'	=> $servicesInstance->getName(),
-					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&relatedModule='.$servicesInstance->getName().'&mode=showRelatedRecords&page=1&limit=10',
-					'action'	=> array('Select'),
-					'actionlabel'	=> array('Sélectionner'),
-					'actionURL' =>	$servicesInstance->getListViewUrl()
-			);
-		}
-
-		$documentsInstance = Vtiger_Module_Model::getInstance('Documents');
-		if($userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'DetailView')) {
-			$widgets[] = array(
-					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'Documents',
-					'linkName'	=> $documentsInstance->getName(),
-					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&relatedModule='.$documentsInstance->getName().'&mode=showRelatedRecords&page=1&limit=10',
-					'action'	=> array('Select'),
-					'actionlabel'	=> array('Sélectionner'),
-					'actionURL' =>	$documentsInstance->getListViewUrl()
-			);
-		}
-
-		$invoicesInstance = Vtiger_Module_Model::getInstance('Invoice');
-		if($userPrivilegesModel->hasModuleActionPermission($invoicesInstance->getId(), 'DetailView')) {
-			$relatedField = 'notesid';
-			$widgets[] = array(
-					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'Invoice',
-					'linkName'	=> $invoicesInstance->getName(),
-					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&relatedModule=Invoice&mode=showRelatedRecords&page=1&limit=10',
-					'action'	=> array('Add'),
-					'actionlabel'	=> array('Créer'),
-					'actionURL' =>	$invoicesInstance->getCreateRecordUrl() . '&sourceModule='.$this->getModuleName().'&sourceRecord='.$this->getRecord()->getId()
-						. '&relationOperation=true&' . $relatedField .'='.$this->getRecord()->getId(),
-			);
-		}
-			
-		foreach ($widgets as $widgetDetails) {
-			$widgetLinks[] = Vtiger_Link_Model::getInstanceFromValues($widgetDetails);
-		}
-		if($widgetUpdatesLink)
-			$widgetLinks[] = $widgetUpdatesLink;
-			
-		return $widgetLinks;
-	}
 }

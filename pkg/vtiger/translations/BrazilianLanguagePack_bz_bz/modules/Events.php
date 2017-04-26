@@ -13,19 +13,22 @@ $languageStrings = array(
 	'LBL_ADD_RECORD'               => 'Add Event'                   , 
 	'LBL_RECORDS_LIST'             => 'List View'                   , 
 	'LBL_EVENTS'                   => 'Eventos'                     , 
-	'LBL_TODOS'                    => 'Compromisso'                 , 
-	'LBL_HOLD_FOLLOWUP_ON'         => 'Hold Followup on'            , // TODO: Review
-	'LBL_EVENT_INFORMATION'        => 'Event Details'               , 
+	'LBL_TODOS'                    => 'Tarefa'                 , 
+	'LBL_HOLD_FOLLOWUP_ON'         => 'Segure Acompanhamento On'    ,
+    'LBL_CREATE_FOLLOWUP_EVENT'    => 'Criar Follow Up Eventos'     ,
+	'LBL_EVENT_INFORMATION'        => 'Detalhes do Evento'          , 
 	'LBL_RECURRENCE_INFORMATION'   => 'Recurrence Details'          , 
 	'LBL_RELATED_TO'               => 'Related To'                  , // TODO: Review
+    'Related To'                   => 'Relacionado a'               ,
 	'Start Date & Time'            => 'Data & Hora Inicial'         , 
-	'Recurrence'                   => 'Recurrence'                  , 
+	'Recurrence'                   => 'Repetição'                  , 
 	'Send Notification'            => 'Send Notification'           , 
 	'Location'                     => 'Location'                    , 
 	'Send Reminder'                => 'Send Reminder'               , 
 	'End Date & Time'              => 'Data & Hora Final'           , 
+    'End Date'                     => 'Data & Hora Final'           , 
 	'Activity Type'                => 'Tipo Atividade'              , 
-	'Visibility'                   => 'Visibility'                  , 
+	'Visibility'                   => 'Visibilidade'                  , 
 	'Private'                      => 'Particular'                  , 
 	'Public'                       => 'Público'                    , 
 	'Call'                         => 'Chamada'                     , 
@@ -59,11 +62,17 @@ $languageStrings = array(
 	'Weekly'                       => 'Week(s)'                     , // TODO: Review
 	'Monthly'                      => 'Month(s)'                    , // TODO: Review
 	'Yearly'                       => 'Year'                        , // TODO: Review
-	'LBL_REPEATEVENT'              => 'Repeat once in every'        , // TODO: Review
+	'LBL_REPEATEVENT'              => 'Uma vez em cada'        , // TODO: Review
 	'LBL_UNTIL'                    => 'Until'                       , // TODO: Review
 	'LBL_DAY_OF_THE_MONTH'         => 'day of the month'            , // TODO: Review
 	'LBL_ON'                       => 'on'                          , // TODO: Review
 	'LBL_CALENDAR_VIEW'            => 'Calendar View'               , 
 	'LBL_INVITE_USER_BLOCK'        => 'Invite'                      , // TODO: Review
 	'LBL_INVITE_USERS'             => 'Invite Users'                , // TODO: Review
+        'LBL_INVITE_PEOPLE'            => 'Convidar Pessoas',
+
+
+  'INVITATION' => ' Convite ',
+  'Busy' => 'Ocupado',
+
 );

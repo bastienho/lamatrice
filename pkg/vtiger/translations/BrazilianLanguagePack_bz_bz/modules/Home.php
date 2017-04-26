@@ -20,5 +20,10 @@ $languageStrings = array(
 	'OLTPO'                        => 'Principais Pedidos Compras'  , 
 	'LTFAQ'                        => 'Minhas FAQs Recentes'        , 
 	'UA'                           => 'Eventos Programados'         , 
-	'PA'                           => 'Eventos Pendentes'           , 
+	'PA'                           => 'Eventos Pendentes'           ,
+        'Home'                         => 'Painel de instrumentos'                        ,
+
+  'LBL_SAVE_ORDER' => 'Salve Ordem',
+  'LBL_ADD_NEW_DASHBOARD' => 'Adicionar novo painel de instrumentos',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'São permitidos um máximo de 30 caracteres para o nome do painel.',
 );

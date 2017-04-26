@@ -17,8 +17,8 @@ require_once 'include/logging.php';
 include_once 'libraries/adodb/adodb.inc.php';
 require_once 'libraries/adodb/adodb-xmlschema.inc.php';
 
-$log =& LoggerManager::getLogger('VT');
-$logsqltm =& LoggerManager::getLogger('SQLTIME');
+$log = LoggerManager::getLogger('VT');
+$logsqltm = LoggerManager::getLogger('SQLTIME');
 
 // Callback class useful to convert PreparedStatement Question Marks to SQL value
 // See function convertPS2Sql in PearDatabase below
@@ -115,7 +115,7 @@ class PearDatabase{
     function println($msg)
     {
 		require_once('include/logging.php');
-		$log1 =& LoggerManager::getLogger('VT');
+		$log1 = LoggerManager::getLogger('VT');
 		if(is_array($msg)) {
 		    $log1->info("PearDatabse ->".print_r($msg,true));
 		} else {
@@ -175,10 +175,6 @@ class PearDatabase{
 		    $this->println("ADODB error ".$msg."->[".$this->database->ErrorNo()."]".$this->database->ErrorMsg());
 		}
 		return false;
-    }
-	//ED150417
-	function echoError($msg='', $return = FALSE) {
-		return print_r("<pre>ADODB error ".$msg."->[".$this->database->ErrorNo()."]".$this->database->ErrorMsg()."</pre>", $return);
     }
 
     function change_key_case($arr) {
@@ -254,7 +250,7 @@ class PearDatabase{
 		global $default_charset;
 		static $DEFAULTCHARSET = null;
 		if ($DEFAULTCHARSET === null) $DEFAULTCHARSET = strtoupper($default_charset);
-		
+
 		// Performance Tuning: If database default charset is UTF-8, we don't need this
 		if($DEFAULTCHARSET == 'UTF-8' && ($force || !$this->isdb_default_utf8_charset)) {
 
@@ -358,9 +354,9 @@ class PearDatabase{
 
 		if($this->avoidPreparedSql || empty($params)) {
 			$sql = $this->convert2Sql($sql, $params);
-			$result = &$this->database->Execute($sql);
+			$result = $this->database->Execute($sql);
 		} else {
-			$result = &$this->database->Execute($sql, $params);
+			$result = $this->database->Execute($sql, $params);
 		}
 		$sql_end_time = microtime(true);
 		$this->logSqlTiming($sql_start_time, $sql_end_time, $sql, $params);
@@ -529,13 +525,13 @@ class PearDatabase{
 
     /* ADODB newly added. replacement for mysql_fetch_array() */
     function fetch_array(&$result) {
-	if($result->EOF) {
-	    //$this->println("ADODB fetch_array return null");
-	    return NULL;
-	}
-	$arr = $result->FetchRow();
-	if(is_array($arr))
-		$arr = array_map('to_html', $arr);
+		if($result->EOF) {
+		    //$this->println("ADODB fetch_array return null");
+		    return NULL;
+		}
+		$arr = $result->FetchRow();
+        if(is_array($arr))
+			$arr = array_map('to_html', $arr);
         return $this->change_key_case($arr);
     }
 
@@ -665,6 +661,8 @@ class PearDatabase{
 	    switch ($this->dbType) {
 		    case 'mysql':
 			    return 'concat('.implode(',',$list).')';
+                    case 'mysqli':
+                            return 'concat('.implode(',',$list).')';
 		    case 'pgsql':
 			    return '('.implode('||',$list).')';
 		    default:
@@ -687,14 +685,14 @@ class PearDatabase{
     }
 
 	// Function to get particular row from the query result
-	function query_result_rowdata(&$result, $row=0, $parseHtml=true) {
+	function query_result_rowdata(&$result, $row=0) {
 		if (!is_object($result))
                 throw new Exception("result is not an object");
 		$result->Move($row);
 		$rowdata = $this->change_key_case($result->FetchRow());
 
 		foreach($rowdata as $col => $coldata) {
-			if($col != 'fieldlabel' && $parseHtml)
+			if($col != 'fieldlabel')
 				$rowdata[$col] = to_html($coldata);
 		}
 		return $rowdata;
@@ -750,16 +748,7 @@ class PearDatabase{
 		return '';
     }
 
-	/* ED151017 */
-    function fetchAllByAssoc(&$result, $encode=true) {
-		$rows = array();
-		$rowNum = 0;
-		while(!$result->EOF)
-			$rows[] = $this->fetchByAssoc($result, $rowNum++, $encode);
-		return $rows;
-	}
-	
-	function fetchByAssoc(&$result, $rowNum = -1, $encode=true) {
+    function fetchByAssoc(&$result, $rowNum = -1, $encode=true) {
 		if($result->EOF) {
 		    $this->println("ADODB fetchByAssoc return null");
 		    return NULL;
@@ -780,7 +769,7 @@ class PearDatabase{
 		$result->MoveNext();
 		$this->println($row);
 
-		if($encode && is_array($row))
+		if($encode&& is_array($row))
 			return array_map('to_html', $row);
 		return $row;
     }
@@ -788,9 +777,9 @@ class PearDatabase{
     function getNextRow(&$result, $encode=true){
 		global $log;
 		$log->info('getNextRow');
-		if(isset($result)){
+		if(isset($result) && $result){
 	    	$row = $this->change_key_case($result->FetchRow());
-		    if($row && $encode && is_array($row))
+		    if($row && $encode&& is_array($row))
 				return array_map('to_html', $row);
 	    	return $row;
 		}
@@ -798,7 +787,7 @@ class PearDatabase{
     }
 
     function fetch_row(&$result, $encode=true) {
-		return $this->getNextRow($result, $encode);
+		return $this->getNextRow($result);
     }
 
     function field_name(&$result, $col) {
@@ -817,8 +806,11 @@ class PearDatabase{
 		}
 		$this->database = ADONewConnection($this->dbType);
 
-//ED140906
-//$this->database->debug = (true); 
+		// Setting client flag for Import csv to database(LOAD DATA LOCAL INFILE.....)
+		if ($this->database->clientFlags == 0 && isset($dbconfigoption['clientFlags'])) {
+			$this->database->clientFlags = $dbconfigoption['clientFlags'];
+		}
+		// End
 
 		$result = $this->database->PConnect($this->dbHostName, $this->userName, $this->userPassword, $this->dbName);
 		if ($result) {
@@ -838,7 +830,7 @@ class PearDatabase{
 	 */
     function PearDatabase($dbtype='',$host='',$dbname='',$username='',$passwd='') {
 		global $currentModule;
-		$this->log =& LoggerManager::getLogger('PearDatabase_'. $currentModule);
+		$this->log = LoggerManager::getLogger('PearDatabase_'. $currentModule);
 		$this->resetSettings($dbtype,$host,$dbname,$username,$passwd);
 
 		// Initialize performance parameters
@@ -850,6 +842,7 @@ class PearDatabase{
 	    $this->println("ADODB Connect : DBType not specified");
 	    return;
 	}
+
     }
 
     function resetSettings($dbtype,$host,$dbname,$username,$passwd){
@@ -883,8 +876,11 @@ class PearDatabase{
 		$this->println("ADODB disconnect");
 		if(isset($this->database)){
 	    	if($this->dbType == "mysql"){
-			mysql_close($this->database);
-	    } else {
+			mysql_close($this->database->_connectionID);
+	    }else if($this->dbType=="mysqli"){
+                mysqli_close($this->database->_connectionID);
+            }
+            else {
 			$this->database->disconnect();
 	    }
 	    unset($this->database);
@@ -1012,33 +1008,16 @@ class PearDatabase{
 		return $result;
     }
 
-	
-
 	//To get a function name with respect to the database type which escapes strings in given text
 	function sql_escape_string($str)
 	{
-		if($this->isMySql())
-			$result_data = $this->mysql_escape_mimic($str);//mysql_real_escape_string
+		if($this->isMySql()){
+			$result_data = ($this->dbType=='mysqli')?mysqli_real_escape_string($this->database->_connectionID,$str):mysql_real_escape_string($str);
+                }
 		elseif($this->isPostgres())
 			$result_data = pg_escape_string($str);
 		return $result_data;
 	}
-
-	/* ED141005
-	 * mysql_real_escape_string is no more supported
-	 * mysqli_real_escape_string need link object
-	 * so, mimic
-	*/
-	function mysql_escape_mimic($inp) { 
-		if(is_array($inp)) 
-			return array_map(__METHOD__, $inp); 
-
-		if(!empty($inp) && is_string($inp)) { 
-			return str_replace(array('\\', "\0", "\n", "\r", "'", '"', "\x1a"), array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z'), $inp); 
-		} 
-
-		return $inp; 
-	} 
 
 	// Function to get the last insert id based on the type of database
 	function getLastInsertID($seqname = '') {

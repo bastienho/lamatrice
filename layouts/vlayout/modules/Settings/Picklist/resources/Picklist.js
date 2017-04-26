@@ -7,7 +7,7 @@
  * All Rights Reserved.
  *************************************************************************************/
 var Settings_Picklist_Js = {
-	
+
 	registerModuleChangeEvent : function() {
 		jQuery('#pickListModules').on('change',function(e){
             var element = jQuery(e.currentTarget);
@@ -38,8 +38,8 @@ var Settings_Picklist_Js = {
 			});
 		});
 	},
-	
-	
+
+
 	registerModulePickListChangeEvent : function() {
 		jQuery('#modulePickList').on('change',function(e){
 			var params = {
@@ -62,9 +62,9 @@ var Settings_Picklist_Js = {
 				Settings_Picklist_Js.registerItemActions();
 				progressIndicatorElement.progressIndicator({'mode':'hide'});
 			})
-		})	
+		})
 	},
-	
+
 	registerAddItemEvent : function() {
 		jQuery('#addItem').on('click',function(e){
 			var data = jQuery('#createViewContents').find('.modal');
@@ -74,7 +74,6 @@ var Settings_Picklist_Js = {
 				jQuery('[name="addItemForm"]',data).validationEngine();
 				Settings_Picklist_Js.registerAddItemSaveEvent(data);
 				Settings_Picklist_Js.regiserSelectRolesEvent(data);
-				//TODO uicolor ?
 			}
 			app.showModalWindow(clonedCreateView, function(data) {
 				if(typeof callBackFunction == 'function') {
@@ -83,8 +82,8 @@ var Settings_Picklist_Js = {
 			});
 		});
 	},
-	
-	
+
+
 	registerAssingValueToRuleEvent : function() {
 		jQuery('#assignValue').on('click',function() {
 			var pickListValuesTable = jQuery('#pickListValuesTable');
@@ -93,10 +92,10 @@ var Settings_Picklist_Js = {
 				var selectedValues = [];
 				jQuery.each(selectedListItem,function(i,element) {
 					selectedValues.push(jQuery(element).closest('tr').data('key'));
-					
+
 				});
 			}
-			
+
 			var params = {
 				module : app.getModuleName(),
 				parent : app.getParentModuleName(),
@@ -110,16 +109,16 @@ var Settings_Picklist_Js = {
 				jQuery('[name="addItemForm"]',jQuery(data)).validationEngine();
 				Settings_Picklist_Js.registerAssignValueToRoleSaveEvent(jQuery(data));
 				if(selectedListItem.length > 0) {
-					jQuery('[name="assign_values[]"]',jQuery('#assignValueToRoleForm')).select2('val',selectedValues);	
+					jQuery('[name="assign_values[]"]',jQuery('#assignValueToRoleForm')).select2('val',selectedValues);
 				}
 			});
 		});
 	},
-	
+
 	registerAssignValueToRoleSaveEvent : function(data) {
 		jQuery('#assignValueToRoleForm').on('submit',function(e) {
 			var form = jQuery(e.currentTarget);
-			
+
 			var assignValuesSelectElement = jQuery('[name="assign_values[]"]',form);
 			var assignValuesSelect2Element = app.getSelect2ElementFromSelect(assignValuesSelectElement);
 			var assignValueResult = Vtiger_MultiSelect_Validator_Js.invokeValidation(assignValuesSelectElement);
@@ -128,7 +127,7 @@ var Settings_Picklist_Js = {
 			} else {
 				assignValuesSelect2Element.validationEngine('hide');
 			}
-			
+
 			var rolesSelectElement = jQuery('[name="rolesSelected[]"]',form);
 			var select2Element = app.getSelect2ElementFromSelect(rolesSelectElement);
 			var result = Vtiger_MultiSelect_Validator_Js.invokeValidation(rolesSelectElement);
@@ -137,7 +136,7 @@ var Settings_Picklist_Js = {
 			} else {
 				select2Element.validationEngine('hide');
 			}
-			
+
 			if(assignValueResult != true || result != true) {
 				e.preventDefault();
 				return;
@@ -154,11 +153,11 @@ var Settings_Picklist_Js = {
 			e.preventDefault();
 		});
 	},
-	
+
 	registerEnablePickListValueClickEvent : function() {
 		jQuery('#listViewContents').on('click','.assignToRolePickListValue',function(e) {
 			jQuery('#saveOrder').removeAttr('disabled');
-			
+
 			var pickListVaue = jQuery(e.currentTarget)
 			if(pickListVaue.hasClass('selectedCell')) {
 				pickListVaue.removeClass('selectedCell').addClass('unselectedCell');
@@ -169,7 +168,7 @@ var Settings_Picklist_Js = {
 			}
 		});
 	},
-	
+
 	registerenableOrDisableListSaveEvent : function() {
 		jQuery('#saveOrder').on('click',function(e) {
 			var progressIndicatorElement = jQuery.progressIndicator({
@@ -185,9 +184,9 @@ var Settings_Picklist_Js = {
 			jQuery.each(pickListValues,function(i,element) {
 				var currentValue = jQuery(element);
 				if(currentValue.hasClass('selectedCell')){
-					enabledValues.push(currentValue.data('value'));
+					enabledValues.push(currentValue.data('id'));
 				} else {
-					disabledValues.push(currentValue.data('value'));
+					disabledValues.push(currentValue.data('id'));
 				}
 			});
 			var params = {
@@ -209,13 +208,13 @@ var Settings_Picklist_Js = {
 			});
 		});
 	},
-	
+
 	regiserSelectRolesEvent : function(data) {
 		data.find('[name="rolesSelected[]"]').on('change',function(e) {
 			var rolesSelectElement = jQuery(e.currentTarget);
 			var selectedValue = rolesSelectElement.val();
 			if(jQuery.inArray('all', selectedValue) != -1){
-				rolesSelectElement.select2("val", ""); 
+				rolesSelectElement.select2("val", "");
 				rolesSelectElement.select2("val","all");
 				rolesSelectElement.select2("close");
 				rolesSelectElement.find('option').not(':first').attr('disabled','disabled');
@@ -226,7 +225,7 @@ var Settings_Picklist_Js = {
 			}
 		});
 	},
-	
+
 	registerRenameItemEvent : function() {
 		var thisInstance = this;
 		jQuery('#renameItem').on('click',function(e){
@@ -243,17 +242,6 @@ var Settings_Picklist_Js = {
 				Vtiger_Helper_Js.showPnotify(params);
 				return;
 			} else{
-				/* ED150625 : Comma is forbidden */
-				var container = jQuery('#createViewContents').find('.modal');
-				var newValueEle = jQuery('[name="newValue"]',container);
-				var newValue = newValueEle.val();
-				if(newValue.indexOf(',') >= 0) {
-					var errorMessage = app.vtranslate('JS_DO_NOT_USE_COMMA');
-					newValueEle.validationEngine('showPrompt', errorMessage+' '+'"'+newValue+'"'  , 'error','bottomLeft',true);
-					e.preventDefault();
-					return;
-				}
-				
 				var params = {
 					module : app.getModuleName(),
 					parent : app.getParentModuleName(),
@@ -273,7 +261,7 @@ var Settings_Picklist_Js = {
 			}
 		});
 	},
-	
+
 	/**
 	 * Function to register the scroll bar for NonEditable Picklist Values
 	 */
@@ -283,14 +271,14 @@ var Settings_Picklist_Js = {
 				size: '6px'
 			});
 	},
-	
+
 	registerDeleteItemEvent : function() {
 		var thisInstance = this;
 		jQuery('#deleteItem').on('click',function(e){
 			var pickListValuesTable = jQuery('#pickListValuesTable');
 			var selectedListItem = jQuery('.selectedListItem',pickListValuesTable);
 			var selectedListItemsArray = new Array();
-			
+
 			jQuery.each(selectedListItem,function(index,element){
 				selectedListItemsArray.push(jQuery(element).closest('tr').data('key'));
 			})
@@ -311,9 +299,9 @@ var Settings_Picklist_Js = {
 			thisInstance.showDeleteItemForm(params);
 		});
 	},
-	
+
 	registerDeleteOptionEvent : function() {
-		
+
 		function result(value) {
 			var replaceValueElement = jQuery('#replaceValue');
 			if(typeof value.added != 'undefined'){
@@ -329,13 +317,13 @@ var Settings_Picklist_Js = {
 		}
 		jQuery('[name="delete_value[]"]').on("change", function(e) {
 			result({
-				val:e.val, 
-				added:e.added, 
+				val:e.val,
+				added:e.added,
 				removed:e.removed
 				});
 		})
 	},
-	
+
 	duplicateItemNameCheck : function(container) {
 		var pickListValues = JSON.parse(jQuery('[name="pickListValues"]',container).val());
 		var pickListValuesArr = new Array();
@@ -343,12 +331,12 @@ var Settings_Picklist_Js = {
 			var decodedValue = app.getDecodedValue(e);
 			pickListValuesArr.push(jQuery.trim(decodedValue.toLowerCase()));
 		});
-		
+
 		var mode = jQuery('[name="mode"]', container).val();
 		var newValue = jQuery.trim(jQuery('[name="newValue"]',container).val());
 		var lowerCasedNewValue = newValue.toLowerCase();
-		
-		//Checking the new picklist value is already exists 
+
+		//Checking the new picklist value is already exists
 		if(jQuery.inArray(lowerCasedNewValue,pickListValuesArr) != -1){
 			//while renaming the picklist values
 			if(mode == 'rename') {
@@ -365,7 +353,7 @@ var Settings_Picklist_Js = {
 			return false;
 		}
 	},
-	
+
 	registerChangeRoleEvent : function() {
 		jQuery('#rolesList').on('change',function(e) {
 			var progressIndicatorElement = jQuery.progressIndicator({
@@ -391,7 +379,7 @@ var Settings_Picklist_Js = {
 			});
 		})
 	},
-	
+
 	registerAddItemSaveEvent : function(container) {
 		container.find('[name="addItemForm"]').on('submit',function(e){
 			var form = jQuery(e.currentTarget);
@@ -406,30 +394,22 @@ var Settings_Picklist_Js = {
 					e.preventDefault();
 					return;
 				}
-				/* ED150625 : Comma is forbidden */
-				var newValueEle = jQuery('[name="newValue"]',container);
-				var newValue = newValueEle.val();
-				if(newValue.indexOf(',') >= 0) {
-					var errorMessage = app.vtranslate('JS_DO_NOT_USE_COMMA');
-					newValueEle.validationEngine('showPrompt', errorMessage+' '+'"'+newValue+'"'  , 'error','bottomLeft',true);
-					e.preventDefault();
-					return;
-				}
-				
 				var invalidFields = form.data('jqv').InvalidFields;
 				if(invalidFields.length == 0){
 					form.find('[name="saveButton"]').attr('disabled',"disabled");
 				}
-				
+
 				var params = jQuery(e.currentTarget).serializeFormData();
 				var newValue = params.newValue;
 				params.newValue = jQuery.trim(newValue);
 				AppConnector.request(params).then(function(data) {
+					data = data.result;
 					var newValue = jQuery.trim(jQuery('[name="newValue"]',container).val());
 					var dragImagePath = jQuery('#dragImagePath').val();
 					var newElement = '<tr class="pickListValue cursorPointer"><td class="textOverflowEllipsis"><img class="alignMiddle" src="'+dragImagePath+'" />&nbsp;&nbsp;'+newValue+'</td></tr>';
 					var newPickListValueRow = jQuery(newElement).appendTo(jQuery('#pickListValuesTable').find('tbody'));
 					newPickListValueRow.attr('data-key',newValue);
+					newPickListValueRow.attr('data-key-id',data['id']);
 					app.hideModalWindow();
 					var params = {
 						title : app.vtranslate('JS_MESSAGE'),
@@ -441,15 +421,15 @@ var Settings_Picklist_Js = {
 					//update the new item in the hidden picklist values array
 					var pickListValuesEle = jQuery('[name="pickListValues"]');
 					var pickListValuesArray = JSON.parse(pickListValuesEle.val());
-					pickListValuesArray.push(newValue);
+					pickListValuesArray[data['id']] = newValue;
 					pickListValuesEle.val(JSON.stringify(pickListValuesArray));
-					
+
 				});
 			}
 			e.preventDefault();
 		});
 	},
-	
+
 	registerRenameItemSaveEvent : function() {
 		jQuery('#renameItemForm').on('submit',function(e) {
 			var form = jQuery(e.currentTarget);
@@ -464,17 +444,12 @@ var Settings_Picklist_Js = {
 					e.preventDefault();
 					return;
 				}
-				/* ED150625 : Comma is forbidden */
-				if(newValue.indexOf(',') >= 0) {
-					var errorMessage = app.vtranslate('JS_DO_NOT_USE_COMMA');
-					newValueEle.validationEngine('showPrompt', errorMessage+' '+'"'+newValue+'"'  , 'error','bottomLeft',true);
-					e.preventDefault();
-					return;
-				}
-				
-				var oldValue = jQuery('[name="oldValue"]',form).val();
+				var oldElem = jQuery('[name="oldValue"]',form);
+				var oldValue = oldElem.val();
+				var id = oldElem.find('option[value="'+oldValue+'"]').data('id');
 				var params = jQuery(e.currentTarget).serializeFormData();
 				params.newValue = newValue;
+				params.id = id;
 				var invalidFields = form.data('jqv').InvalidFields;
 				if(invalidFields.length == 0){
 					form.find('[name="saveButton"]').attr('disabled',"disabled");
@@ -485,7 +460,7 @@ var Settings_Picklist_Js = {
 						var encodedOldValue = oldValue.replace(/"/g, '\\"');
 						var dragImagePath = jQuery('#dragImagePath').val();
 						var renamedElement = '<tr class="pickListValue cursorPointer"><td class="textOverflowEllipsis"><img class="alignMiddle" src="'+dragImagePath+'" />&nbsp;&nbsp;'+newValue+'</td></tr>';
-						var renamedElement = jQuery(renamedElement).attr('data-key',newValue);
+						var renamedElement = jQuery(renamedElement).attr('data-key',newValue).attr('data-key-id',id);
 						jQuery('[data-key="'+encodedOldValue+'"]').replaceWith(renamedElement)
 						var params = {
 						title : app.vtranslate('JS_MESSAGE'),
@@ -494,13 +469,11 @@ var Settings_Picklist_Js = {
 						type: 'success'
 					};
 					Vtiger_Helper_Js.showPnotify(params);
-					
+
 					//update the new item in the hidden picklist values array
 					var pickListValuesEle = jQuery('[name="pickListValues"]');
 					var pickListValuesArray = JSON.parse(pickListValuesEle.val());
-					var index = pickListValuesArray.indexOf(oldValue);
-					pickListValuesArray.splice(index, 1);
-					pickListValuesArray.push(newValueEle.val());
+					pickListValuesArray[id] = newValueEle.val();
 					pickListValuesEle.val(JSON.stringify(pickListValuesArray));
 					}
 				});
@@ -508,7 +481,7 @@ var Settings_Picklist_Js = {
 			e.preventDefault();
 		});
 	},
-	
+
 	showDeleteItemForm : function(params) {
 		var thisInstance = this;
 		AppConnector.request(params).then(function(data){
@@ -518,7 +491,7 @@ var Settings_Picklist_Js = {
 				}
 			});
 		});
-			
+
 		var callBackFunction = function(data) {
 			var form = data.find('#deleteItemForm');
 			thisInstance.registerScrollForNonEditablePicklistValues(form);
@@ -534,7 +507,6 @@ var Settings_Picklist_Js = {
 					var result = Vtiger_MultiSelect_Validator_Js.invokeValidation(selectElement);
 					if(result != true){
 						select2Element.validationEngine('showPrompt', result , 'error','topLeft',true);
-						e.preventDefault();
 						return;
 					} else {
 						select2Element.validationEngine('hide');
@@ -550,9 +522,8 @@ var Settings_Picklist_Js = {
 							var pickListValuesArray = JSON.parse(pickListValuesEle.val());
 							jQuery.each(deleteValues,function(i,e){
 								var encodedOldValue = e.replace(/"/g, '\\"');
-								jQuery('[data-key="'+encodedOldValue+'"]').remove();
-								var index = pickListValuesArray.indexOf(e);
-								pickListValuesArray.splice(index, 1);
+								jQuery('[data-key-id="'+encodedOldValue+'"]').remove();
+								delete pickListValuesArray[e];
 							});
 							pickListValuesEle.val(JSON.stringify(pickListValuesArray));
 							var params = {
@@ -570,185 +541,22 @@ var Settings_Picklist_Js = {
 			form.validationEngine(params);
 		}
 	},
-	
+
 	registerSelectPickListValueEvent : function() {
-		var thisInstance = this;
 		jQuery("#pickListValuesTable").on('click','.pickListValue',function(event) {
 			var currentRow = jQuery(event.currentTarget);
 			var currentRowTd = currentRow.find('td');
 			event.preventDefault();
 
 			if(event.ctrlKey) {
-				currentRowTd.toggleClass('selectedListItem');  
+				currentRowTd.toggleClass('selectedListItem');
 			} else {
 				jQuery(".pickListValue").find('td').not(currentRowTd).removeClass("selectedListItem");
-				currentRowTd.toggleClass('selectedListItem');       
+				currentRowTd.toggleClass('selectedListItem');
 			}
-			thisInstance.handleSelectedItemFromSettingTableFields(currentRowTd);
 		});
 	},
-	
-	/**
-	 * Function to register color fields
-	 * ED141127
-	 */
-	registerEventForColorPickerFields : function(parentElement,registerForAddon, customParams) {
-		if(typeof parentElement == 'undefined') {
-			parentElement = jQuery('body');
-		}
 
-		parentElement = jQuery(parentElement);
-
-		if(parentElement.is('.colorField')){
-			var element = parentElement;
-		}else{
-			var element = jQuery('.colorField', parentElement);
-		}
-		if(element.length == 0){
-			return;
-		}
-		element.each(function(){
-			var $this = $(this);
-			var id = this.id;
-			if (!id) {
-				id = this.id = Math.random();
-			}
-			var selectorId = '#' + id + '-colorSelector';
-			$(selectorId).ColorPicker({
-				color: $this.val(),
-				onShow: function (colpkr) {
-					$(colpkr).fadeIn(200);
-					return false;
-				},
-				onHide: function (colpkr) {
-					var $input = $this;
-					if ($input.parent().hasClass('edit')) { /*Detail view -> Edit on click*/
-						$input
-							.parent().prev().click() /* ne valide pas mais permet de declencher le submit en 1 seul clic ailleurs. Enfin, c'est bizarre
-							* TODO : 	gerer le reset a la couleur d'origine (clic en haut a droite du pickcolor)
-							* 		*/
-						;
-					}
-					$(colpkr).fadeOut(200);
-					return false;
-				},
-				onChange: function (hsb, hex, rgb) {
-					var $colorSelector = $(this.data('colorpicker').el);
-					$input = $('#' + $colorSelector.attr('id').replace(/\-colorSelector$/, ''));
-					$input.val('#' + hex);
-					$colorSelector.children('div').css('backgroundColor', '#' + hex);
-					jQuery('#saveSequence').removeAttr('disabled');
-				}
-			})
-		});
-	},
-	
-	/**
-	 * Function to register picklistproperties ui properties
-	 * ED141127
-	 */
-	registerEventForUIProperties : function() {
-		
-		var element = jQuery('#picklistproperties-uicolor, #picklistproperties-uiicon');
-		
-		if(element.length == 0)
-			return;
-		
-		element.change(function(){
-			//change layout class name properties-uicolor 
-			var className = this.id.replace('picklist', '')
-			, $layout = $(this).parents('.layoutContent:first');
-			if (this.checked)
-				$layout.addClass(className);
-			else
-				$layout.removeClass(className);
-			//show save button
-			jQuery('#saveSequence').removeAttr('disabled');
-		});
-	},
-	/**
-	 * Function to register picklist table setting fields events
-	 * ED151216
-	 */
-	registerEventForSettingTableFields : function() {
-		
-		var form = jQuery('#picklistsettingfields');
-		
-		if(form.length == 0)
-			return;
-			
-		//show save button
-		form.on('change', 'input', function(){
-			jQuery('#saveSettingTableFields').removeAttr('disabled');
-		});
-			
-		//Submit
-		form.on('click', '#saveSettingTableFields', function(){
-			var params = form.serializeFormData();
-			AppConnector.request(params).then(function(data) {
-				if(data){
-					jQuery('#saveSettingTableFields').attr('disabled');
-					var params = {
-						title : app.vtranslate('JS_MESSAGE'),
-						text: data.error ? data.error.message : 'Ok',
-						animation: 'show',
-						type: data.error ? 'error' : 'info'
-					};
-					Vtiger_Helper_Js.showPnotify(params);
-				}
-			});
-			return false;
-		});
-	},
-	
-	handleSelectedItemFromSettingTableFields : function(currentRowTd){
-		var form = jQuery('#picklistsettingfields');
-		
-		if(form.length == 0)
-			return;
-		jQuery('#saveSettingTableFields').attr('disabled', 'disabled');
-		var selectedItems = currentRowTd ? currentRowTd.filter('.selectedListItem') : false;
-		form.addClass('no-item-selected');
-		if (selectedItems && selectedItems.length) {
-			var keys = []
-			, pickListFieldId = form.find('input[name="pickListFieldId"]').val();
-			selectedItems.each(function(){ keys.push(this.parentNode.getAttribute('data-key')); });
-			var params = {
-				'parent' : 'Settings',
-				'module' : 'Picklist',
-				'action' : 'GetData',
-				'mode' : 'getSettingFields',
-				'pickListFieldId' : pickListFieldId,
-				'picklistValues' : keys,
-			};
-			AppConnector.request(params).then(function(data) {
-				if(typeof data.result != 'undefined' &&  data.result.success){
-					for ( var picklistValue in data.result.data ) {
-						var fields = data.result.data[picklistValue];
-						form.find(':input[name="picklistvalue"]').val(picklistValue);
-						for (var field in fields) {
-							var $input = form.find(':input[name="' + field + '"]')
-							, value = fields[field];
-							if ($input.length) {
-								if ($input.is(':checkbox')) {
-									$input.filter(':visible').get(0).checked = value == '1';
-								}
-								else
-									$input.val(value);
-							}
-						}
-											 
-						break;//first value only
-					}
-					form.removeClass('no-item-selected');
-				}
-			});
-		}
-		
-	},
-	
-	/** Sortable
-	*/
 	registerPickListValuesSortableEvent : function() {
 		var tbody = jQuery( "tbody",jQuery('#pickListValuesTable'));
 		tbody.sortable({
@@ -769,30 +577,7 @@ var Settings_Picklist_Js = {
 			}
 		});
 	},
-	
-	/** Sort all rows
-	*/
-	registerPickListValuesSortAllEvent : function() {
-		$('#sort-values-asc,#sort-values-desc').on('click',function(e){
-			var $td = jQuery('#pickListValuesTable tbody tr > td:first-of-type')
-			, inverse = /-desc$/.test(this.id);
-			$td.sortElements(function(a, b){
 
-                if( $.text([a]) == $.text([b]) )
-                    return 0;
-
-                return $.text([a]) > $.text([b]) ?
-                    inverse ? -1 : 1
-                    : inverse ? 1 : -1;
-
-            }, function(){
-                // parentNode is the element we want to move
-                return this.parentNode; 
-            });
-			jQuery('#saveSequence').removeAttr('disabled');
-		});
-	},
-	
 	registerSaveSequenceClickEvent : function() {
 		jQuery('#saveSequence').on('click',function(e) {
 			var progressIndicatorElement = jQuery.progressIndicator({
@@ -802,30 +587,17 @@ var Settings_Picklist_Js = {
 					'elementToBlock' : jQuery('.tab-content')
 				}
 			});
-			var pickListValuesSequenceArray = {};
-			var pickListValuesDataArray = {}; /* ED141127 */
+			var pickListValuesSequenceArray = {}
 			var pickListValues = jQuery('#pickListValuesTable').find('.pickListValue');
 			jQuery.each(pickListValues,function(i,element) {
-				pickListValuesSequenceArray[jQuery(element).data('key')] = ++i;
-				pickListValuesDataArray[jQuery(element).data('key')] = {
-					'uicolor': jQuery(element).find(".colorField").val(),
-					'uiicon': jQuery(element).find(".uiicon-selector").val()
-				};
+				pickListValuesSequenceArray[jQuery(element).data('key-id')] = ++i;
 			});
-			
-			var picklistProperties = {};
-			jQuery('#picklistproperties-uicolor, #picklistproperties-uiicon').each(function(){
-				picklistProperties[this.name] = this.checked ? "1" : "0";
-			});
-		
 			var params = {
 				module : app.getModuleName(),
 				parent : app.getParentModuleName(),
 				action : 'SaveAjax',
 				mode : 'saveOrder',
 				picklistValues : pickListValuesSequenceArray,
-				picklistData : pickListValuesDataArray,
-				picklistProperties : picklistProperties,
 				picklistName : jQuery('[name="picklistName"]').val()
 			}
 			AppConnector.request(params).then(function(data) {
@@ -837,34 +609,27 @@ var Settings_Picklist_Js = {
 			});
 		});
 	},
-	
-	
+
+
 	registerAssingValueToRoleTabClickEvent : function() {
 		jQuery('#assignedToRoleTab').on('click',function(e) {
 			jQuery('#rolesList').trigger('change');
 		});
 	},
-	
+
 	registerItemActions : function() {
 		Settings_Picklist_Js.registerAddItemEvent();
 		Settings_Picklist_Js.registerRenameItemEvent();
 		Settings_Picklist_Js.registerDeleteItemEvent();
 		Settings_Picklist_Js.registerSelectPickListValueEvent();
-		/* ED141127 */
-		Settings_Picklist_Js.registerEventForColorPickerFields();
-		Settings_Picklist_Js.registerEventForUIProperties();
-		Settings_Picklist_Js.registerEventForSettingTableFields();
-		
 		Settings_Picklist_Js.registerAssingValueToRuleEvent();
 		Settings_Picklist_Js.registerChangeRoleEvent();
 		Settings_Picklist_Js.registerAssingValueToRoleTabClickEvent();
 		Settings_Picklist_Js.registerPickListValuesSortableEvent();
 		Settings_Picklist_Js.registerSaveSequenceClickEvent();
-		//ED151219
-		Settings_Picklist_Js.registerPickListValuesSortAllEvent();
 	},
-	
-	
+
+
 	registerEvents : function() {
 		Settings_Picklist_Js.registerModuleChangeEvent();
 		Settings_Picklist_Js.registerModulePickListChangeEvent();
@@ -878,7 +643,7 @@ jQuery(document).ready(function(){
 })
 
 Vtiger_Base_Validator_Js("Vtiger_FieldLabel_Validator_Js",{
-	
+
 	/**
 	 *Function which invokes field validation
 	 *@param accepts field element as parameter
@@ -892,7 +657,7 @@ Vtiger_Base_Validator_Js("Vtiger_FieldLabel_Validator_Js",{
 			return instance.getError();
 		}
 	}
-	
+
 },{
 	/**
 	 * Function to validate the field label
@@ -903,64 +668,16 @@ Vtiger_Base_Validator_Js("Vtiger_FieldLabel_Validator_Js",{
 		var fieldValue = this.getFieldValue();
 		return this.validateValue(fieldValue);
 	},
-	
+
 	validateValue : function(fieldValue){
-		var specialChars = /[<\>\"]/ ;
+		var specialChars = /[<\>\"\,]/ ;
 
 		if (specialChars.test(fieldValue)) {
-			var errorInfo = app.vtranslate('JS_SPECIAL_CHARACTERS')+" < > \" "+app.vtranslate('JS_NOT_ALLOWED');
+			var errorInfo = app.vtranslate('JS_SPECIAL_CHARACTERS')+" < > \" , "+app.vtranslate('JS_NOT_ALLOWED');
 			this.setError(errorInfo);
 			return false;
-		} 
+		}
         return true;
 	}
 });
 
-//
-if (!jQuery.fn.sortElements) {
-	jQuery.fn.sortElements = (function(){
-		
-		var sort = [].sort;
-		
-		return function(comparator, getSortable) {
-			
-			getSortable = getSortable || function(){return this;};
-			
-			var placements = this.map(function(){
-				
-				var sortElement = getSortable.call(this),
-					parentNode = sortElement.parentNode,
-					
-					// Since the element itself will change position, we have
-					// to have some way of storing it's original position in
-					// the DOM. The easiest way is to have a 'flag' node:
-					nextSibling = parentNode.insertBefore(
-						document.createTextNode(''),
-						sortElement.nextSibling
-					);
-				
-				return function() {
-					
-					if (parentNode === this) {
-						throw new Error(
-							"You can't sort elements if any one is a descendant of another."
-						);
-					}
-					
-					// Insert before flag:
-					parentNode.insertBefore(this, nextSibling);
-					// Remove flag:
-					parentNode.removeChild(nextSibling);
-					
-				};
-				
-			});
-		   
-			return sort.call(this, comparator).each(function(i){
-				placements[i].call(getSortable.call(this));
-			});
-			
-		};
-		
-	})();
-}

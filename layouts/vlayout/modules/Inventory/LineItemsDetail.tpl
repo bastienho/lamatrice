@@ -45,7 +45,7 @@
 	<tr>
 	    <td>
 		<div class="row-fluid">
-		    <a href="index.php?module={$LINE_ITEM_DETAIL["entityType$INDEX"]}&record={$LINE_ITEM_DETAIL["hdnProductId$INDEX"]}&view=Detail">{$LINE_ITEM_DETAIL["hdnProductcode$INDEX"]} - {$LINE_ITEM_DETAIL["productName$INDEX"]}</a>
+		    {$LINE_ITEM_DETAIL["productName$INDEX"]}
 		</div>
 		{if $LINE_ITEM_DETAIL["productDeleted$INDEX"]}
 			<div class="row-fluid redColor deletedItem">
@@ -149,7 +149,7 @@
 
 		</td>
 	    </tr>
-		<tr class="hide">{*ED151201 hide*}
+		<tr>
 		<td width="83%">
 		    <span class="pull-right">
 			(+)&nbsp;<b>{vtranslate('LBL_SHIPPING_AND_HANDLING_CHARGES',$MODULE_NAME)} </b>
@@ -173,6 +173,7 @@
 		    </span>
 		</td>
 	    </tr>
+	    <tr>
 	    {if $FINAL_DETAILS.taxtype eq 'group'}
 		<tr>
 		    <td width="83%">
@@ -189,7 +190,6 @@
 		    </td>
 		</tr>
 	    {/if}
-	    <tr {*ED150529 TODO 'hide' should be configurable *}style="display: none;">
 		<td width="83%">
 		    <span class="pull-right">
 			{assign var=SHIPPING_HANDLING_TAX_INFO value="{vtranslate('LBL_SHIPPING_AND_HANDLING_CHARGES',$MODULE_NAME)} = {$FINAL_DETAILS["shipping_handling_charge"]}\r\n{foreach item=tax_details from=$FINAL_DETAILS["sh_taxes"]}{$tax_details["taxlabel"]} : {$tax_details["percentage"]} % = {$tax_details["amount"]}\r\n{/foreach}\r\n{vtranslate('LBL_TOTAL_TAX_AMOUNT',$MODULE_NAME)} = {$FINAL_DETAILS['shtax_totalamount']}"}
@@ -228,47 +228,54 @@
 		    </span>
 		</td>
 	    </tr>
-	    <tr>
-		<td width="83%">
-		    <span class="pull-right">
-			{if $RECORD->get('typedossier') === 'Avoir'
-			|| $RECORD->get('typedossier') === 'Remboursement'}
-			    <b>{vtranslate('LBL_REFUND',$MODULE)}</b>
-			{else}
-			    <b>{vtranslate('LBL_RECEIVED',$MODULE)}</b>
-			{/if}
-		    </span>
-		    {* ED150127
-		    * ajout des champs complémentaires du règlement
-		    *}
-		    {if $MODULE eq 'Invoice'}
-			<span class="pull-right" id="invoice-recu">
-			    {if $FINAL_DETAILS["receivedcomments"]}
-				{str_replace("\n", "<br>", $FINAL_DETAILS["receivedcomments"])}
-			    {/if}
-			</span>
-		    {/if}
-		</td>
-		<td>
-		    <span class="pull-right">
-			{if $MODULE eq 'Invoice'}
-                            {$FINAL_DETAILS["received"]}
-			{else}
-			    {$FINAL_DETAILS["paid"]}
-			{/if}
-		    </span>
-		</td>
-	    </tr>
-	    <tr>
-		<td width="83%">
-		    <span class="pull-right">
-			<b>Reste à payer</b>
-		    </span>
-		</td>
-		<td>
-		    <span class="pull-right">
-			{$FINAL_DETAILS["balance"]}
-		    </span>
-		</td>
-	    </tr>
+		{if $MODULE_NAME eq 'Invoice' or $MODULE_NAME eq 'PurchaseOrder'}
+        <tr>
+            <td width="83%">
+                {if $MODULE_NAME eq 'Invoice'}
+                    <span class="pull-right">
+                        <b>{vtranslate('LBL_RECEIVED',$MODULE_NAME)}</b>
+                    </span>
+                {else}
+                    <span class="pull-right">
+                        <b>{vtranslate('LBL_PAID',$MODULE_NAME)}</b>
+                    </span>
+                {/if}
+            </td>
+
+            <td>
+                {if $MODULE_NAME eq 'Invoice'}
+                    <span class="pull-right">
+                        {if $RECORD->getDisplayValue('received')}
+							{$RECORD->getDisplayValue('received')}
+                        {else}
+                            0
+                        {/if}
+                    </span>
+                {else}
+                    <span class="pull-right">
+                        {if $RECORD->getDisplayValue('paid')}
+							{$RECORD->getDisplayValue('paid')}
+                        {else}
+                            0
+                        {/if}
+                    </span>
+                {/if}
+            </td>
+        </tr>
+        <tr>
+            <td width="83%">
+                <span class="pull-right">
+                    <b>{vtranslate('LBL_BALANCE',$MODULE_NAME)}</b>
+                </span>
+            </td>
+            <td>
+                <span class="pull-right">
+                    {if $RECORD->getDisplayValue('balance')}
+						{$RECORD->getDisplayValue('balance')}
+                    {else}0
+                    {/if}
+                </span>
+            </td>
+        </tr>
+        {/if}
 	</table>

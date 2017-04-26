@@ -9,11 +9,11 @@
  ************************************************************************************/
 
 class Users_UserSetup_View extends Vtiger_Index_View {
-	
+
 	public function preProcess(Vtiger_Request $request) {
 		return true;
 	}
-	
+
 	public function process(Vtiger_Request $request) {
 		$moduleName = $request->getModule();
 		$userName = $request->get('user_name');
@@ -34,6 +34,7 @@ class Users_UserSetup_View extends Vtiger_Index_View {
 				$viewer->assign('CURRENCIES', $currenciesList);
 			}
 
+			$viewer->assign('CURRENT_USER_MODEL',$userModel);
 			$viewer->assign('MODULE', $moduleName);
 			$viewer->assign('USER_NAME', $userName);
 			$viewer->assign('TIME_ZONES', $userModuleModel->getTimeZonesList());
@@ -41,12 +42,19 @@ class Users_UserSetup_View extends Vtiger_Index_View {
 			$viewer->assign('USER_ID', $request->get('record'));
 			$viewer->view('UserSetup.tpl', $moduleName);
 		} else {
-			header("Location: index.php");
+			if(isset($_SESSION['return_params'])) {
+				$return_params = urldecode($_SESSION['return_params']);
+				header("Location: index.php?$return_params");
+				exit();
+			} else {
+				header("Location: index.php");
+				exit();
+			}
 		}
 	}
-	
+
 	function postProcess(Vtiger_Request $request) {
 		return true;
 	}
-	
+
 }

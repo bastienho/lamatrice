@@ -18,30 +18,8 @@ class Reports_ListView_Model extends Vtiger_ListView_Model {
 	 * @return <Array> - Associate array of Link Type to List of Vtiger_Link_Model instances
 	 */
 	public function getListViewLinks() {
-		$currentUserModel = Users_Record_Model::getCurrentUserModel();
-		$privileges = Users_Privileges_Model::getCurrentUserPrivilegesModel();
-		$basicLinks = array();
-		if($currentUserModel->isAdminUser() || $privileges->hasModulePermission($this->getModule()->getId())) {
-			$basicLinks = array(
-					array(
-							'linktype' => 'LISTVIEWBASIC',
-							'linklabel' => 'LBL_ADD_RECORD',
-							'linkurl' => $this->getCreateRecordUrl(),
-							'linkicon' => ''
-					),
-					array(
-							'linktype' => 'LISTVIEWBASIC',
-							'linklabel' => 'LBL_ADD_FOLDER',
-							'linkurl' => 'javascript:Reports_List_Js.triggerAddFolder("'.$this->getModule()->getAddFolderUrl().'")',
-							'linkicon' => ''
-					)
-			);
-		}
-
-		foreach($basicLinks as $basicLink) {
-			$links['LISTVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues($basicLink);
-		}
-
+		$moduleModel = $this->getModule();
+		$links = Vtiger_Link_Model::getAllByType($moduleModel->getId(), array('LISTVIEWBASIC'));
 		return $links;
 	}
 
@@ -77,17 +55,37 @@ class Reports_ListView_Model extends Vtiger_ListView_Model {
 		return $links;
 	}
 
+	public function getListViewHeadersForVtiger7($folderId){
+		$headers = array(
+			'reporttype' => array('label' => 'Report Type', 'type' => 'picklist'),
+			'reportname' => array('label' => 'Report Name', 'type' => 'string'),
+            'primarymodule' => array('label' => 'Primary Module', 'type' => 'picklist'),
+			'foldername' => array('label' => 'LBL_FOLDER_NAME', 'type' => 'picklist'),
+            'owner' => array('label' => 'LBL_OWNER', 'type' => 'picklist'),
+		);
+		if ($folderId == 'shared') {
+			unset($headers['foldername']);
+		}
+		return $headers;
+	}
+	
 	/**
 	 * Function to get the list view header
 	 * @return <Array> - List of Vtiger_Field_Model instances
 	 */
-	public function getListViewHeaders() {
-		return array(
-				'reportname'=>'Report Name',
-				'description'=>'Description'
+	public function getListViewHeaders($folderId) {
+		$headers = array(
+			'reportname' => array('label' => 'LBL_REPORT_NAME', 'type' => 'string'),
+			'description' => array('label' => 'LBL_DESCRIPTION', 'type' => 'string'),
+			'reporttype' => array('label' => 'Report Type', 'type' => 'picklist'),
 		);
-	}
 
+		if($folderId == 'All') {
+			$headers['foldername'] = array('label' => 'LBL_FOLDER_NAME', 'type' => 'picklist');
+		}
+		return $headers;
+	}
+	
 	/**
 	 * Function to get the list view entries
 	 * @param Vtiger_Paging_Model $pagingModel
@@ -98,13 +96,22 @@ class Reports_ListView_Model extends Vtiger_ListView_Model {
 		$reportFolderModel->set('folderid', $this->get('folderid'));
 
 		$orderBy = $this->get('orderby');
+		if (!empty($orderBy) && $orderBy === 'smownerid') {
+			$fieldModel = Vtiger_Field_Model::getInstance('assigned_user_id', $moduleModel);
+			if ($fieldModel->getFieldDataType() == 'owner') {
+				$orderBy = 'COALESCE(CONCAT(vtiger_users.first_name,vtiger_users.last_name),vtiger_groups.groupname)';
+			}
+		}
 		if(!empty($orderBy)) {
 			$reportFolderModel->set('orderby', $orderBy);
 			$reportFolderModel->set('sortby', $this->get('sortorder'));
 		}
 
+		$reportFolderModel->set('search_params', $this->get('search_params'));
 		$reportRecordModels = $reportFolderModel->getReports($pagingModel);
+		$nextPageExists = $pagingModel->get('nextPageExists');
 		$pagingModel->calculatePageRange($reportRecordModels);
+		$pagingModel->set('nextPageExists', $nextPageExists);
 		return $reportRecordModels;
 	}
 
@@ -115,9 +122,10 @@ class Reports_ListView_Model extends Vtiger_ListView_Model {
 	public function getListViewCount() {
 		$reportFolderModel = Reports_Folder_Model::getInstance();
 		$reportFolderModel->set('folderid', $this->get('folderid'));
+		$reportFolderModel->set('searchParams', $this->get('search_params'));
 		return $reportFolderModel->getReportsCount();
 	}
-	
+
 	public function getCreateRecordUrl(){
 		return 'javascript:Reports_List_Js.addReport("'.$this->getModule()->getCreateRecordUrl().'")';
 	}

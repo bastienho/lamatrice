@@ -122,10 +122,9 @@ jQuery.Class("Settings_Vtiger_Tax_Js",{},{
 		
 		var trElementForTax = 
 				jQuery('<tr class="opacity" data-taxid="'+details.taxid+'" data-taxtype="'+details.type+'">\n\
-					<td style="border-left: none;"><label class="taxLabel">'+details.taxlabel+'</label></td>\n\
-					<td style="border-left: none;"><span class="taxPercentage">'+details.percentage+'%</span></td>\n\
-					<td style="border-left: none;"><span class="taxAccount">'+details.account+'</span></td>\n\
-					<td style="border-left: none;"><input class="editTaxStatus" type="checkbox" checked>\n\
+					<td style="border-left: none;" class="textAlignCenter '+details.row_type+'"><label class="taxLabel">'+details.taxlabel+'</label></td>\n\
+					<td style="border-left: none;" class="textAlignCenter '+details.row_type+'"><span class="taxPercentage">'+details.percentage+'%</span></td>\n\
+					<td style="border-left: none;" class="textAlignCenter '+details.row_type+'"><input class="editTaxStatus" type="checkbox" checked>\n\
 						<div class="pull-right actions">\n\
 							<a class="editTax cursorPointer" data-url="'+details._editurl+'">\n\
 								<i class="icon-pencil alignBottom" title="'+app.vtranslate('JS_EDIT')+'"></i>\n\
@@ -141,7 +140,6 @@ jQuery.Class("Settings_Vtiger_Tax_Js",{},{
 	updateTaxDetails : function(data, currentTrElement) {
 		currentTrElement.find('.taxLabel').text(data['taxlabel']);
 		currentTrElement.find('.taxPercentage').text(data['percentage']+'%');
-		currentTrElement.find('.taxAccount').text(data['account']+'');
 		if(data['deleted'] == '0') {
 			currentTrElement.find('.editTaxStatus').attr('checked', 'true');
 		} else {

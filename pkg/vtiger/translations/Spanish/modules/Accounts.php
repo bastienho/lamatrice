@@ -12,7 +12,7 @@
  *  Version      : 6.0.0
  *  Created Date : 2012-10-25
  *  Author       : JPL TSolucio, S. L. Joe Bordes
- *  Last change  : 2013-07-14
+ *  Last change  : 2013-05-03
  *  Author       : JPL TSolucio, S. L. Joe Bordes
  ************************************************************************************/
 $languageStrings = array(
@@ -32,9 +32,6 @@ $languageStrings = array(
 	'Ownership'                    => 'Propietario',
 	'SIC Code'                     => 'CIF',
 	'Other Email'                  => 'Email (Alternativo)',
-	'Other Phone' => 'Teléfono (Alternativo)',
-	'Phone' => 'Teléfono',
-	'Email' => 'Email',
 	'Analyst'                      => 'Analista',
 	'Competitor'                   => 'Competencia',
 	'Customer'                     => 'Cliente',
@@ -43,15 +40,25 @@ $languageStrings = array(
 	'Press'                        => 'Prensa',
 	'Prospect'                     => 'Prospecto',
 	'Reseller'                     => 'Revendedor',
+        'Type'                         => 'Tipo',
 	'LBL_START_DATE'               => 'Inicio',
 	'LBL_END_DATE'                 => 'Vencimiento',
 	'LBL_DUPLICATES_EXIST'         => 'Una cuenta con este nombre ya existe',
 	'LBL_COPY_SHIPPING_ADDRESS' => 'Copiar Dirección Envío',
 	'LBL_COPY_BILLING_ADDRESS' => 'Copiar Dirección Facturación',
+    'LBL_IMAGE_INFORMATION' => 'Foto de Perfil',
+    'Organization Image' => 'Organización de imagen',
+
+  'Other Phone' => 'Teléfono Secundario',
+  'Phone' => 'Teléfono Principal',
+  'Email' => 'De Correo Electrónico Principal',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION'      => '¿Estás seguro que quieres eliminar?',
 	'LBL_DELETE_CONFIRMATION'      => 'Borrar esta cuenta eliminará sus relaciones con Oportunidades, Presupuestos, Ordenes de Venta y Facturas. ¿Quieres borrar la Cuenta?',
 	'LBL_MASS_DELETE_CONFIRMATION' => 'Borrar esta cuenta eliminará sus relaciones con Oportunidades, Presupuestos, Ordenes de Venta y Facturas. ¿Quieres borrar los registros seleccionados?',
-	'JS_DUPLICTAE_CREATION_CONFIRMATION' => 'Este nombre de Cuenta ya existe. ¿Quieres crear un registro duplicado?',
+
+  'JS_DUPLICATE_CREATION_CONFIRMATION' => 'Nombre de la organización que ya Existe.¿Desea crear un registro duplicado?',
+
 );

@@ -8,6 +8,7 @@
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
+    'SharingAccess' => 'Sharing Rules',
 	'Accounts' => 'Organizations & Contacts',
 	'LBL_ADD_CUSTOM_RULE' => 'Add Custom Rule',
 	'Read Only' => 'Read Only',

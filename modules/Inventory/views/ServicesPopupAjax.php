@@ -9,15 +9,14 @@
  ************************************************************************************/
 
 class Inventory_ServicesPopupAjax_View extends Inventory_ServicesPopup_View {
-	
-	//ED150708
+
 	function __construct() {
 		parent::__construct();
 		$this->exposeMethod('getListViewCount');
 		$this->exposeMethod('getRecordsCount');
 		$this->exposeMethod('getPageCount');
 	}
-	
+
 	function preProcess(Vtiger_Request $request) {
 		return true;
 	}

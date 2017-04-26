@@ -8,6 +8,7 @@
  * All Rights Reserved.
  ************************************************************************************/
 $languageStrings = array(
+    'Quotes'                       => 'Ajánlat'                    , 
 	'SINGLE_Quotes'                => 'Ajánlat'                    , 
 	'LBL_EXPORT_TO_PDF'            => 'Exportálás PDF-be'         , 
 	'LBL_SEND_MAIL_PDF'            => 'Send Email with PDF'         , // TODO: Review
@@ -20,4 +21,10 @@ $languageStrings = array(
 	'Inventory Manager'            => 'Raktár menedzser'           , 
 	'Accepted'                     => 'Elfogadott'                  , 
 	'Rejected'                     => 'Elutasított'                , 
+    'Related To'                   => 'Kapcsolódóan'                ,
+
+  'LBL_THIS' => 'Ez a',
+  'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'törli a rendszerből.kérjük, eltávolítása vagy cseréje ez a tétel',
+  'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'Ez a sor törlődik a rendszerből,kérjük, távolítsa el ezt a sort',
+
 );

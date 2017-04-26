@@ -13,8 +13,9 @@ $languageStrings = array(
 	'LBL_ADD_RECORD'               => 'Agregar Evento'              , 
 	'LBL_RECORDS_LIST'             => 'Vista de Lista'              , 
 	'LBL_EVENTS'                   => 'Eventos'                     , 
-	'LBL_TODOS'                    => 'Tareas'                      , 
-	'LBL_HOLD_FOLLOWUP_ON'         => 'Hold Followup on'            , // TODO: Review
+	'LBL_TODOS'                    => 'Tarea'                      , 
+	'LBL_HOLD_FOLLOWUP_ON'         => 'Mantenga Seguimiento On'     ,
+    'LBL_CREATE_FOLLOWUP_EVENT'    => 'Crear Seguimiento de eventos',
 	'LBL_EVENT_INFORMATION'        => 'Detalle del evento'          , 
 	'LBL_RECURRENCE_INFORMATION'   => 'Detalles de recurrencia'     , 
 	'LBL_RELATED_TO'               => 'Related To'                  , // TODO: Review
@@ -24,6 +25,7 @@ $languageStrings = array(
 	'Location'                     => 'Lugar'                       , 
 	'Send Reminder'                => 'Enviar recordatorio'         , 
 	'End Date & Time'              => 'Fecha y Hora de Vencimiento' , 
+    'End Date'                     => 'Fecha y Hora de Vencimiento' , 
 	'Activity Type'                => 'Tipo de Actividad'           , 
 	'Visibility'                   => 'Visibilidad'                 , 
 	'Private'                      => 'Privado'                     , 
@@ -33,6 +35,7 @@ $languageStrings = array(
 	'Planned'                      => 'Planeada'                    , 
 	'Held'                         => 'Mantenida'                   , 
 	'Not Held'                     => 'No Mantenida'                , 
+    'Related To'                   => 'En relación con'             ,
 	'LBL_DAYS'                     => 'Días'                       , 
 	'LBL_HOURS'                    => 'Horas'                       , 
 	'LBL_DAYS_TYPE'                => 'Day(s)'                      , // TODO: Review
@@ -59,11 +62,17 @@ $languageStrings = array(
 	'Weekly'                       => 'Week(s)'                     , // TODO: Review
 	'Monthly'                      => 'Month(s)'                    , // TODO: Review
 	'Yearly'                       => 'Year'                        , // TODO: Review
-	'LBL_REPEATEVENT'              => 'Repeat once in every'        , // TODO: Review
+	'LBL_REPEATEVENT'              => 'Una vez en cada'        , // TODO: Review
 	'LBL_UNTIL'                    => 'Until'                       , // TODO: Review
 	'LBL_DAY_OF_THE_MONTH'         => 'day of the month'            , // TODO: Review
 	'LBL_ON'                       => 'on'                          , // TODO: Review
 	'LBL_CALENDAR_VIEW'            => 'Vista de Calendario'         , 
 	'LBL_INVITE_USER_BLOCK'        => 'Invite'                      , // TODO: Review
 	'LBL_INVITE_USERS'             => 'Invite Users'                , // TODO: Review
+        'LBL_INVITE_PEOPLE'            => 'Invitar Gente'               ,
+
+
+  'INVITATION' => ' Invitación ',
+  'Busy' => 'Ocupado',
+
 );

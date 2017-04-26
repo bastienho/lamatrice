@@ -35,20 +35,18 @@ class Settings_Leads_Module_Model extends Vtiger_Module_Model {
 	public function getMappingSupportedFieldIdsList() {
 		if (!$this->supportedFieldIdsList) {
 			$selectedTabidsList[] = getTabid($this->getName());
-			$presense = array(0, 2);
 			$restrictedFieldNames = array('campaignrelstatus');
-			$restrictedUitypes = array(4, 10, 51, 52, 53, 57, 58, 69, 70);
+			$restrictedUitypes = $this->getRestrictedUitypes();
 			$selectedGeneratedTypes = array(1, 2);
 
 			$db = PearDatabase::getInstance();
 			$query = 'SELECT fieldid FROM vtiger_field
-						WHERE presence IN ('. generateQuestionMarks($presense) .')
-						AND tabid IN ('. generateQuestionMarks($selectedTabidsList) .')
+						WHERE tabid IN ('. generateQuestionMarks($selectedTabidsList) .')
 						AND uitype NOT IN ('. generateQuestionMarks($restrictedUitypes) .')
 						AND fieldname NOT IN ('. generateQuestionMarks($restrictedFieldNames) .')
 						AND generatedtype IN ('.generateQuestionMarks($selectedGeneratedTypes).')';
 
-			$params = array_merge($presense, $selectedTabidsList, $restrictedUitypes,$restrictedFieldNames, $selectedGeneratedTypes);
+			$params = array_merge($selectedTabidsList, $restrictedUitypes,$restrictedFieldNames, $selectedGeneratedTypes);
 
 			$result = $db->pquery($query, $params);
 			$numOfRows = $db->num_rows($result);
@@ -61,6 +59,14 @@ class Settings_Leads_Module_Model extends Vtiger_Module_Model {
 		}
 		return $this->supportedFieldIdsList;
 	}
+    
+    /**
+     * Function to get the Restricted Ui Types
+     * @return <array> Restricted ui types
+     */
+    public function getRestrictedUitypes() {
+        return array(4, 51, 52, 53, 57, 58, 70);
+    }
 
 	/**
 	 * Function to get instance of module

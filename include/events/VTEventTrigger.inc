@@ -15,7 +15,7 @@
 		private static $cache = array();
 		private static $cacheLookupType = '';
 
-		private static $mandatoryEventClass = array('VTEntityDelta', 'ModTrackerHandler');
+		private static $mandatoryEventClass = array('VTEntityDelta', 'ModTrackerHandler', 'PBXManagerBatchHandler');
 
 		const CACHE_LOOKUP_TYPE_ALL = 'ALL';
 
@@ -107,9 +107,9 @@
 			$this->adb = $adb;
 		}
 
-		/* ED150418 TODO Should filter with ModuleName (IN vtiger_eventhandler_module WHERE module_name=?) */
 		function trigger($data){
 			$adb = $this->adb;
+
 			$eventInfos = self::lookupCache($this->name);
 			if($eventInfos === false) {
 				$eventInfos = self::getActiveEventInfos($this->adb, $this->name);

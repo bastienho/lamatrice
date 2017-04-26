@@ -32,7 +32,6 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 	 * Function to get list of tooltip enabled field model.
 	 * @return <Vtiger_Field_Model>
 	 */
-
 	public function getFields() {
 		return $this->fields;
 	}
@@ -41,8 +40,6 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 	 * Function to load record
 	 * @param <Number> $recordId
 	 * @return <Vtiger_Record_Model>
-	 *
-	 * ED150515 : Attention, fields of type 'file' must not be shown in tooltipview (e.g., Document->filename)
 	 */
 	protected function loadRecord($recordId) {
 		$moduleName = $this->module->getName();
@@ -52,6 +49,9 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 		foreach ($this->fields as $fieldModel) {
 			$fieldType = $fieldModel->getFieldDataType();
 			$fieldName = $fieldModel->get('name');
+            if($moduleName == 'Documents' && $fieldName == 'filename') {
+                continue;
+            }
 			
 			$fieldNames[] = $fieldName;
 			if ($fieldType == 'reference' || $fieldType == 'owner') {
@@ -64,6 +64,7 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 		// Retrieves only required fields of the record with permission check.
 		try {
 			$data = array_shift(vtws_query($q, Users_Record_Model::getCurrentUserModel()));
+
 			if ($data) {
 				// De-transform the webservice ID to CRM ID.
 				foreach ($data as $key => $value) {
@@ -79,7 +80,6 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 			
 		} catch(WebServiceException $wex) {
 			// Error retrieving information !
-			echo $wex;
 		}
 		return $this;
 	}
@@ -93,11 +93,16 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 			$tooltipFieldsList = $this->fields;
 			$recordModel = $this->getRecord();
 			$this->structuredValues = array('TOOLTIP_FIELDS' => array());
+            $moduleName = $this->module->getName();
 			if ($tooltipFieldsList) {
 				foreach ($tooltipFieldsList as $fieldModel) {
 					$fieldName = $fieldModel->get('name');
+                    if($moduleName == 'Documents' && $fieldName == 'filename') {
+                        continue;
+                    }
 					if($fieldModel->isViewableInDetailView()) {
-						$fieldModel->set('fieldvalue', $recordModel->get($fieldName));
+                        // tosafeHTML is to avoid XSS Vulnerability
+						$fieldModel->set('fieldvalue', Vtiger_Util_Helper::toSafeHTML($recordModel->get($fieldName)));
 						$this->structuredValues['TOOLTIP_FIELDS'][$fieldName] = $fieldModel;
 					}
 				}
@@ -111,26 +116,21 @@ class Vtiger_TooltipView_Model extends Vtiger_DetailRecordStructure_Model {
 	 * Function to get the instance
 	 * @param <String> $moduleName - module name
 	 * @param <String> $recordId - record id
-	 * @param <Boolean> $tryOtherModule - swap Services/Products module if record is not found. Prevents infinity recursivity
 	 * @return <Vtiger_DetailView_Model>
 	 */
-	public static function getInstance($moduleName, $recordId, $tryOtherModule = true) {
+	public static function getInstance($moduleName,$recordId) {
+       if($moduleName=="Calendar"){
+            $recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+			$activityType = $recordModel->getType();
+            if($activityType=="Events"){
+                $moduleName="Events";
+            }
+        }
 		$modelClassName = Vtiger_Loader::getComponentClassName('Model', 'TooltipView', $moduleName);
 		$instance = new $modelClassName();
 
 		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
 		
-		$instance->setModule($moduleModel)->loadRecord($recordId);
-		
-		//ED150630
-		if(!$instance->record->getId() && $tryOtherModule){
-			if($moduleName === 'Services'){
-				return self::getInstance('Products', $recordId, false);
-			}
-			elseif($moduleName === 'Products'){
-				return self::getInstance('Services', $recordId, false);
-			}
-		}
-		return $instance;
+		return $instance->setModule($moduleModel)->loadRecord($recordId);
 	}
 }

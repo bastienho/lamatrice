@@ -7,19 +7,19 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  ************************************************************************************/
+ini_set('error_reporting', '6135');
+ini_set('display_warnings', 'On');
 header('Content-Type: text/html;charset=utf-8');
 
 chdir (dirname(__FILE__) . '/../../');
 
 /**
- * URL Verfication - Required to overcome Apache mis-configuration and leading to shared setup mode. 
+ * URL Verfication - Required to overcome Apache mis-configuration and leading to shared setup mode.
  */
 require_once 'config.php';
 if (file_exists('config_override.php')) {
     include_once 'config_override.php';
 }
-
-
 
 include_once dirname(__FILE__) . '/api/Request.php';
 include_once dirname(__FILE__) . '/api/Response.php';
@@ -28,79 +28,49 @@ include_once dirname(__FILE__) . '/api/Session.php';
 include_once dirname(__FILE__) . '/api/ws/Controller.php';
 
 include_once dirname(__FILE__) . '/Mobile.php';
-include_once dirname(__FILE__) . '/ui/Viewer.php';
-include_once dirname(__FILE__) . '/ui/models/Module.php'; // Required for auto de-serializatio of session data
-
-include_once 'includes/main/WebUI.php';
+include_once dirname(__FILE__) . '/html/Viewer.php';
+require_once 'includes/main/WebUI.php';
 
 class Mobile_Index_Controller {
-	
-	static $opControllers = array(
-		'logout'                  => array('file' => '/ui/Logout.php', 'class' => 'Mobile_UI_Logout'),
-		'login'                   => array('file' => '/ui/Login.php', 'class' => 'Mobile_UI_Login'),
-		'loginAndFetchModules'    => array('file' => '/ui/LoginAndFetchModules.php', 'class' => 'Mobile_UI_LoginAndFetchModules'),
-		'listModuleRecords'       => array('file' => '/ui/ListModuleRecords.php', 'class' => 'Mobile_UI_ListModuleRecords'),
-		'fetchRecordWithGrouping' => array('file' => '/ui/FetchRecordWithGrouping.php', 'class' => 'Mobile_UI_FetchRecordWithGrouping'),
-	
-		'searchConfig'            => array('file' => '/ui/SearchConfig.php', 'class' => 'Mobile_UI_SearchConfig' )
-	);
-	
+
 	static function process(Mobile_API_Request $request) {
-		$operation = $request->getOperation();
-		$sessionid = HTTP_Session::detectId(); //$request->getSession();
-		
-		if (empty($operation)) $operation = 'login';
-		
-		$response = false;
-		if(isset(self::$opControllers[$operation])) {
-			$operationFile = self::$opControllers[$operation]['file'];
-			$operationClass= self::$opControllers[$operation]['class'];
+		$sessionid = HTTP_Session::detectId();
+		Mobile_API_Session::init($sessionid);
 
-			include_once dirname(__FILE__) . $operationFile;
-			$operationController = new $operationClass;
+		try {
+			$module = $request->get('module');
+			$view   = $request->get('view');
+			
+			if (empty($module)) $module = 'Vtiger';
+			if (empty($view)) $view = 'Home';
+			
+			$requireLogin = true;
+			if ($module=='Users' && $view=='Login') {
+				$requireLogin = false;
+			}
+			
+			if (preg_match("/[^a-zA-Z0-9_-]/", $module) ||
+				preg_match("/[^a-zA-Z0-9_-]/", $view)) {
+				throw new Exception("Invalid access");
+			}
+			
+			if ($requireLogin && !Mobile_API_Session::get('_authenticated_user_id')) {
+				$module = 'Users';
+				$view = 'Login';
+			}
 
-			$operationSession = false;
-			if($operationController->requireLogin()) {
-				$operationSession = Mobile_API_Session::init($sessionid);
-				if($operationController->hasActiveUser() === false) {
-					$operationSession = false;
-				}
-				//Mobile_WS_Utils::initAppGlobals();
-			} else {
-				// By-pass login
-				$operationSession = true;
+			$viewer = new Mobile_HTML_Viewer();
+			$html   = $viewer->process($module, $view);
+            $viewer->assign('MODULE', $module);
+            
+			if ($html) {
+				echo $html;
 			}
-			
-			if($operationSession === false) {
-				$response = new Mobile_API_Response();
-				$response->setError(1501, 'Login required');
-			} else {
-				
-				try {
-					$response = $operationController->process($request);
-				} catch(Exception $e) {
-					$response = new Mobile_API_Response();
-					$response->setError($e->getCode(), $e->getMessage());
-				}
-			}
-			
-		} else {
-			$response = new Mobile_API_Response();
-			$response->setError(1404, 'Operation not found: ' . $operation);
+
+		} catch(Exception $e) {
+			echo $e->getMessage();
 		}
-		
-		if($response !== false) {
-			
-			if ($response->hasError()) {
-				include_once dirname(__FILE__) . '/ui/Error.php';
-				$errorController = new Mobile_UI_Error();
-				$errorController->setError($response->getError());
-				echo $errorController->process($request)->emitHTML();
-			} else {
-				echo $response->emitHTML();
-			}
-		}
-	}	
+	}
 }
 
 /** Take care of stripping the slashes */

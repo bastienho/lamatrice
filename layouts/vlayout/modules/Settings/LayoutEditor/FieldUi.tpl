@@ -21,14 +21,14 @@
 		</span>
 		<div class="span11 marginLeftZero">
 			<span class="fieldLabel">{vtranslate($FIELD_MODEL->get('label'), $SELECTED_MODULE_NAME)}&nbsp;
-				{if $IS_MANDATORY}<span class="redColor">*</span>{/if}</span>
+																{if $IS_MANDATORY}<span class="redColor">*</span>{/if}</span>
 			<span class="btn-group pull-right actions">
 				{if $FIELD_MODEL->isEditable()}
 				<a href="javascript:void(0)" class="dropdown-toggle editFieldDetails" data-toggle="dropdown">
 					<i class="icon-pencil alignMiddle" title="{vtranslate('LBL_EDIT', $QUALIFIED_MODULE)}"></i>
 				</a>
 				<div class="basicFieldOperations pull-right hide" style="width : 250px;">
-					<form class="form-horizontal fieldDetailsForm">
+					<form class="form-horizontal fieldDetailsForm" method="POST">
 						<div class="modal-header"><strong>{vtranslate($FIELD_MODEL->get('label'), $SELECTED_MODULE_NAME)}</strong></div>
 						<div class="contentsBackground" style="padding-bottom: 5px;">
 						<span><label class="checkbox" style="padding-left: 25px; padding-top: 5px;"><input type="hidden" name="mandatory" value="O" />
@@ -64,8 +64,7 @@
 								{if $FIELD_MODEL->isDefaultValueOptionDisabled() neq "true"}
 									{if $FIELD_MODEL->getFieldDataType() eq "picklist"}
 										{assign var=PICKLIST_VALUES value=$FIELD_MODEL->getPicklistValues()}
-										<select class="span2" name="fieldDefaultValue" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"
-											 data-fieldinfo='{Vtiger_Util_Helper::toSafeHTML(ZEND_JSON::encode($FIELD_INFO))}'>
+										<select class="span2" name="fieldDefaultValue" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"  data-fieldinfo='{Vtiger_Util_Helper::toSafeHTML(ZEND_JSON::encode($FIELD_INFO))}'>
 											{foreach item=PICKLIST_VALUE key=PICKLIST_NAME from=$PICKLIST_VALUES}
 												<option value="{$PICKLIST_NAME}" {if $FIELD_MODEL->get('defaultvalue') eq $PICKLIST_NAME} selected {/if}>{vtranslate($PICKLIST_VALUE, $SELECTED_MODULE_NAME)}</option>
 											{/foreach}
@@ -73,8 +72,7 @@
 									{elseif $FIELD_MODEL->getFieldDataType() eq "multipicklist"}
 										{assign var=PICKLIST_VALUES value=$FIELD_MODEL->getPicklistValues()}
 										{assign var="FIELD_VALUE_LIST" value=explode(' |##| ',$FIELD_MODEL->get('defaultvalue'))}
-										<select multiple class="span2" name="fieldDefaultValue" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"
-											data-fieldinfo='{Vtiger_Util_Helper::toSafeHTML(ZEND_JSON::encode($FIELD_INFO))}'>
+										<select multiple class="span2" name="fieldDefaultValue" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]"  data-fieldinfo='{Vtiger_Util_Helper::toSafeHTML(ZEND_JSON::encode($FIELD_INFO))}'>
 											{foreach item=PICKLIST_VALUE from=$PICKLIST_VALUES}
 												<option value="{$PICKLIST_VALUE}" {if in_array($PICKLIST_VALUE, $FIELD_VALUE_LIST)} selected {/if}>{vtranslate($PICKLIST_VALUE, $SELECTED_MODULE_NAME)}</option>
 											{/foreach}
@@ -107,7 +105,7 @@
 											<span class="add-on">{$USER_MODEL->get('currency_symbol')}</span>
 											<input type="text" class="input-medium" name="fieldDefaultValue" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]" 
 												data-fieldinfo='{ZEND_JSON::encode($FIELD_INFO)}' value="{$FIELD_MODEL->getEditViewDisplayValue($FIELD_MODEL->get('defaultvalue'))}" 
-												data-decimal-seperator='{$USER_MODEL->get('currency_decimal_separator')}' data-group-seperator='{$USER_MODEL->get('currency_grouping_separator')}' />
+												data-decimal-separator='{$USER_MODEL->get('currency_decimal_separator')}' data-group-separator='{$USER_MODEL->get('currency_grouping_separator')}' />
 										</div>
 									{else}
 										<input type="text" {if !$FIELD_MODEL->hasDefaultValue()} disabled="" {/if} data-validation-engine="validate[required,funcCall[Vtiger_Base_Validator_Js.invokeValidation]]" class="input-medium" name="fieldDefaultValue" value="{$FIELD_MODEL->get('defaultvalue')}" data-fieldinfo='{ZEND_JSON::encode($FIELD_INFO)}'/>

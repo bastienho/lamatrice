@@ -23,6 +23,7 @@ class Vtiger_RecordStructure_Model extends Vtiger_Base_Model {
 	const RECORD_STRUCTURE_MODE_QUICKCREATE = 'QuickCreate';
 	const RECORD_STRUCTURE_MODE_MASSEDIT = 'MassEdit';
 	const RECORD_STRUCTURE_MODE_SUMMARY = 'Summary';
+	const RECORD_STRUCTURE_MODE_FILTER = 'Filter';
 
 	/**
 	 * Function to set the record Model
@@ -119,15 +120,5 @@ class Vtiger_RecordStructure_Model extends Vtiger_Base_Model {
 		$instance = new $className();
 		$instance->setModule($moduleModel);
 		return $instance;
-	}
-	
-	/** ED150526
-	 * getField among blocks structure
-	 */
-	public function getField($fieldName){
-		foreach($this->getStructure() as $block)
-			foreach($block as $field_name => $field)
-				if(strcmp($field_name, $fieldName) === 0)
-					return $field;
 	}
 }

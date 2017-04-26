@@ -16,7 +16,7 @@ class ModComments_MassSaveAjax_Action extends Vtiger_Mass_Action {
 
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		if(!$currentUserPriviligesModel->hasModuleActionPermission($moduleModel->getId(), 'Save')) {
-			throw new AppException(vtranslate($moduleName).' '.vtranslate('LBL_NOT_ACCESSIBLE'));
+			throw new AppException(vtranslate($moduleName, $moduleName).' '.vtranslate('LBL_NOT_ACCESSIBLE'));
 		}
 	}
 
@@ -42,9 +42,10 @@ class ModComments_MassSaveAjax_Action extends Vtiger_Mass_Action {
 		foreach($recordIds as $recordId) {
 			$recordModel = Vtiger_Record_Model::getCleanInstance($moduleName);
 			$recordModel->set('mode', '');
-			$recordModel->set('commentcontent', $request->get('commentcontent'));
+			$recordModel->set('commentcontent', $request->getRaw('commentcontent'));
 			$recordModel->set('related_to', $recordId);
 			$recordModel->set('assigned_user_id', $currentUserModel->getId());
+			$recordModel->set('userid', $currentUserModel->getId());
 			$recordModels[$recordId] = $recordModel;
 		}
 		return $recordModels;

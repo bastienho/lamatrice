@@ -33,17 +33,18 @@ class Vtiger_EditRecordStructure_Model extends Vtiger_RecordStructure_Model {
 				$values[$blockLabel] = array();
 				foreach($fieldModelList as $fieldName=>$fieldModel) {
 					if($fieldModel->isEditable()) {
-						if($recordModel->get($fieldName) != null) {
+						if($recordModel->get($fieldName) != '') {
 							$fieldModel->set('fieldvalue', $recordModel->get($fieldName));
-						}else if( !$recordId ){
+						}else{
 							$defaultValue = $fieldModel->getDefaultFieldValue();
-							//if(!empty($defaultValue) && !$recordId)
-							if($defaultValue != null)
+							if(!empty($defaultValue) && !$recordId)
 								$fieldModel->set('fieldvalue', $defaultValue);
 						}
 						$values[$blockLabel][$fieldName] = $fieldModel;
+                        if ($fieldName == 'taxclass' && count($recordModel->getTaxClassDetails()) < 1) {
+                            unset($values[$blockLabel][$fieldName]);
+                        }
 					}
-					//else	var_dump($fieldName);
 				}
 			}
 		}

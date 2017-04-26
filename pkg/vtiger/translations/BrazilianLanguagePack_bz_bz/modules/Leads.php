@@ -40,14 +40,17 @@ $languageStrings = array(
 	'LBL_CONVERT_LEAD'             => 'Converter Lead:'             , 
 	'LBL_TRANSFER_RELATED_RECORD'  => 'Transfer related record to'  , 
 	'LBL_CONVERT_LEAD_ERROR'       => 'You have to enable either Organization or Contact to convert the Lead', 
-	'LBL_CONVERT_LEAD_ERROR_TITLE' => 'Modules Disabled'            , 
-	'CANNOT_CONVERT'               => 'Não pode ser Convertido'    , 
-	'LBL_FOLLOWING_ARE_POSSIBLE_REASONS' => 'O seguinte pode ser uma das possíveis razões', 
 	'LBL_LEADS_FIELD_MAPPING_INCOMPLETE' => 'Todos os campos obrigatórios não são mapeados', 
-	'LBL_MANDATORY_FIELDS_ARE_EMPTY' => 'Alguns dos valores dos campos obrigatórios estão vazios', 
 	'LBL_LEADS_FIELD_MAPPING'      => 'Mapeamento Campos Customizados do Lead', 
-	'LBL_CUSTOM_FIELD_MAPPING'     => 'Edit Field Mapping'          , 
-	'LBL_WEBFORMS'                 => 'Setup Webfroms'              , 
+	'LBL_CUSTOM_FIELD_MAPPING'     => 'Mapeamento levar para conversão de dados'          , 
+    'LBL_IMAGE_INFORMATION' => 'Imagem do perfil',
+    'Lead Image' => 'Imagem de chumbo',
+	
+
+  'Phone' => 'Telefone Principal',
+  'Secondary Email' => 'E-Mail Secundário',
+  'Email' => 'E-Mail Principal',
+
 );
 $jsLanguageStrings = array(
 	'JS_SELECT_CONTACTS'           => 'Select Contacts to proceed'  , 

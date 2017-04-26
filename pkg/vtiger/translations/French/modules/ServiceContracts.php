@@ -6,23 +6,40 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013     
  ************************************************************************************/
 $languageStrings = array(
 	'ServiceContracts'             => 'Contrats de Service'         , 
 	'SINGLE_ServiceContracts'      => 'Contrat de Service'          , 
-	'LBL_ADD_RECORD'               => 'Ajouter Contrat de Service'        , 
-	'LBL_RECORDS_LIST'             => 'Liste Contrat de Service'      , 
+	'LBL_ADD_RECORD'               => 'Add Service Contract'        , 
+	'LBL_RECORDS_LIST'             => 'Service Contracts List'      , 
 	'LBL_SERVICE_CONTRACT_INFORMATION' => 'Information Contrat de Service', 
-	'Contract No'                  => 'Contrat de Service No'                  , 
+	'Contract No'                  => 'Contrat No'                  , 
 	'Start Date'                   => 'Date de début'              , 
 	'End Date'                     => 'Date de fin'                 , 
 	'Tracking Unit'                => 'Unités de suivi'            , 
 	'Total Units'                  => 'Unités totales'             , 
-	'Used Units'                   => 'Unités utilisées'         , 
+	'Used Units'                   => "Unités d'occasion"         , 
 	'Progress'                     => 'Progession (en %)'           , 
 	'Planned Duration'             => 'Durée estimée (en jours)'  , 
 	'Actual Duration'              => 'Durée actuelle (en jours)'  , 
+        'Type'                         => 'Type'                        , 
+    'Related to'                   => 'Relatif à la'                ,
+	'Hours'                        => 'Heures',
+	'Days'                         => 'Journées',
+	'Incidents'                    => 'Incidents',
+	'Normal'                       => 'Normal',
+	'Support'                      => 'Soutien',
+	'Administrative'               => 'Administratif',
+	'Undefined'                    => 'Indéfini',
+	'In Planning'                  => 'Dans la planification',
+	'On Hold'                      => 'En Attente',
+	'Complete'                     => 'Complet',
+	'Archived'                     => 'Archivé',
+	'Low'                          => 'Faible',
+	'High'                         => 'Élevé',
+	'Services'                     => 'Services',
+	'In Progress'                  => 'En Cours',
+
+  'Service Contracts' => 'Les Contrats De Service',
+
 );

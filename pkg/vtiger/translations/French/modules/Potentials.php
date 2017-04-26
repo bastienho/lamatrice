@@ -6,15 +6,12 @@
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
- * Translated by ABOnline solutions - http://www.abo-s.com/
- * Boris CLEMENT
- * December 2013    
  ************************************************************************************/
 $languageStrings = array(
 	'Potentials'                   => 'Affaires'                    , 
 	'SINGLE_Potentials'            => 'Affaire'                     , 
-	'LBL_ADD_RECORD'               => 'Ajouter Affaire'             , 
-	'LBL_RECORDS_LIST'             => 'Listes des affaires'          , 
+	'LBL_ADD_RECORD'               => 'Add Opportunity'             , 
+	'LBL_RECORDS_LIST'             => 'Opportunities List'          , 
 	'LBL_OPPORTUNITY_INFORMATION'  => 'Détail'                     , 
 	'Potential No'                 => 'Affaire N°'                 , 
 	'Amount'                       => 'Montant'                     , 
@@ -22,12 +19,12 @@ $languageStrings = array(
 	'Sales Stage'                  => 'Phase de vente'              , 
 	'Probability'                  => 'Probabilité'                , 
 	'Campaign Source'              => 'Campagne'                    , 
-	'Forecast Amount'              => 'Montant prévisionnel'             , 
-	'Funnel'                       => 'Pipeline des ventes'                , 
-	'Potentials by Stage'          => 'Affaires par phase'      , 
-	'Total Revenue'                => 'Revenu par commercial'      , 
-	'Top Potentials'               => 'Top Affaires'           , 
-	'Forecast'                     => 'Prévisions de vente'              , 
+	'Forecast Amount'              => 'Revenu pondéré'             , 
+	'Funnel'                       => 'Sales Funnel'                , 
+	'Potentials by Stage'          => 'Opportunities by Stage'      , 
+	'Total Revenue'                => 'Revenue by Salesperson'      , 
+	'Top Potentials'               => 'Top Opportunities'           , 
+	'Forecast'                     => 'Sales Forecast'              , 
 	'Prospecting'                  => 'Prospection'                 , 
 	'Qualification'                => 'Qualification '              , 
 	'Needs Analysis'               => 'A analyser'                  , 
@@ -41,7 +38,26 @@ $languageStrings = array(
 	'--None--'                     => '--Aucun--'                   , 
 	'Existing Business'            => 'Client existant'             , 
 	'New Business'                 => 'Nouveau client'              , 
-	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Date de cloture estimée'        , 
-	'LBL_RELATED_CONTACTS'         => 'Contacts relatifs'            , 
-	'LBL_RELATED_PRODUCTS'         => 'Produits relatifs'            ,
+	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Expected to close on'        , 
+	'LBL_RELATED_CONTACTS'         => 'Related Contacts'            , // TODO: Review
+	'LBL_RELATED_PRODUCTS'         => 'Related Products'            , // TODO: Review
+    'Related To'                   => 'Nom de l\'organisation'      ,
+    'Type'                         => 'Type'                        , 
+    
+    //Convert Potentials
+    'LBL_CONVERT_POTENTIAL' => 'Conversion nécessite la sélection du projet',
+    'LBL_POTENTIALS_FIELD_MAPPING' => 'Possibilités de cartographie sur le terrain',
+    'LBL_CONVERT_POTENTIALS_ERROR' => 'Vous devez activer le projet de convertir l\'opportunité',
+    'LBL_POTENTIALS_FIELD_MAPPING_INCOMPLETE' => 'Opportunités mappage de champs est incomplète (Paramètres> Gestionnaire de modules> Perspectives> Perspectives mappage de champs)',
+	'LBL_CREATE_PROJECT'           => 'Créer le projet'            , 
+    
+    //Potentials Custom Field Mapping
+	'LBL_CUSTOM_FIELD_MAPPING'=> 'Possibilité de projet de cartographie',
+
+  'Contact Name' => 'Nom Du Contact',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SELECT_PROJECT_TO_CONVERT_LEAD' => 'Conversion nécessite la sélection du projet',
 );

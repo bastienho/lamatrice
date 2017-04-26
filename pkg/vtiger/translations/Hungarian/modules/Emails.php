@@ -35,4 +35,16 @@ $languageStrings = array(
 	'LBL_SENT_ON'                  => 'Sent on'                     , // TODO: Review
 	'LBL_OWNER'                    => 'Owner'                       , // TODO: Review
 	'Date & Time Sent'             => 'Date Sent'                   , // TODO: Review
+    'Time Start'                   => 'Küldés időpontja'            ,
+    'LBL_EMAIL_INFORMATION' => 'Email információ',
+    'LBL_EMAILTEMPLATE_WARNING'    => 'Helyesek a körlevél címkékhez',
+    'LBL_EMAILTEMPLATE_WARNING_CONTENT' => 'Kérjük, ügyeljen arra, hogy a sablon Ön által választott egybenyitható címkék releváns a címzett rekordot. 
+                                            Ha küld egy e-mailt a vezető, de a merge-tags tartoznak kapcsolatba modul (ex: $contacts-lastname$) 
+                                            akkor az értékek nem olvad.',
+	'Draft'                        => 'Piszkozat'                   ,
+    'Parent ID'                    => 'Szülő Record',
 );
+
+$jsLanguageStrings = array(
+    'JS_WARNING' => 'figyelmeztetés',
+); 

@@ -6,6 +6,39 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  *************************************************************************************/
+
+Vtiger_Email_Validator_Js("Vtiger_To_Email_Validator_Js", {
+
+	/**
+	 *Function which invokes field validation
+	 *@param accepts field element as parameter
+	 * @return error if validation fails true on success
+	 */
+	invokeValidation: function(field, rules, i, options){
+		var toEmailInstance = new Vtiger_To_Email_Validator_Js();
+		toEmailInstance.setElement(field);
+		return toEmailInstance.validate();
+	}
+},{
+
+	/**
+	 * Function to validate the email field data
+	 */
+	validate: function() {
+		var fieldValue = this.getFieldValue();
+		var fieldValuesList = fieldValue.split(',');
+		for (var i in fieldValuesList) {
+			var splittedFieldValue = fieldValuesList[i];
+			var emailInstance = new Vtiger_Email_Validator_Js();
+			var response = emailInstance.validateValue(splittedFieldValue);
+			if(response != true) {
+				return emailInstance.getError();
+			}
+		}
+	}
+
+});
+
 jQuery.Class("Emails_MassEdit_Js",{},{
 
 	ckEditorInstance : false,
@@ -30,7 +63,7 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 	 * return UI
 	 */
 	showComposeEmailForm : function(params,cb,windowName){
-	    app.hideModalWindow();
+		app.hideModalWindow();
 		var popupInstance = Vtiger_Popup_Js.getInstance();
 		return popupInstance.show(params,cb,windowName);
 		
@@ -246,7 +279,7 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 				for(var id in responseData){
 					selectedDocumentId = id;
 					var selectedFileName = responseData[id].info['filename'];
-					var selectedFileSize =  responseData[id].info['filesize'];
+					var selectedFileSize = responseData[id].info['filesize'];
 					var response = thisInstance.writeDocumentIds(selectedDocumentId)
 					if(response){
 						var attachmentElement = thisInstance.getDocumentAttachmentElement(selectedFileName,id,selectedFileSize);
@@ -372,34 +405,50 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 			}
 			var popupInstance =Vtiger_Popup_Js.getInstance();
 			popupInstance.show(params, function(data){
-					var responseData = JSON.parse(data);
-					for(var id in responseData){
-						var data = {
-							'name' : responseData[id].name,
-							'id' : id,
-							'emailid' : responseData[id].email
-						}
-						thisInstance.setReferenceFieldValue(parentElem, data);
-                        thisInstance.addToEmailAddressData(data);
-                        thisInstance.appendToSelectedIds(id);
-                        thisInstance.addToEmails(data);
+				var responseData = JSON.parse(data);
+				for(var id in responseData){
+					var data = {
+						'name' : responseData[id].name,
+						'id' : id,
+						'emailid' : responseData[id].email
 					}
-				},'relatedEmailModules');
+					thisInstance.setReferenceFieldValue(parentElem, data);
+					thisInstance.addToEmailAddressData(data);
+					thisInstance.appendToSelectedIds(id);
+					thisInstance.addToEmails(data);
+				}
+			},'relatedEmailModules');
 		});
 		
 		this.getMassEmailForm().on('click','[name="clearToEmailField"]',function(e){
 			var element = jQuery(e.currentTarget);
-			element.closest('div.toEmailField').find('.sourceField').val('');
+			element.closest('div.toEmailField').find('#toEmail').val('');
 			thisInstance.getMassEmailForm().find('[name="toemailinfo"]').val(JSON.stringify(new Array()));
 			thisInstance.getMassEmailForm().find('[name="selected_ids"]').val(JSON.stringify(new Array()));
 			thisInstance.getMassEmailForm().find('[name="to"]').val(JSON.stringify(new Array()));
+
+			var preloadData = [];
+			thisInstance.setPreloadData(preloadData);
+			thisInstance.getMassEmailForm().find('#toEmail').select2('data', preloadData);
 		});
 		
 		
 	},
 	
 	setReferenceFieldValue : function(container,object){
-		var toEmailField = container.find('.sourceField');
+		var thisInstance = this;
+		var preloadData = thisInstance.getPreloadData();
+
+		var emailInfo = {
+			'recordId' : object.id,
+			'id' : object.emailid,
+			'text' : object.name+' <b>('+object.emailid+')</b>'
+		}
+		preloadData.push(emailInfo);
+		thisInstance.setPreloadData(preloadData);
+		container.find('#toEmail').select2('data', preloadData);
+
+		var toEmailField = container.find('#toEmail');
 		var toEmailFieldExistingValue = toEmailField.val();
 		var toEmailFieldNewValue;
 		if(toEmailFieldExistingValue != ""){
@@ -410,34 +459,50 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 		toEmailField.val(toEmailFieldNewValue);
 	},
 
-    addToEmailAddressData : function(mailInfo) {
-        var mailInfoElement = this.getMassEmailForm().find('[name="toemailinfo"]');
-        var existingToMailInfo = JSON.parse(mailInfoElement.val());
-        //If it is an array then there are no previous records so make as map
-        if(typeof existingToMailInfo.length != 'undefined') {
-          existingToMailInfo = {};
-        }
-        existingToMailInfo[mailInfo.id] = new Array(mailInfo.emailid);
-        mailInfoElement.val(JSON.stringify(existingToMailInfo));
-    },
+	addToEmailAddressData : function(mailInfo) {
+		var mailInfoElement = this.getMassEmailForm().find('[name="toemailinfo"]');
+		var existingToMailInfo = JSON.parse(mailInfoElement.val());
+		 if(typeof existingToMailInfo.length != 'undefined') {
+			existingToMailInfo = {};
+		} 
+		//If same record having two different email id's then it should be appended to
+		//existing email id
+		 if(existingToMailInfo.hasOwnProperty(mailInfo.id) === true){
+			var existingValues = existingToMailInfo[mailInfo.id];
+			var newValue = new Array(mailInfo.emailid);
+			existingToMailInfo[mailInfo.id] = jQuery.merge(existingValues,newValue);
+		} else {
+			existingToMailInfo[mailInfo.id] = new Array(mailInfo.emailid);
+		}
+		mailInfoElement.val(JSON.stringify(existingToMailInfo));
+	},
 
-    appendToSelectedIds : function(selectedId) {
-        var selectedIdElement = this.getMassEmailForm().find('[name="selected_ids"]');
-        var previousValue = JSON.parse(selectedIdElement.val());
-        previousValue.push(selectedId);
-        selectedIdElement.val(JSON.stringify(previousValue));
-    },
+	appendToSelectedIds : function(selectedId) {
+		var selectedIdElement = this.getMassEmailForm().find('[name="selected_ids"]');
+		var previousValue = '';
+		if(JSON.parse(selectedIdElement.val()) != '') {
+			previousValue = JSON.parse(selectedIdElement.val());
+			//If value doesn't exist then insert into an array
+			if(jQuery.inArray(selectedId,previousValue) === -1){
+				previousValue.push(selectedId);
+			}
+		} else {
+			previousValue = new Array(selectedId);
+		}
+		selectedIdElement.val(JSON.stringify(previousValue));
 
-    addToEmails : function(mailInfo){
-        var toEmails = this.getMassEmailForm().find('[name="to"]');
-        var value = JSON.parse(toEmails.val());
+	},
+
+	addToEmails : function(mailInfo){
+		var toEmails = this.getMassEmailForm().find('[name="to"]');
+		var value = JSON.parse(toEmails.val());
 		if(value == ""){
 			value = new Array();
 		}
-        value.push(mailInfo.emailid);
-        toEmails.val(JSON.stringify(value));
-    },
-	
+		value.push(mailInfo.emailid);
+		toEmails.val(JSON.stringify(value));
+	},
+
 	/**
 	 * Function to remove attachments that are added in 
 	 * edit view of email in compose email form
@@ -509,7 +574,345 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 			self.location.href = url;
 		})
 	},
-	
+
+	preloadData : new Array(),
+
+	getPreloadData : function() {
+		return this.preloadData;
+	},
+
+	setPreloadData : function(dataInfo){
+		this.preloadData = dataInfo;
+		return this;
+	},
+
+	searchEmails : function(params) {
+		var aDeferred = jQuery.Deferred();
+
+		if(typeof params.module == 'undefined') {
+			params.module = app.getModuleName();
+		}
+
+		if(typeof params.action == 'undefined') {
+			params.action = 'BasicAjax';
+		}
+		AppConnector.request(params).then(
+			function(data){
+				aDeferred.resolve(data);
+			},
+			function(error){
+				aDeferred.reject();
+			}
+		)
+		return aDeferred.promise();
+	},
+
+	/**
+	 * Function which will handle the reference auto complete event registrations
+	 * @params - container <jQuery> - element in which auto complete fields needs to be searched
+	 */
+	registerAutoCompleteFields : function(container) {
+		var thisInstance = this;
+
+		container.find('.emailField').select2({
+			minimumInputLength: 3,
+			closeOnSelect : false,
+
+			tags : [],
+			tokenSeparators: [","],
+
+			createSearchChoice : function(term) {
+				return {id: term, text: term};
+			},
+
+			ajax : {
+				'url' : 'index.php?module=Emails&action=BasicAjax',
+				'dataType' : 'json',
+				'data' : function(term,page){
+					 var data = {};
+					 data['searchValue'] = term;
+					 return data;
+				},
+				'results' : function(data){
+					var finalResult = [];
+					var results = data.result;
+					var resultData = new Array();
+					for(var moduleName in results) {
+						var moduleResult = [];
+						moduleResult.text = moduleName;
+
+						var children = new Array();
+						for(var recordId in data.result[moduleName]) {
+							var emailInfo = data.result[moduleName][recordId];
+							for (var i in emailInfo) {
+								var childrenInfo = [];
+								childrenInfo.recordId = recordId;
+								childrenInfo.id = emailInfo[i].value;
+								childrenInfo.text = emailInfo[i].label;
+								children.push(childrenInfo);
+							}
+						}
+						moduleResult.children = children;
+						resultData.push(moduleResult);
+					}
+					finalResult.results = resultData;
+					return finalResult;
+				},
+				transport : function(params) {
+					return jQuery.ajax(params);
+				}
+			}
+
+		}).on("change", function (selectedData) {
+			var addedElement = selectedData.added;
+			var removedData = selectedData.removed;
+			var currentElementName = jQuery(selectedData.currentTarget).attr('name');
+			if(currentElementName == 'cc' || currentElementName == 'bcc') {
+				var fieldName = 'ccInfo';
+				if(currentElementName == 'bcc') {
+					fieldName = 'bccInfo';
+				}
+
+				var emailData = [];
+				var fieldData = jQuery('[name="'+fieldName+'"]').val();
+				if(fieldData.length) {
+					emailData = JSON.parse(fieldData);
+					emailData = jQuery.map(emailData, function(value, index) {
+						return [value];
+					});
+				}
+
+				if(typeof addedElement != 'undefined') {
+					var data = {
+						'id' : addedElement.recordId,
+						'name' : addedElement.text,
+						'emailid' : addedElement.id
+					}
+					emailData.push(data);
+				} else if(typeof removedData != 'undefined') {
+					for(var i in emailData) {
+						if(emailData[i].id == removedData.recordId || emailData[i].emailid == removedData.id) {
+							emailData.splice(i, 1);
+						}
+					}
+				}
+				jQuery('[name="'+fieldName+'"]').val(JSON.stringify(emailData));
+			}
+
+			if (typeof addedElement != 'undefined') {
+				var data = {
+					'id' : addedElement.recordId,
+					'name' : addedElement.text,
+					'emailid' : addedElement.id
+				}
+				thisInstance.addToEmails(data);
+				if (typeof addedElement.recordId != 'undefined') {
+					thisInstance.addToEmailAddressData(data);
+					thisInstance.appendToSelectedIds(addedElement.recordId);
+				}
+
+				var preloadData = thisInstance.getPreloadData();
+				var emailInfo = {
+					'id' : addedElement.id
+				}
+				if (typeof addedElement.recordId != 'undefined') {
+					emailInfo['text'] = addedElement.text;
+					emailInfo['recordId'] = addedElement.recordId;
+				} else {
+					emailInfo['text'] = addedElement.id;
+				}
+				preloadData.push(emailInfo);
+				thisInstance.setPreloadData(preloadData);
+			}
+
+			var removedElement = selectedData.removed;
+			if (typeof removedElement != 'undefined') {
+				var data = {
+					'id' : removedElement.recordId,
+					'name' : removedElement.text,
+					'emailid' : removedElement.id
+				}
+				thisInstance.removeFromEmails(data);
+				if (typeof removedElement.recordId != 'undefined') {
+					thisInstance.removeFromEmailAddressData(data);
+					thisInstance.removeFromSelectedIds(removedElement.recordId);
+				}
+
+				var preloadData = thisInstance.getPreloadData();
+				var updatedPreloadData = [];
+				for(var i in preloadData) {
+					var preloadDataInfo = preloadData[i];
+					var skip = false;
+					if (removedElement.id == preloadDataInfo.id) {
+						skip = true;
+					}
+					if (skip == false) {
+						updatedPreloadData.push(preloadDataInfo);
+					}
+				}
+				thisInstance.setPreloadData(updatedPreloadData);
+			}
+		});
+
+		container.find('.emailField').select2("container").find("ul.select2-choices").sortable({
+			containment: 'parent',
+			start: function(){
+				container.find('.emailField').select2("onSortStart");
+			},
+			update: function(){
+				container.find('.emailField').select2("onSortEnd");
+			}
+		});
+
+		var toEmailNamesList = JSON.parse(container.find('[name="toMailNamesList"]').val());
+		var toEmailInfo = JSON.parse(container.find('[name="toemailinfo"]').val());
+		var toEmails = container.find('[name="toEmail"]').val();
+		var toFieldValues = Array();
+		if (toEmails.length > 0) {
+			toFieldValues = toEmails.split(',');
+		}
+
+		var preloadData = thisInstance.getPreloadData();
+		if (typeof toEmailInfo != 'undefined') {
+			for(var key in toEmailInfo) {
+				if (toEmailNamesList.hasOwnProperty(key)) {
+					for (var i in toEmailNamesList[key]) {
+						var emailInfo = [];
+						var emailId = toEmailNamesList[key][i].value;
+						var emailInfo = {
+							'recordId' : key,
+							'id' : emailId,
+							'text' : toEmailNamesList[key][i].label+' <b>('+emailId+')</b>'
+						}
+						preloadData.push(emailInfo);
+						if (jQuery.inArray(emailId, toFieldValues) != -1) {
+							var index = toFieldValues.indexOf(emailId);
+							if (index !== -1) {
+								toFieldValues.splice(index, 1);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (typeof toFieldValues != 'undefined') {
+			for(var i in toFieldValues) {
+				var emailId = toFieldValues[i];
+				var emailInfo = {
+					'id' : emailId,
+					'text' : emailId
+				}
+				preloadData.push(emailInfo);
+			}
+		}
+		if (typeof preloadData != 'undefined') {
+			thisInstance.setPreloadData(preloadData);
+			container.find('.emailField[name="toEmail"]').select2('data', preloadData);
+		}
+
+		var ccValues = container.find('[name="ccInfo"]').val();
+		if(ccValues) {
+			ccValues = JSON.parse(ccValues);
+			var emailData = [];
+			for(var i in ccValues) {
+				var ccValue = ccValue[i];
+				if(ccValue.id) {
+					emailData.push({'id' : ccValue.emailid, 'text' : ccValue.name, 'recordId' : ccValue.id});
+				} else if(ccValue.emailid) {
+					emailData.push({'id' : ccValue.emailid, 'text' : ccValue.name});
+				} else {
+					emailData.push({'id' : ccValue.trim(), 'text' : ccValue.trim()});
+				}
+			}
+			container.find('.emailField[name="cc"]').select2('data', emailData);
+		}
+
+		var bccValues = container.find('[name="bccInfo"]').val();
+		if(bccValues) {
+			bccValues = JSON.parse(bccValues);
+			var bemailData = [];
+			for(var i in bccValues) {
+				var bccValue = bccValues[i];
+				if(bccValue.id) {
+					bemailData.push({'id' : bccValue.emailid, 'text' : bccValue.name, 'recordId' : bccValue.id});
+				} else if(bccValue.emailid) {
+					bemailData.push({'id' : bccValue.emailid, 'text' : bccValue.name});
+				} else {
+					bemailData.push({'id' : bccValue.trim(), 'text' : bccValue.trim()});
+				}
+			}
+			container.find('.emailField[name="bcc"]').select2('data', bemailData);
+		}
+	},
+
+	removeFromEmailAddressData : function(mailInfo) {
+		var mailInfoElement = this.getMassEmailForm().find('[name="toemailinfo"]');
+		var previousValue = JSON.parse(mailInfoElement.val());
+		var elementSize = previousValue[mailInfo.id].length;
+		var emailAddress = mailInfo.emailid;
+		var selectedId = mailInfo.id;
+		//If element length is not more than two delete existing record.
+		if(elementSize < 2){
+			delete previousValue[selectedId];
+		} else {
+			// Update toemailinfo hidden element value
+			var newValue;
+			var reserveValue = previousValue[selectedId];
+			delete previousValue[selectedId];
+			//Remove value from an array and return the resultant array
+			newValue = jQuery.grep(reserveValue, function(value) {
+				return value != emailAddress;
+			});
+			previousValue[selectedId] = newValue;
+			//update toemailnameslist hidden element value
+		}
+		mailInfoElement.val(JSON.stringify(previousValue));
+	},
+
+	removeFromSelectedIds : function(selectedId) {
+		var selectedIdElement = this.getMassEmailForm().find('[name="selected_ids"]');
+		var previousValue = JSON.parse(selectedIdElement.val());
+		var mailInfoElement = this.getMassEmailForm().find('[name="toemailinfo"]');
+		var mailAddress = JSON.parse(mailInfoElement.val());
+		var elements = mailAddress[selectedId];
+		var noOfEmailAddress = elements.length; 
+		
+		//Don't remove id from selected_ids if element is having more than two email id's
+		if(noOfEmailAddress < 2){
+			var updatedValue = [];
+			for (var i in previousValue) {
+				var id = previousValue[i];
+				var skip = false;
+				if (id == selectedId) {
+					skip = true;
+				}
+				if (skip == false) {
+					updatedValue.push(id);
+				}
+			}
+			selectedIdElement.val(JSON.stringify(updatedValue));
+		}
+	},
+
+	removeFromEmails : function(mailInfo){
+		var toEmails = this.getMassEmailForm().find('[name="to"]');
+		var previousValue = JSON.parse(toEmails.val());
+
+		var updatedValue = [];
+		for (var i in previousValue) {
+			var email = previousValue[i];
+			var skip = false;
+			if (email == mailInfo.emailid) {
+				skip = true;
+			}
+			if (skip == false) {
+				updatedValue.push(email);
+			}
+		}
+		toEmails.val(JSON.stringify(updatedValue));
+	},
+
 	registerEvents : function(){
 		var thisInstance = this;
 		var composeEmailForm = this.getMassEmailForm();
@@ -534,6 +937,7 @@ jQuery.Class("Emails_MassEdit_Js",{},{
 			var textAreaElement = jQuery('#description');
 			var ckEditorInstance = this.getckEditorInstance(textAreaElement);
 			ckEditorInstance.loadCkEditor(textAreaElement);
+			this.registerAutoCompleteFields(this.getMassEmailForm());
 			this.registerRemoveAttachmentEvent();
 			this.registerEventsToGetFlagValue();
 			this.registerCcAndBccEvents();

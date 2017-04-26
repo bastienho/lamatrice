@@ -20,32 +20,16 @@ class Vtiger_Export_View extends Vtiger_Index_View {
 		}
 	}
 
-	/**
-	 * Function to get the list of Script models to be included
-	 * @param Vtiger_Request $request
-	 * @return <Array> - List of Vtiger_JsScript_Model instances
-	 */
-	function getHeaderScripts(Vtiger_Request $request) {
-		$headerScriptInstances = parent::getHeaderScripts($request);
-		$moduleName = $request->getModule();
-
-		$jsFileNames = array(
-			'modules.Vtiger.resources.Export'
-		);
-
-		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
-		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
-		return $headerScriptInstances;
-	}
-
 	function process(Vtiger_Request $request) {
 		$viewer = $this->getViewer($request);
-		
+
 		$source_module = $request->getModule();
 		$viewId = $request->get('viewname');
 		$selectedIds = $request->get('selected_ids');
 		$excludedIds = $request->get('excluded_ids');
-
+		$orderBy = $request->get('orderby');
+		$sortOrder = $request->get('sortorder');
+		$tagParams = $request->get('tag_params');
 		$page = $request->get('page');
 
 		$viewer->assign('SELECTED_IDS', $selectedIds);
@@ -54,51 +38,44 @@ class Vtiger_Export_View extends Vtiger_Index_View {
 		$viewer->assign('PAGE', $page);
 		$viewer->assign('SOURCE_MODULE', $source_module);
 		$viewer->assign('MODULE','Export');
+		$viewer->assign('ORDER_BY', $orderBy);
+		$viewer->assign('SORT_ORDER', $sortOrder);
+		$viewer->assign('TAG_PARAMS', $tagParams);
+
+         // for the option of selecting currency while exporting inventory module records
+        if(in_array($source_module, Vtiger_Functions::getLineItemFieldModules())){
+           $viewer->assign('MULTI_CURRENCY',true);
+        }
         
         $searchKey = $request->get('search_key');
         $searchValue = $request->get('search_value');
 		$operator = $request->get('operator');
-		if(!empty($operator)) {
-			$viewer->assign('OPERATOR',is_array($operator) ? htmlspecialchars(json_encode($operator)) : $operator);
-			$viewer->assign('ALPHABET_VALUE',is_array($searchValue) ? htmlspecialchars(json_encode($searchValue)) : $searchValue);
-			$viewer->assign('SEARCH_KEY',is_array($searchKey) ? htmlspecialchars(json_encode($searchKey)) : $searchKey);
+        if(!empty($operator)) {
+			$viewer->assign('OPERATOR',$operator);
+			$viewer->assign('ALPHABET_VALUE',$searchValue);
+            $viewer->assign('SEARCH_KEY',$searchKey);
 		}
-
-		//AV151023 : Count the number of rows
-		if(empty($viewId)) {
-			$viewId = '0';
-		}
-		$listViewModel = Vtiger_ListView_Model::getInstance($source_module, $viewId);
-		$listViewModel->set('search_key', $searchKey);
-		$listViewModel->set('search_value', $searchValue);
-		$listViewModel->set('operator', $operator);
-
-		$count_all = $listViewModel->getListViewCount($calculatedTotals);
-
-		$viewer->assign('COUNT_ALL', $count_all);
-		if (empty($selectedIds)) {
-			$viewer->assign('COUNT_SELECTED', 0);
-		} else if ($selectedIds == 'all') {
-			$viewer->assign('COUNT_SELECTED', $count_all - count($excludedIds));
-		} else {
-			$viewer->assign('COUNT_SELECTED', count($selectedIds));
-		}
-
-		$pagingModel = new Vtiger_Paging_Model();
-		$limit = $pagingModel->getPageLimit();
-		$currentPage = $request->get('page');
-		if(empty($currentPage)) $currentPage = 1;
-		$currentPageStart = ($currentPage - 1) * $limit;
-		if ($currentPageStart < 0) $currentPageStart = 0;
-		if ($currentPageStart + $limit > $count_all) $limit = ($count_all - $currentPageStart);
-		
-		$viewer->assign('COUNT_CURRENT_PAGE', $limit);//TMP !!!get real number an take care of the last page !!
-		
-		// TODO : add the list of preconfigured export (+ export de base)
-		$exportList = Export_Utils_Helper::getSourceList($source_module);
-		$viewer->assign('EXPORT_LIST', $exportList);
-		$viewer->assign('DEFAULT_EXPORT', Export_Utils_Helper::getDefaultExport());
-
+		$viewer->assign('SUPPORTED_FILE_TYPES', array('csv', 'ics'));
+		$viewer->assign('SEARCH_PARAMS', $request->get('search_params'));
 		$viewer->view('Export.tpl', $source_module);
+	}
+
+	function getHeaderScripts(Vtiger_Request $request) {
+		$headerScriptInstances = parent::getHeaderScripts($request);
+
+		$moduleName = $request->getModule();
+		if (in_array($moduleName, getInventoryModules())) {
+			$moduleEditFile = 'modules.'.$moduleName.'.resources.Edit';
+			unset($headerScriptInstances[$moduleEditFile]);
+
+			$jsFileNames = array(
+				'modules.Inventory.resources.Edit',
+				'modules.'.$moduleName.'.resources.Edit',
+			);
+		}
+
+		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
+		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
+		return $headerScriptInstances;
 	}
 }

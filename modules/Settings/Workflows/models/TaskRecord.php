@@ -48,7 +48,11 @@ class Settings_Workflows_TaskRecord_Model extends Settings_Vtiger_Record_Model {
 	}
 
 	public function getEditViewUrl() {
-		return 'index.php?module=Workflows&parent=Settings&view=EditTask&type='.$this->task_type->getName().'&task_id='.$this->getId().'&for_workflow='.$this->getWorkflow()->getId();
+		return 'index.php?module=Workflows&parent=Settings&view=EditTask&type='.$this->getTaskType()->getName().'&task_id='.$this->getId().'&for_workflow='.$this->getWorkflow()->getId();
+	}
+    
+    public function getV7EditViewUrl() {
+		return 'index.php?module=Workflows&parent=Settings&view=EditV7Task&type='.$this->getTaskType()->getName().'&task_id='.$this->getId().'&for_workflow='.$this->getWorkflow()->getId();
 	}
 
 	public function getDeleteActionUrl() {

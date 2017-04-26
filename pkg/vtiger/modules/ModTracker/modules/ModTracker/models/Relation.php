@@ -38,31 +38,24 @@ class ModTracker_Relation_Model extends Vtiger_Record_Model {
 			$recordInstance = new $modelClassName();
 			$recordInstance->setData($row)->setModuleFromInstance($moduleModel);
 			$recordInstance->set('id', $row['crmid']);
-			return $recordInstance;
-		}
-		return false;
-	}
-
-	function getUnLinkedRecord() {
-		$targetId = $this->get('targetid');
-		$targetModule = $this->get('targetmodule');
-		$db = PearDatabase::getInstance();
-
-        $query = 'SELECT * FROM vtiger_crmentity WHERE crmid = ?';
-		$params = array($targetId);
-		$result = $db->pquery($query, $params);
-		$noOfRows = $db->num_rows($result);
-		$moduleModels = array();
-		if($noOfRows) {
-			if(!array_key_exists($targetModule, $moduleModels)) {
-				$moduleModel = Vtiger_Module_Model::getInstance($targetModule);
+			if($targetModule == 'Emails') {
+				$recordInstance->set('parent_id', $this->parent->get('crmid'));
 			}
-			$row = $db->query_result_rowdata($result, 0);
-			$modelClassName = Vtiger_Loader::getComponentClassName('Model', 'Record', $targetModule);
-			$recordInstance = new $modelClassName();
-			$recordInstance->setData($row)->setModuleFromInstance($moduleModel);
 			return $recordInstance;
 		}
 		return false;
 	}
+
+	public function getRecordDetailViewUrl() {
+		try {
+			$recordModel = Vtiger_Record_Model::getInstanceById($this->get('targetid'), $this->get('targetmodule'));
+			if ($this->get('targetmodule') == 'Emails') {
+				return $recordModel->getDetailViewUrl($this->parent->get('crmid'));
+			}
+			return $recordModel->getDetailViewUrl();
+		} catch (Exception $e) {
+			return false;
+		}
+	}
+
 }

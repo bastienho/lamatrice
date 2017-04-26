@@ -16,7 +16,7 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 		if(!$currentUserPriviligesModel->hasModuleActionPermission($moduleModel->getId(), 'Export')) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
 		}
 	}
 
@@ -28,8 +28,8 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 		$this->ExportData($request);
 	}
 
-	protected $moduleInstance;
-	protected $focus;
+	private $moduleInstance;
+	private $focus;
 
 	/**
 	 * Function exports the data based on the mode
@@ -37,16 +37,25 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 	 */
 	function ExportData(Vtiger_Request $request) {
 		$db = PearDatabase::getInstance();
-		$isPreview = $request->get('preview');
 		$moduleName = $request->get('source_module');
 
 		$this->moduleInstance = Vtiger_Module_Model::getInstance($moduleName);
-		$this->moduleFieldInstances = $this->moduleInstance->getFields();
+		$this->moduleFieldInstances = $this->moduleFieldInstances($moduleName);
 		$this->focus = CRMEntity::getInstance($moduleName);
 
 		$query = $this->getExportQuery($request);
 		$result = $db->pquery($query, array());
 
+		$translatedHeaders = $this->getHeaders();
+		$entries = array();
+		for ($j = 0; $j < $db->num_rows($result); $j++) {
+			$entries[] = $this->sanitizeValues($db->fetchByAssoc($result, $j));
+		}
+
+		$this->output($request, $translatedHeaders, $entries);
+	}
+
+	public function getHeaders() {
 		$headers = array();
 		//Query generator set this when generating the query
 		if(!empty($this->accessibleFields)) {
@@ -55,26 +64,27 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 				$fieldModel = $this->moduleFieldInstances[$fieldName];
 				// Check added as querygenerator is not checking this for admin users
 				$presence = $fieldModel->get('presence');
-				if(in_array($presence, $accessiblePresenceValue)) {
+				if(in_array($presence, $accessiblePresenceValue) && $fieldModel->get('displaytype') != '6') {
 					$headers[] = $fieldModel->get('label');
 				}
 			}
 		} else {
-			foreach($this->moduleFieldInstances as $field) $headers[] = $field->get('label');
+			foreach($this->moduleFieldInstances as $field) {
+				$headers[] = $field->get('label');
+			}
 		}
+
 		$translatedHeaders = array();
-		foreach($headers as $header) $translatedHeaders[] = vtranslate(html_entity_decode($header, ENT_QUOTES), $moduleName);
-
-		$entries = array();
-		for($j=0; $j<$db->num_rows($result); $j++) {
-			$entries[] = $this->sanitizeValues($db->fetchByAssoc($result, $j));
+		foreach($headers as $header) {
+			$translatedHeaders[] = vtranslate(html_entity_decode($header, ENT_QUOTES), $this->moduleInstance->getName());
 		}
 
-		if ($isPreview) {
-			$this->displayPrewiew($request, $translatedHeaders, $entries);
-		} else {
-			$this->output($request, $translatedHeaders, $entries);
-		}
+		$translatedHeaders = array_map('decode_html', $translatedHeaders);
+		return $translatedHeaders;
+	}
+
+	function getAdditionalQueryModules(){
+		return array_merge(getInventoryModules(), array('Products', 'Services', 'PriceBooks', 'Cases'));
 	}
 
 	/**
@@ -82,50 +92,90 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 	 * @param Vtiger_Request $request
 	 * @return <String> export query
 	 */
-	function getExportQuery(Vtiger_Request $request) {//depand of the export type...
-		$queryorderby = "";
-		$querylimit = "";
+	function getExportQuery(Vtiger_Request $request) {
 		$currentUser = Users_Record_Model::getCurrentUserModel();
 		$mode = $request->getMode();
 		$cvId = $request->get('viewname');
 		$moduleName = $request->get('source_module');
-		$isPreview = $request->get('preview');
-		$searchKey = $request->get('search_key');
-		$searchValue = $request->get('search_value');
-		$operator = $request->get('operator');
 
-		$queryGenerator = new QueryGenerator($moduleName, $currentUser);
+		$queryGenerator = new EnhancedQueryGenerator($moduleName, $currentUser);
 		$queryGenerator->initForCustomViewById($cvId);
 		$fieldInstances = $this->moduleFieldInstances;
 
-        $accessiblePresenceValue = array(0,2);
-		foreach($fieldInstances as $field) {
-            // Check added as querygenerator is not checking this for admin users
-            $presence = $field->get('presence');
-            if(in_array($presence, $accessiblePresenceValue)) {
-                $fields[] = $field->getName();
-            }
-        }
-		$queryGenerator->setFields($fields);
-		
-		if(!empty($searchKey)) {
-			$queryGenerator->addUserSearchConditions(array('search_field' => $searchKey, 'search_text' => $searchValue, 'operator' => $operator));
+		$orderBy = $request->get('orderby');
+		$orderByFieldModel = $fieldInstances[$orderBy];
+		$sortOrder = $request->get('sortorder');
+
+		if ($mode !== 'ExportAllData') {
+			$operator = $request->get('operator');
+			$searchKey = $request->get('search_key');
+			$searchValue = $request->get('search_value');
+
+			$tagParams = $request->get('tag_params');
+			if (!$tagParams) {
+				$tagParams = array();
+			}
+
+			$searchParams = $request->get('search_params');
+			if (!$searchParams) {
+				$searchParams = array();
+			}
+
+			$glue = '';
+			if($searchParams && count($queryGenerator->getWhereFields())) {
+				$glue = QueryGenerator::$AND;
+			}
+			$searchParams = array_merge($searchParams, $tagParams);
+			$searchParams = Vtiger_Util_Helper::transferListSearchParamsToFilterCondition($searchParams, $this->moduleInstance);
+			$queryGenerator->parseAdvFilterList($searchParams, $glue);
+
+			if($searchKey) {
+				$queryGenerator->addUserSearchConditions(array('search_field' => $searchKey, 'search_text' => $searchValue, 'operator' => $operator));
+			}
+
+			if ($orderBy && $orderByFieldModel) {
+				if ($orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::REFERENCE_TYPE || $orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::OWNER_TYPE) {
+					$queryGenerator->addWhereField($orderBy);
+				}
+			}
 		}
 
+		/**
+		 *  For Documents if we select any document folder and mass deleted it should delete documents related to that 
+		 *  particular folder only
+		 */
+		if($moduleName == 'Documents'){
+			$folderValue = $request->get('folder_value');
+			if(!empty($folderValue)){
+				 $queryGenerator->addCondition($request->get('folder_id'),$folderValue,'e');
+			}
+		}
+
+		$accessiblePresenceValue = array(0,2);
+		foreach($fieldInstances as $field) {
+			// Check added as querygenerator is not checking this for admin users
+			$presence = $field->get('presence');
+			if(in_array($presence, $accessiblePresenceValue) && $field->get('displaytype') != '6') {
+				$fields[] = $field->getName();
+			}
+		}
+		$queryGenerator->setFields($fields);
 		$query = $queryGenerator->getQuery();
 
-		if(in_array($moduleName, getInventoryModules())){
+		$additionalModules = $this->getAdditionalQueryModules();
+		if(in_array($moduleName, $additionalModules)) {
 			$query = $this->moduleInstance->getExportQuery($this->focus, $query);
 		}
 
 		$this->accessibleFields = $queryGenerator->getFields();
 
-
 		switch($mode) {
-			case 'ExportAllData' :	break;
+			case 'ExportAllData'	:	if ($orderBy && $orderByFieldModel) {
+											$query .= ' ORDER BY '.$queryGenerator->getOrderByColumn($orderBy).' '.$sortOrder;
+										}
+										break;
 
-			case 'ExportCurrentPage' :
-										$pagingModel = new Vtiger_Paging_Model();
+			case 'ExportCurrentPage' :	$pagingModel = new Vtiger_Paging_Model();
 										$limit = $pagingModel->getPageLimit();
 
 										$currentPage = $request->get('page');
@@ -133,7 +183,11 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 
 										$currentPageStart = ($currentPage - 1) * $limit;
 										if ($currentPageStart < 0) $currentPageStart = 0;
-										$querylimit = ' LIMIT '.$currentPageStart.','.$limit;
+
+										if ($orderBy && $orderByFieldModel) {
+											$query .= ' ORDER BY '.$queryGenerator->getOrderByColumn($orderBy).' '.$sortOrder;
+										}
+										$query .= ' LIMIT '.$currentPageStart.','.$limit;
 										break;
 
 			case 'ExportSelectedRecords' :	$idList = $this->getRecordsListFromRequest($request);
@@ -148,87 +202,15 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 												$query .= ' AND '.$baseTable.'.'.$baseTableColumnId.' NOT IN ('.implode(',',$request->get('excluded_ids')).')';
 											}
 
+											if ($orderBy && $orderByFieldModel) {
+												$query .= ' ORDER BY '.$queryGenerator->getOrderByColumn($orderBy).' '.$sortOrder;
+											}
 											break;
 
 
 			default :	break;
 		}
-
-		$queryorderby = $this->getQueryOrderBy($request);
-
-		if ($isPreview && !$querylimit) {
-			$querylimit = ' LIMIT 0, 20';
-		}
-
-		$query .= $queryorderby . $querylimit;
-
 		return $query;
-	}
-
-	function getQueryOrderBy($request) {
-		$moduleName = $request->get('source_module');
-		$orderBy = Vtiger_Util_Helper::validateStringForSql($request->get('orderby'));
-		$sortOrder = Vtiger_Util_Helper::validateStringForSql($request->get('sortorder'));
-
-		//List view will be exported on recently created/modified records
-		if(empty($orderBy) && empty($sortOrder)){
-			switch($moduleName){
-			case "Users":
-				break;
-			case "RSNMediaRelations":
-				$orderBy = 'daterelation';
-				$sortOrder = 'DESC';
-				break;
-			default:
-				$orderBy = 'modifiedtime';
-				$sortOrder = 'DESC';
-				break;
-			}
-		}
-
-		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
-
-		if(!empty($orderBy)){
-		    $columnFieldMapping = $moduleModel->getColumnFieldMapping();
-		    $orderByFieldName = $columnFieldMapping[$orderBy];
-		    $orderByFieldModel = $moduleModel->getField($orderByFieldName);
-		    if($orderByFieldModel &&
-				(	$orderByFieldModel->getFieldDataType() == Vtiger_Field_Model::REFERENCE_TYPE
-				||	preg_match('/cf$/', $orderByFieldModel->table)//ED150622 TODO more than *cf
-				)
-			){
-				//IF it is reference add it in the where fields so that from clause will be having join of the table
-				$queryGenerator = $this->get('query_generator');
-				$queryGenerator->addWhereField($orderByFieldName);
-				//$queryGenerator->whereFields[] = $orderByFieldName;
-		    }
-		}
-
-	    if ($orderByFieldModel && $orderByFieldModel->isReferenceField()) {
-			$referenceModules = $orderByFieldModel->getReferenceList();
-			$referenceNameFieldOrderBy = array();
-
-			foreach ($referenceModules as $referenceModuleName) {
-			    $referenceModuleModel = Vtiger_Module_Model::getInstance($referenceModuleName);
-			    $referenceNameFields = $referenceModuleModel->getNameFields();
-			    $columnList = array();
-
-			    foreach ($referenceNameFields as $nameField) {
-					$fieldModel = $referenceModuleModel->getField($nameField);
-					$columnList[] = $fieldModel->get('table').$orderByFieldModel->getName().'.'.$fieldModel->get('column');
-			    }
-
-			    if (count($columnList) > 1) {
-					$referenceNameFieldOrderBy[] = getSqlForNameInDisplayFormat(array('first_name'=>$columnList[0],'last_name'=>$columnList[1]),'Users').' '.$sortOrder;
-			    } else {
-					$referenceNameFieldOrderBy[] = implode('', $columnList).' '.$sortOrder ;
-			    }
-			}
-
-			return ' ORDER BY '. implode(',',$referenceNameFieldOrderBy);
-	    }
-
-		return ' ORDER BY '. $orderBy . ' ' .$sortOrder;
 	}
 
 	/**
@@ -241,29 +223,6 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 		if(empty($type)) {
 			return 'text/csv';
 		}
-		return $type;
-	}
-
-	/**
-	 * Function returns the export encoding - This can be extended to support different file exports
-	 * @param Vtiger_Request $request
-	 * @return <String>
-	 */
-	function getExportEncoding(Vtiger_Request $request) {
-		$encoding = $request->get('export_encoding');
-		if(empty($encoding)) {
-			return 'UTF-8';
-		}
-
-		return $encoding;
-	}
-
-	/**
-	 * AV1511
-	 */
-	function getExportFileName($request) {
-		$moduleName = $request->get('source_module');
-		return str_replace(' ','_',vtranslate($moduleName, $moduleName));
 	}
 
 	/**
@@ -273,111 +232,45 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 	 * @param <Array> $entries - outfput file data
 	 */
 	function output($request, $headers, $entries) {
-		$fileName = $this->getExportFileName($request);
+		$moduleName = $request->get('source_module');
+		$fileName = str_replace(' ','_',decode_html(vtranslate($moduleName, $moduleName)));
+		// for content disposition header comma should not be there in filename 
+		$fileName = str_replace(',', '_', $fileName);
 		$exportType = $this->getExportContentType($request);
-		$encoding = $this->getExportEncoding($request);
 
-		//AV15
-		$csvseparator = $this->getCSVSeparator();
-		$csvDelimiter = $this->getCSVDelimiter();
-		$csvEscapeChar = $this->getCSVEscapeChar();
-		
 		header("Content-Disposition:attachment;filename=$fileName.csv");
-		header("Content-Type:$exportType");
-		header("Content-Transfer-Encoding: $encoding");
-
+		header("Content-Type:$exportType;charset=UTF-8");
 		header("Expires: Mon, 31 Dec 2000 00:00:00 GMT" );
 		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT" );
 		header("Cache-Control: post-check=0, pre-check=0", false );
 
-		//AV151026
-		$out = fopen('php://output', 'w');
-		foreach ($headers as &$header) {
-			if ($encoding == 'macintosh') {
-				$header = iconv('UTF-8', 'macintosh', $header);
-			} else {
-				$header = mb_convert_encoding($header, $encoding);
-			}
-		}
-
-		fputcsv($out, $headers, $csvseparator, $csvDelimiter, $csvEscapeChar);
+		$header = implode("\", \"", $headers);
+		$header = "\"" .$header;
+		$header .= "\"\r\n";
+		echo $header;
 
 		foreach($entries as $row) {
-			foreach ($row as &$value) {
-				if ($encoding == 'macintosh') {
-					$value = iconv('UTF-8', 'macintosh', $value);
-				} else {
-					$value = mb_convert_encoding($value, $encoding);
-				}
+			foreach ($row as $key => $value) {
+				/* To support double quotations in CSV format
+				 * To review: http://creativyst.com/Doc/Articles/CSV/CSV01.htm#EmbedBRs
+				 */
+				$row[$key] = str_replace('"', '""', $value);
 			}
-			fputcsv($out, $row, $csvseparator, $csvDelimiter, $csvEscapeChar);
+			$line = implode("\",\"",$row);
+			$line = "\"" .$line;
+			$line .= "\"\r\n";
+			echo $line;
 		}
-
-		fclose($out);
 	}
 
-	function displayPrewiew($request, $headers, $entries) {
-		// echo 'display preview';
-		// var_dump($headers);
-		// var_dump($entries);
-		foreach ($headers as &$header) {
-			$header = htmlentities($header);
-		}
-
-		foreach($entries as $row) {
-			foreach ($row as &$value) {
-				$value = htmlentities($value);
-			}
-		} 
-
-		$module = $request->get('module');
-
-		$viewer = new Vtiger_Viewer();
-		$viewer->assign('DISPLAY_HEADER', (is_array($headers) && sizeof($headers) > 0));
-		$viewer->assign('HEADERS', $headers);
-		$viewer->assign('ENTRIES', $entries);
-
-		$viewer->view('ExportPreview.tpl', $module);
-
-		// fputcsv($out, $headers, $csvseparator);
-		// foreach($entries as $row) {
-		// 	fputcsv($out, $row, $csvseparator);
-		// }
-	}	
-	
-	//ED150922
-	function getCSVSeparator(){
-		return "\t";	
-	}
-
-	//AV15
-	function getCSVDelimiter(){
-		return "\"";	
-	}
-
-	//AV15
-	function getCSVEscapeChar(){
-		return chr(92);	
-	}
-
-	//ED150922
-	function escapeForCSV($string){
-		// if(strpos($string, "\t") !== FALSE)
-		// 	$string = str_replace("\t", "\\t", $string);
-		if(strpos($string, '"') !== FALSE)
-			$string = str_replace('"', '\'\'', $string);
-		return $string;
-	}
-
-	protected $picklistValues;
-	protected $fieldArray;
-	protected $fieldDataTypeCache = array();
+	private $picklistValues;
+	private $fieldArray;
+	private $fieldDataTypeCache = array();
 	/**
 	 * this function takes in an array of values for an user and sanitizes it for export
 	 * @param array $arr - the array of values
-	 * @param exportStructure because of inheritance
 	 */
-	function sanitizeValues($arr, $exportStructure = false){
+	function sanitizeValues($arr){
 		$db = PearDatabase::getInstance();
 		$currentUser = Users_Record_Model::getCurrentUserModel();
 		$roleid = $currentUser->get('roleid');
@@ -402,7 +295,11 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 				unset($arr[$fieldName]);
 				continue;
 			}
-			$value = decode_html($value);
+			//Track if the value had quotes at beginning
+			$beginsWithDoubleQuote = strpos($value, '"') === 0;
+			$endsWithDoubleQuote = substr($value,-1) === '"'?1:0;
+
+			$value = trim($value,"\"");
 			$uitype = $fieldInfo->get('uitype');
 			$fieldname = $fieldInfo->get('name');
 
@@ -410,14 +307,17 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 				$this->fieldDataTypeCache[$fieldName] = $fieldInfo->getFieldDataType();
 			}
 			$type = $this->fieldDataTypeCache[$fieldName];
-			
+
+			//Restore double quote now.
+			if ($beginsWithDoubleQuote) $value = "\"{$value}";
+			if($endsWithDoubleQuote) $value = "{$value}\"";
 			if($fieldname != 'hdnTaxType' && ($uitype == 15 || $uitype == 16 || $uitype == 33)){
 				if(empty($this->picklistValues[$fieldname])){
 					$this->picklistValues[$fieldname] = $this->fieldArray[$fieldname]->getPicklistValues();
 				}
 				// If the value being exported is accessible to current user
 				// or the picklist is multiselect type.
-				if($uitype == 33 || $uitype == 16 || in_array($value,$this->picklistValues[$fieldname])){
+				if($uitype == 33 || $uitype == 16 || array_key_exists($value,$this->picklistValues[$fieldname])){
 					// NOTE: multipicklist (uitype=33) values will be concatenated with |# delim
 					$value = trim($value);
 				} else {
@@ -447,6 +347,21 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
                 $value = CurrencyField::convertToUserFormat($value, null, true, true);
 			} elseif($uitype == 7 && $fieldInfo->get('typeofdata') == 'N~O' || $uitype == 9){
 				$value = decimalFormat($value);
+			} elseif($type == 'date') {
+				if ($value && $value != '0000-00-00') {
+					$value = DateTimeField::convertToUserFormat($value);
+				}
+			} elseif($type == 'datetime') {
+				if ($moduleName == 'Calendar' && in_array($fieldName, array('date_start', 'due_date'))) {
+					$timeField = 'time_start';
+					if ($fieldName === 'due_date') {
+						$timeField = 'time_end';
+					}
+					$value = $value.' '.$arr[$timeField];
+				}
+				if (trim($value) && $value != '0000-00-00 00:00:00') {
+					$value = Vtiger_Datetime_UIType::getDisplayDateTimeValue($value);
+				}
 			}
 			if($moduleName == 'Documents' && $fieldname == 'description'){
 				$value = strip_tags($value);
@@ -454,7 +369,10 @@ class Vtiger_ExportData_Action extends Vtiger_Mass_Action {
 				array_push($new_arr,$value);
 			}
 		}
-
 		return $arr;
+	}
+
+	public function moduleFieldInstances($moduleName) {
+		return $this->moduleInstance->getFields();
 	}
 }

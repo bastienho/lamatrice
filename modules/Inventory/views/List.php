@@ -15,25 +15,25 @@ class Inventory_List_View extends Vtiger_List_View {
 	 * @return <Array> - List of Vtiger_JsScript_Model instances
 	 */
 	function getHeaderScripts(Vtiger_Request $request) {
-		$headerScriptInstances = parent::getHeaderScripts($request);
+            	$headerScriptInstances = parent::getHeaderScripts($request);
 
 		$moduleName = $request->getModule();
 		$modulePopUpFile = 'modules.'.$moduleName.'.resources.Popup';
 		$moduleEditFile = 'modules.'.$moduleName.'.resources.Edit';
-		$moduleListFile = 'modules.'.$moduleName.'.resources.List';//ED150625
+		$moduleListFile = 'modules.'.$moduleName.'.resources.List';
 		unset($headerScriptInstances[$modulePopUpFile]);
 		unset($headerScriptInstances[$moduleEditFile]);
-		unset($headerScriptInstances[$moduleListFile]);//ED150625
-
+		unset($headerScriptInstances[$moduleListFile]);
 
 		$jsFileNames = array(
 			'modules.Inventory.resources.Edit',
 			'modules.Inventory.resources.Popup',
-			'modules.Inventory.resources.List',//ED150625
+			'modules.Inventory.resources.List',
 		);
 		$jsFileNames[] = $modulePopUpFile;
 		$jsFileNames[] = $moduleEditFile;
-		$jsFileNames[] = $moduleListFile;//ED150625
+		$jsFileNames[] = $moduleListFile;
+
 		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
 		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
 		return $headerScriptInstances;

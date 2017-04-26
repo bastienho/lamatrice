@@ -8,7 +8,7 @@
  * All Rights Reserved.
  ************************************************************************************/
 
-class Inventory_ServicesPopup_View extends Vtiger_Popup_View {
+class Inventory_ServicesPopup_View extends Inventory_ProductsPopup_View {
 
 	/**
 	 * Function returns module name for which Popup will be initialized
@@ -25,45 +25,17 @@ class Inventory_ServicesPopup_View extends Vtiger_Popup_View {
 		//src_module value is added just to stop showing inactive services
 		$request->set('src_module', $request->getModule());
 
-		//ED151006
-		$searchKey = $request->get('search_key');
-		$searchValue = $request->get('search_value');
-		$operator = $request->get('operator');
-		if((!empty($searchKey)) && (!empty($searchValue))) {
-			if($searchKey === 'servicename'){
-				if(!$operator)
-					$operator = 's';
-				//tableau de tableau pour définir le OR
-				$searchKey = 	array(array($searchKey, '', 'productcode'));
-				$searchValue = 	array(array($searchValue, '', $searchValue));
-				$operator = 	array(array($operator, 'OR', 's'));
-				
-				$request->set('search_key', $searchKey);
-				$request->set('search_value', $searchValue);
-				$request->set('operator', $operator);
-			}
-		}
-		
 		parent::initializeListViewContents($request, $viewer);
-		$viewer->assign('MODULE', $request->getModule());
+        $moduleModel = Vtiger_Module_Model::getInstance('Services');
+        
+        if (!$moduleModel->isActive()) {
+			$viewer->assign('LISTVIEW_ENTRIES_COUNT', 0);
+            $viewer->assign('LISTVIEW_ENTRIES', array());
+            $viewer->assign('IS_MODULE_DISABLED', true);
+        }
+
 		$viewer->assign('GETURL', 'getTaxesURL');
 		$viewer->assign('VIEW', 'ServicesPopup');
 	}
-	
-	 /**
-	 * Function to get the list of Script models to be included
-	 * @param Vtiger_Request $request
-	 * @return <Array> - List of Vtiger_JsScript_Model instances
-	 */
-	function getHeaderScripts(Vtiger_Request $request) {
-		$headerScriptInstances = parent::getHeaderScripts($request);
-
-		$jsFileNames = array('modules.Inventory.resources.Popup');
-		$jsScriptInstances = $this->checkAndConvertJsScripts($jsFileNames);
-		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
-
-		return $headerScriptInstances;
-	}
-
 
 }

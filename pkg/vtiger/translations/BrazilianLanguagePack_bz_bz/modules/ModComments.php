@@ -17,4 +17,5 @@ $languageStrings = array(
 	'Comment'                      => 'Comentário'                 , 
 	'Creator'                      => 'Criador'                     , 
 	'Related To Comments'          => 'Comentário Pai'             , 
+	'LBL_COMMENTED_AT'             => 'Comentou em'                 , 
 );

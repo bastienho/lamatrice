@@ -19,7 +19,7 @@ $languageStrings = array(
 	'LBL_PROFILE_VIEW'             => 'Profile view'                , // TODO: Review
 	'LBL_FIELDS'                   => 'Fields'                      , // TODO: Review
 	'LBL_TOOLS'                    => 'Tools'                       , // TODO: Review
-	'LBL_FIELD_AND_TOOL_PRVILIGES' => 'Field and Tool Privileges'   , // TODO: Review
+	'LBL_FIELD_AND_TOOL_PRIVILEGES' => 'Mező és a Tool kiváltságok'   , // TODO: Review
 	'LBL_EDIT_RECORD'              => 'Edit'                        , // TODO: Review
 	'LBL_DUPLICATE_RECORD'         => 'Duplicate'                   , // TODO: Review
 	'LBL_DELETE_RECORD'            => 'Delete'                      , // TODO: Review
@@ -33,6 +33,16 @@ $languageStrings = array(
 	'LBL_TRANSFER_ROLES_TO_PROFILE' => 'Transfer roles to profile'   , // TODO: Review
 	'LBL_PROFILES'                 => 'Profiles'                    , // TODO: Review
 	'LBL_CHOOSE_PROFILES'          => 'Choose Profiles'             , // TODO: Review
+	'LBL_GLOBAL_PERMISSION_WARNING' => 'Figyelmeztetés: A felhasználók ezzel kapcsolatos profilt elérheti az összes rekordot a CRM',
+
+  'LBL_EDIT_PRIVILEGES_OF_THIS_PROFILE' => 'Szerkesztés jogosultságok ez a profil',
+  'LBL_VIEW_ALL' => 'Összes Megtekintése',
+  'LBL_EDIT_ALL' => 'A Szerkesztés Minden',
+  'LBL_VIEW_ALL_DESC' => 'Megtekintheti az összes modult információk',
+  'LBL_EDIT_ALL_DESC' => 'Szerkesztheti az összes modult információk',
+  'LBL_DUPLICATES_EXIST' => 'Ismétlődő Profil Létezik',
+  'LBL_EDIT_PROFILE' => 'Profil Szerkesztése',
+
 );
 $jsLanguageStrings = array(
 	'JS_RECORD_DELETED_SUCCESSFULLY' => 'Profile deleted successfully', // TODO: Review

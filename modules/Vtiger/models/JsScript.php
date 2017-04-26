@@ -34,7 +34,7 @@ class Vtiger_JsScript_Model extends Vtiger_Base_Model {
 	public function getSrc() {
 		$src = $this->get('src');
 		if(empty($src)) {
-			$src = $this->get('linkurl');
+            $src = $this->get('linkurl');
 		}
 		return $src;
 	}

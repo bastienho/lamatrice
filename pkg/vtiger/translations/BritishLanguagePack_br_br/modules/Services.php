@@ -30,4 +30,5 @@ $languageStrings = array(
 	'Usage Unit'                   => 'Usage Unit'                  , 
 	'Tax Class'                    => 'Tax Class'                   , 
 	'Website'                      => 'Website'                     , 
+    
 );

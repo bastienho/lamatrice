@@ -14,7 +14,6 @@ $languageStrings = array(
 	'LBL_ADD_RECORD' => 'Add Group',
 	'LBL_GROUP_NAME' => 'Group Name',
 	'LBL_GROUP_MEMBERS' => 'Group Members',
-	'LBL_ADD_USERS_ROLES' => 'Add Users, Roles...',
 	'LBL_ROLEANDSUBORDINATE' => 'Role and Subordinates',
 	'RoleAndSubordinates' => 'Role and Subordinates',
 	'LBL_DUPLICATES_EXIST' => 'Group Name already Exists',
@@ -22,5 +21,6 @@ $languageStrings = array(
 $jsLanguageStrings = array(
 	'JS_PLEASE_SELECT_ATLEAST_ONE_MEMBER_FOR_A_GROUP' => 'Please select atleast one member for a group',
 	'JS_RECORD_DELETED_SUCCESSFULLY' => 'Group deleted successfully',
+	'JS_COMMA_NOT_ALLOWED_GROUP' => 'Special characters like ,"<> are not allowed in Group Name.',
 );
 

@@ -29,7 +29,9 @@ class Documents_CheckFileIntegrity_Action extends Vtiger_Action_Controller {
 		if ($resultVal) {
 			$result['message'] = vtranslate('LBL_FILE_AVAILABLE', $moduleName);
 		} else {
-			$documentRecordModel->updateFileStatus();
+			if ($documentRecordModel->get('filelocationtype') == 'I') {
+				$documentRecordModel->updateFileStatus();
+			}
 			$result['message'] = vtranslate('LBL_FILE_NOT_AVAILABLE', $moduleName);
 		}
 

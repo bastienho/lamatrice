@@ -36,7 +36,7 @@ class VTWorkflowEventHandler extends VTEventHandler {
 	 * Push tasks to the task queue if the conditions are true
 	 * @param $entityData A VTEntityData object representing the entity.
 	 */
-	function handleEvent($eventName, $entityData, $entityCache = false) {
+	function handleEvent($eventName, $entityData, $entityCache = false, $relatedInfo = false) {
 		$util = new VTWorkflowUtils();
 		$user = $util->adminUser();
 		global $adb;
@@ -96,6 +96,10 @@ class VTWorkflowEventHandler extends VTEventHandler {
 						$doEvaluate = false;
 						break;
 					}
+				case VTWorkflowManager::$ON_SCHEDULE:{
+						$doEvaluate = false;
+						break;
+					}
 				default: {
 						throw new Exception("Should never come here! Execution Condition:" . $workflow->executionCondition);
 					}
@@ -107,7 +111,7 @@ class VTWorkflowEventHandler extends VTEventHandler {
 					$workflow->markAsCompletedForRecord($entity_id);
 				}
 
-				$workflow->performTasks($entityData);
+				$workflow->performTasks($entityData,$relatedInfo);
 			}
 		}
 		$util->revertUser();

@@ -41,9 +41,8 @@ class Settings_Vtiger_CustomRecordNumberingAjax_Action extends Settings_Vtiger_I
 	 */
 	public function getModuleCustomNumberingData(Vtiger_Request $request) {
 		$sourceModule = $request->get('sourceModule');
-		$sequenceModule = $request->get('sequenceModule');
 
-		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sourceModule, false, $sequenceModule);
+		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sourceModule);
 		$moduleData = $moduleModel->getModuleCustomNumberingData();
 		
 		$response = new Vtiger_Response();
@@ -59,9 +58,8 @@ class Settings_Vtiger_CustomRecordNumberingAjax_Action extends Settings_Vtiger_I
 	public function saveModuleCustomNumberingData(Vtiger_Request $request) {
 		$qualifiedModuleName = $request->getModule(false);
 		$sourceModule = $request->get('sourceModule');
-		$sequenceModule = $request->get('sequenceModule');
 
-		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sourceModule, false, $sequenceModule);
+		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sourceModule);
 		$moduleModel->set('prefix', $request->get('prefix'));
 		$moduleModel->set('sequenceNumber', $request->get('sequenceNumber'));
 
@@ -82,13 +80,17 @@ class Settings_Vtiger_CustomRecordNumberingAjax_Action extends Settings_Vtiger_I
 	 * @param Vtiger_Request $request
 	 */
 	public function updateRecordsWithSequenceNumber(Vtiger_Request $request) {
-		$sequenceModule = $request->get('sourceModule');
+		$sourceModule = $request->get('sourceModule');
 
-		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sequenceModule);
+		$moduleModel = Settings_Vtiger_CustomRecordNumberingModule_Model::getInstance($sourceModule);
 		$result = $moduleModel->updateRecordsWithSequence();
 
 		$response = new Vtiger_Response();
 		$response->setResult($result);
 		$response->emit();
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

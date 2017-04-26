@@ -26,11 +26,7 @@
 				if(typeof data[v.name] == 'object' ) {
 					data[v.name].push(v.value);
 				}else{
-					//ED160102 : manage object named with [] suffix
-					if(v.name.length > 2 && v.name.substr(v.name.length - 2, 2) == '[]')
-						data[v.name]=[v.value];
-					else
-						data[v.name]=v.value;
+					data[v.name]=v.value;
 				}				
 			});
 		}

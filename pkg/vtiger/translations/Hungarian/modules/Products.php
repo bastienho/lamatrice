@@ -72,4 +72,19 @@ $languageStrings = array(
 	'Spiral Binder'                => 'Spirál fűzés'             , 
 	'Sq Ft'                        => 'm2'                          , 
 	'LBL_CONVERSION_RATE'          => 'Conversion Rate'             , // TODO: Review
+    'LBL_PRODUCTSMOD_DISABLED' => 'Teszi lehetővé a termékek modul termékek megtekintése',
+	'LBL_SHOW_BUNDLE_IN_INVENTORY' => 'Mutasd köteg tételeket számla/Idézetek/Sales Order/Megrendelés',
+	'LBL_BUNDLE_TOTAL_COST' => 'Teljes költsége Bundle',
+	'LBL_UPDATE_BUNDLE_PRICE' => 'Frissítés Bundle Ár',
+
+  'LBL_PRODUCT_NAME' => 'Termék Neve',
+  'LBL_PRICE_QUANTITY' => 'Ár x Mennyiség',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SUB_PRODUCTS_WILL_BE_SHOWN_IN_INVENTORY' => 'Sub termék jelenik meg a Inventory',
+	'JS_SUB_PRODUCTS_WILL_NOT_BE_SHOWN_IN_INVENTORY' => 'Sub termékek nem jelennek meg az Inventory',
+	'JS_SUCCESSFULLY_CHANGED_BUNDLE_COST' => 'Sikeresen megváltoztatta összköltsége csomag',
+	'JS_DELETION_OR_IN_ACTIVATION_CHILD_PRODUCT_MESSAGE' => 'Ez a termék része a termék csomagot. Az ár a csomag változatlan marad, ha a csomag törléséig vagy inaktivált. Biztos benne, hogy folytatni szeretné?',
 );

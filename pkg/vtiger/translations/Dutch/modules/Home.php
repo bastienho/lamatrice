@@ -21,4 +21,9 @@ $languageStrings = array(
 	'LTFAQ'                        => 'Mijn recente FAQs'           , 
 	'UA'                           => 'Nieuwe Afspraken'            , 
 	'PA'                           => 'Afwachtende Afspraken'       , 
+        'Home'                         => 'Dashboard'                        ,
+
+  'LBL_SAVE_ORDER' => 'Bespaar Bestelling',
+  'LBL_ADD_NEW_DASHBOARD' => 'Het toevoegen van nieuwe dashboard',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'Maximaal 30 tekens zijn toegestaan ​​voor het dashboard naam.',
 );

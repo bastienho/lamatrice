@@ -39,6 +39,7 @@ $languageStrings = array(
 	'LBL_SEVERITY'                 => 'Ernstigheid'                 , 
 	'LBL_CONVERT_FAQ'              => 'Converteer naar FAQ'         , 
 	'LBL_RELATED_TO'               => 'Gerelateerd aan'             ,
+    'Related To'                   => 'Gerelateerd aan'             ,
 
 	//added to support i18n in ticket mails
 	'Hi' => 'Hallo',
@@ -82,4 +83,13 @@ $languageStrings = array(
 	'HelpDesk ID' => 'Ticket ID',
 	'Ticket ID' => 'Ticket ID',
 	'LBL_TICKET_NUMBER' => 'Ticket Nummer',
+
+  'Contact Name' => 'Contact Naam',
+  'The comments are' => 'De commentaren zijn',
+  'Ticket Title' => 'Ticket Titel',
+  'Re' => 'Re :',
+  'LBL_ADD_DOCUMENT' => 'Document Toevoegen',
+  'LBL_OPEN_TICKETS' => 'Open Tickets',
+  'LBL_CREATE_TICKET' => 'Creëren Van Een Ticket',
+
 );

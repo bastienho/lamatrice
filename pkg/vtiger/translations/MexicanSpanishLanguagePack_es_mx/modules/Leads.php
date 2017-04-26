@@ -12,7 +12,7 @@ $languageStrings = array(
 	'SINGLE_Leads'                 => 'Prospecto'                   , 
 	'LBL_RECORDS_LIST'             => 'Lista de prospectos'         , 
 	'LBL_ADD_RECORD'               => 'Agregar prospecto'           , 
-	'LBL_LEAD_INFORMATION'         => 'Infomación del Prospecto'   , 
+	'LBL_LEAD_INFORMATION'         => 'Información del Prospecto'   , 
 	'Lead No'                      => 'Núm. Prospecto'             , 
 	'Company'                      => 'Empresa'                     , 
 	'Designation'                  => 'Puesto'                      , 
@@ -40,14 +40,17 @@ $languageStrings = array(
 	'LBL_CONVERT_LEAD'             => 'Convertir Prospecto:'        , 
 	'LBL_TRANSFER_RELATED_RECORD'  => 'Transferir registro relacionado a', 
 	'LBL_CONVERT_LEAD_ERROR'       => 'Necesitas tener habilitado el módulo de Cuentas o Contactos pasra convertir el prospecto', 
-	'LBL_CONVERT_LEAD_ERROR_TITLE' => 'Módulos deshabilitados'     , 
-	'CANNOT_CONVERT'               => 'No se puede Convertir'       , 
-	'LBL_FOLLOWING_ARE_POSSIBLE_REASONS' => 'A continuación se detallan algunas de las posibles causas', 
 	'LBL_LEADS_FIELD_MAPPING_INCOMPLETE' => 'No se han vinculado todos los campos obligatorios', 
-	'LBL_MANDATORY_FIELDS_ARE_EMPTY' => 'Algún campo obligatorio está vacío', 
 	'LBL_LEADS_FIELD_MAPPING'      => 'Vinculación de Campos Personalizados', 
-	'LBL_CUSTOM_FIELD_MAPPING'     => 'Editar mapeo de campos'      , 
-	'LBL_WEBFORMS'                 => 'Configurar formularios Web'  , 
+	'LBL_CUSTOM_FIELD_MAPPING'     => 'Plomo Mapeo de conversión de datos'      , 
+    'LBL_IMAGE_INFORMATION' => 'Foto de Perfil',
+    'Lead Image' => 'Imagen Plomo',
+	
+
+  'Phone' => 'Teléfono Principal',
+  'Secondary Email' => 'Correo Electrónico Secundaria',
+  'Email' => 'De Correo Electrónico Principal',
+
 );
 $jsLanguageStrings = array(
 	'JS_SELECT_CONTACTS'           => 'Selecciona un contacto para proceder', 

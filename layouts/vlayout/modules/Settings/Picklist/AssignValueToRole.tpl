@@ -29,7 +29,7 @@
 				<div class="controls">
 					<select multiple class="select2" id="assignValues" style="min-width: 220px" name="assign_values[]">
 						{foreach key=PICKLIST_KEY item=PICKLIST_VALUE from=$SELECTED_PICKLISTFIELD_ALL_VALUES}
-							<option value="{$PICKLIST_VALUE}">{vtranslate($PICKLIST_VALUE,$SELECTED_MODULE_NAME)}</option>
+							<option value="{$PICKLIST_KEY}">{vtranslate($PICKLIST_VALUE,$SELECTED_MODULE_NAME)}</option>
 						{/foreach}
 					</select>
 				</div>
@@ -39,7 +39,7 @@
 					<div class="control-label"><span class="redColor">*</span>{vtranslate('LBL_ASSIGN_TO_ROLE',$QUALIFIED_MODULE)}</div>
 					<div class="controls">
 						<select class="rolesList select2" id="rolesSelected" name="rolesSelected[]" multiple style="min-width: 220px" data-placeholder="{vtranslate('LBL_CHOOSE_ROLES',$QUALIFIED_MODULE)}">
-							<option value="all">{vtranslate('LBL_ALL_ROLES',$QUALIFIED_MODULE)}</option>
+							<option value="all" selected>{vtranslate('LBL_ALL_ROLES',$QUALIFIED_MODULE)}</option>
 							{foreach from=$ROLES_LIST item=ROLE}
 								<option value="{$ROLE->get('roleid')}">{$ROLE->get('rolename')}</option>
 							{/foreach}

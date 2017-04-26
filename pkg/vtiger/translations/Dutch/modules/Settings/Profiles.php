@@ -19,7 +19,7 @@ $languageStrings = array(
 	'LBL_PROFILE_VIEW'             => 'Profile view'                , // TODO: Review
 	'LBL_FIELDS'                   => 'Fields'                      , // TODO: Review
 	'LBL_TOOLS'                    => 'Tools'                       , // TODO: Review
-	'LBL_FIELD_AND_TOOL_PRVILIGES' => 'Field and Tool Privileges'   , // TODO: Review
+	'LBL_FIELD_AND_TOOL_PRIVILEGES' => 'Veld en Tool voorrechten'   , // TODO: Review
 	'LBL_EDIT_RECORD'              => 'Edit'                        , // TODO: Review
 	'LBL_DUPLICATE_RECORD'         => 'Duplicate'                   , // TODO: Review
 	'LBL_DELETE_RECORD'            => 'Delete'                      , // TODO: Review
@@ -33,6 +33,16 @@ $languageStrings = array(
 	'LBL_TRANSFER_ROLES_TO_PROFILE' => 'Transfer roles to profile'   , // TODO: Review
 	'LBL_PROFILES'                 => 'Profiles'                    , // TODO: Review
 	'LBL_CHOOSE_PROFILES'          => 'Choose Profiles'             , // TODO: Review
+	'LBL_GLOBAL_PERMISSION_WARNING' => 'Waarschuwing: Gebruikers in verband met dit profiel hebben toegang tot alle records in het CRM',
+
+  'LBL_EDIT_PRIVILEGES_OF_THIS_PROFILE' => 'Wijzig rechten van dit profiel',
+  'LBL_VIEW_ALL' => 'Bekijk Alle',
+  'LBL_EDIT_ALL' => 'Alle Bewerken',
+  'LBL_VIEW_ALL_DESC' => 'Alle modules informatie',
+  'LBL_EDIT_ALL_DESC' => 'Kan het bewerken van alle modules informatie',
+  'LBL_DUPLICATES_EXIST' => 'Duplicaat Van Het Profiel Bestaat',
+  'LBL_EDIT_PROFILE' => 'Profiel Bewerken',
+
 );
 $jsLanguageStrings = array(
 	'JS_RECORD_DELETED_SUCCESSFULLY' => 'Profile deleted successfully', // TODO: Review

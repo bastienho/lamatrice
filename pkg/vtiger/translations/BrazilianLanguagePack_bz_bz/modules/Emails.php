@@ -35,4 +35,16 @@ $languageStrings = array(
 	'LBL_SENT_ON'                  => 'Sent on'                     , // TODO: Review
 	'LBL_OWNER'                    => 'Owner'                       , // TODO: Review
 	'Date & Time Sent'             => 'Date Sent'                   , // TODO: Review
+    'Time Start'                    => 'tempo Sent'                            ,
+    'LBL_EMAIL_INFORMATION' => 'E-mail Informações',
+    'LBL_EMAILTEMPLATE_WARNING'    => 'São seus mesclagem-tags corrigir',
+    'LBL_EMAILTEMPLATE_WARNING_CONTENT' => 'Por favor, certifique-se de que o modelo selecionado tem fundir-tags relevantes para o registro destinatário. 
+                                            Se você está enviando um e-mail para liderar, mas a junção-tags pertencem ao módulo de contato (ex: $contacts-lastname$), 
+                                            em seguida, os valores não serão mesclados.',
+	'Draft'                        => 'Rascunho'                    ,
+    'Parent ID'                    => 'Registro pai',
 );
+
+$jsLanguageStrings = array(
+    'JS_WARNING' => 'aviso',
+);   

@@ -10,8 +10,8 @@
 $languageStrings = array(
 	'Campaigns'                    => 'Кампании'            , 
 	'SINGLE_Campaigns'             => 'Кампания'            , 
-	'LBL_ADD_RECORD'               => 'Add Campaign'                , // TODO: Review
-	'LBL_RECORDS_LIST'             => 'Campaigns List'              , // TODO: Review
+	'LBL_ADD_RECORD'               => 'Добавить кампанию'                ,
+	'LBL_RECORDS_LIST'             => 'Кампании Список'              ,
 	'LBL_CAMPAIGN_INFORMATION'     => 'Информация'        , 
 	'LBL_EXPECTATIONS_AND_ACTUALS' => 'Ожидания и Результаты', 
 	'Campaign Name'                => 'Наименование'    , 
@@ -52,4 +52,8 @@ $languageStrings = array(
 	'Contacted - Successful'       => 'Успешный Контакт', 
 	'Contacted - Unsuccessful'     => 'Неудачный Контакт', 
 	'Contacted - Never Contact Again' => 'Никогда не Контактировать', 
+);
+
+$jsLanguageStrings = array(
+	'JS_APPENDED_TO_EXISTING_LIST' => '%s из выбранного списка будут добавлены с существующим списком.',
 );

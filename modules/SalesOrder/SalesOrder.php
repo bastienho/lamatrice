@@ -20,14 +20,6 @@
  * All Rights Reserved.
  * Contributor(s): ______________________________________..
  ********************************************************************************/
-
-include_once('config.php');
-require_once('include/logging.php');
-require_once('include/database/PearDatabase.php');
-require_once('include/utils/utils.php');
-require_once('user_privileges/default_module_view.php');
-
-// Account is used to store vtiger_account information.
 class SalesOrder extends CRMEntity {
 	var $log;
 	var $db;
@@ -102,17 +94,14 @@ class SalesOrder extends CRMEntity {
 	var $default_sort_order = 'ASC';
 	//var $groupTable = Array('vtiger_sogrouprelation','salesorderid');
 
-	var $mandatory_fields = Array('subject','createdtime' ,'modifiedtime', 'assigned_user_id');
+	var $mandatory_fields = Array('subject','createdtime' ,'modifiedtime', 'assigned_user_id','quantity', 'listprice', 'productid');
 
 	// For Alphabetical search
 	var $def_basicsearch_col = 'subject';
 
 	// For workflows update field tasks is deleted all the lineitems.
 	var $isLineItemUpdate = true;
-	
-	//ED50713 : liste des sostatus qui permettent le calcul des quantités en demande
-	var $statusForQtyInDemand = array('Created', 'Approved', 'Delivered');
-	
+
 	/** Constructor Function for SalesOrder class
 	 *  This function creates an instance of LoggerManager class using getLogger method
 	 *  creates an instance for PearDatabase class and get values for column_fields array of SalesOrder class.
@@ -125,50 +114,23 @@ class SalesOrder extends CRMEntity {
 
 	function save_module($module)
 	{
-
-		//Checking if quote_id is present and updating the quote status
-		if($this->column_fields["quote_id"] != ''){
-			$qt_id = $this->column_fields["quote_id"];
-			$query1 = "update vtiger_quotes set quotestage='Accepted' where quoteid=?";
-			$this->db->pquery($query1, array($qt_id));
+		/* $_REQUEST['REQUEST_FROM_WS'] is set from webservices script.
+		 * Depending on $_REQUEST['totalProductCount'] value inserting line items into DB.
+		 * This should be done by webservices, not be normal save of Inventory record.
+		 * So unsetting the value $_REQUEST['totalProductCount'] through check point
+		 */
+		if (isset($_REQUEST['REQUEST_FROM_WS']) && $_REQUEST['REQUEST_FROM_WS']) {
+			unset($_REQUEST['totalProductCount']);
 		}
 
-		//ED50713 requested productid
-		global $adb;
-		$requestProductIdsList = $requestQuantitiesList = array();
-		$totalNoOfProducts = $_REQUEST['totalProductCount'];
-		for($i=1; $i<=$totalNoOfProducts; $i++) {
-			$productId = $_REQUEST['hdnProductId'.$i];
-			$productIdsList[$productId] = $productId;
-		}
-		//Old products
-		$recordId = $this->id;
-		$result = $adb->pquery("SELECT productid FROM vtiger_inventoryproductrel WHERE id = ?", array($recordId));
-		$numOfRows = $adb->num_rows($result);
-		for ($i=0; $i<$numOfRows; $i++) {
-			$productId = $adb->query_result($result, $i, 'productid');
-			$productIdsList[$productId] = $productId;
-		}
-		
+
 		//in ajax save we should not call this function, because this will delete all the existing product values
 		if($_REQUEST['action'] != 'SalesOrderAjax' && $_REQUEST['ajxaction'] != 'DETAILVIEW'
 				&& $_REQUEST['action'] != 'MassEditSave' && $_REQUEST['action'] != 'ProcessDuplicates'
 				&& $_REQUEST['action'] != 'SaveAjax' && $this->isLineItemUpdate != false) {
-			
 			//Based on the total Number of rows we will save the product relationship with this entity
 			saveInventoryProductDetails($this, 'SalesOrder');
 		}
-		
-		//ED151210 gestion du solde
-		if($this->column_fields['typedossier'] !== 'Solde'
-		&& $this->column_fields['typedossier'] !== 'Inventaire'){
-			$contactId = $this->column_fields["contact_id"];
-			$this->updateSaleOrderSolde($contactId);
-		}
-		
-		//ED150708 refreshes qty in demand
-		if($productIdsList)
-			$this->refreshQtyInDemand($productIdsList);
 
 		// Update the currency id and the conversion rate for the sales order
 		$update_query = "update vtiger_salesorder set currency_id=?, conversion_rate=? where salesorderid=?";
@@ -176,513 +138,6 @@ class SalesOrder extends CRMEntity {
 		$this->db->pquery($update_query, $update_params);
 	}
 
-	/** ED150713
-	 * Recalcule les quantités demandées sur toutes les commandes client liées aux produits
-	 * TODO sub products
-	 */
-	function refreshQtyInDemand($productIdsList = false, $recordId = false){
-		global $adb, $log;
-		$log->debug("Entering refreshQtyInDemand(".print_r($productIdsList, true).") method ...");
-		if(!$recordId)
-			$recordId = $this->id;
-			
-		/* SalesOrder de réference (dernier Solde ou dernier Inventaire)*/
-		$sql = "SELECT salesorderid
-			FROM (
-				SELECT vtiger_salesorder.salesorderid, vtiger_salesorder.contactid, MAX(createdtime) AS createdtime
-				FROM vtiger_salesorder
-				JOIN vtiger_crmentity
-					ON vtiger_salesorder.salesorderid = vtiger_crmentity.crmid
-				WHERE vtiger_crmentity.deleted = 0
-				AND vtiger_salesorder.typedossier IN ('Solde', 'Inventaire')
-				AND vtiger_salesorder.sostatus IN (" . generateQuestionMarks($this->statusForQtyInDemand) . ")
-				GROUP BY vtiger_salesorder.salesorderid, vtiger_salesorder.contactid
-			) ref_salesorder
-			JOIN vtiger_crmentity
-					ON ref_salesorder.salesorderid = vtiger_crmentity.crmid
-					AND ref_salesorder.createdtime = vtiger_crmentity.createdtime
-		";	
-		
-		/* Mise à jour de vtiger_products.qtyindemand pour tous les produits en question, même sans salesorder liée (d'où le LEFT) */
-		$sql = "UPDATE vtiger_products
-			LEFT JOIN (
-				SELECT vtiger_inventoryproductrel.productid, SUM(vtiger_inventoryproductrel.quantity) AS quantity
-				FROM (
-					SELECT DISTINCT productid
-					FROM vtiger_inventoryproductrel
-					" . ($recordId ? "WHERE id = ?" : "")."
-				) this_so_products
-				JOIN vtiger_inventoryproductrel
-					ON vtiger_inventoryproductrel.productid = this_so_products.productid
-				JOIN vtiger_salesorder
-					ON vtiger_salesorder.salesorderid = vtiger_inventoryproductrel.id
-				JOIN vtiger_crmentity
-					ON vtiger_salesorder.salesorderid = vtiger_crmentity.crmid
-				JOIN (".$sql.") ref_salesorder
-					ON vtiger_salesorder.salesorderid = ref_salesorder.salesorderid
-				WHERE vtiger_crmentity.deleted = 0
-			".($productIdsList
-				? " AND vtiger_inventoryproductrel.productid IN (" . generateQuestionMarks($productIdsList) . ")"
-				: ""
-			)."
-				GROUP BY vtiger_inventoryproductrel.productid
-			) _calculation_
-			ON vtiger_products.productid = _calculation_.productid
-			SET vtiger_products.qtyindemand = IFNULL(quantity, 0)
-			".($productIdsList
-				? " WHERE vtiger_products.productid IN (" . generateQuestionMarks($productIdsList) . ")"
-				: ""
-			)."
-		";
-		$params = array();
-		if($recordId)
-			$params[] = $recordId;
-		$params = array_merge($params, $this->statusForQtyInDemand);
-		if($productIdsList){
-			$params = array_merge($params, $productIdsList);
-			$params = array_merge($params, $productIdsList);
-		}
-		$result = $adb->pquery($sql, $params);
-		if(!$result){
-			$adb->echoError('Erreur de mise à jour des quantités demandées');
-			echo "<pre>$sql</pre>";
-			echo "<h5>Paramètres :</h5>";
-			var_dump($params);
-			echo_callstack();
-			$log->debug("Exiting refreshQtyInDemand method : Erreur de mise à jour des quantités demandées");
-			die();
-		}
-		$log->debug("Exiting refreshQtyInDemand method ...");
-	}
-	
-	/*******************************
-	 * GESTION DU DOSSIER DE SOLDE
-	 *******************************/
-	
-	/**
-	 * Création du dossier de solde (typeddosier === 'Solde')
-	 * Un dossier d'inventaire est une référence non modifiable par cette procédure
-	 * 1) le dossier de solde est celui qui a la date de création la plus récente
-	 * 2) Si le saleorder le plus récent n'est pas de typedossier 'Solde' ou 'Inventaire', il est créé.
-	 * 3) Le dossier de solde reprend le précédent dossier de solde ou d'inventaire et ajoute les produits des dossiers de type 'Commande' ou 'Facture' suivants
-	 */
-	function updateSaleOrderSolde($contactId){
-		$dossiers = $this->getContactDepotsVentesInfos($contactId);
-		$variationIds = $this->getVariationIds($dossiers);
-		$soldeReferenceId = $this->getSoldeReferenceId($dossiers);
-		$soldeActifId = $this->getSoldeActifId($dossiers);
-		if(!$soldeReferenceId && !$soldeActifId
-		|| $soldeReferenceId == $soldeActifId
-		|| !$variationIds)
-			//rien à faire
-			return;
-		$this->insertSaleOrderSoldeRows($soldeActifId, $soldeReferenceId, $variationIds);
-		$this->setSaleOrderTotal($soldeActifId);
-	}
-	
-	// reset des lignes dans vtiger_inventoryproductrel
-	private function insertSaleOrderSoldeRows($soldeActifId, $soldeReferenceId, $variationIds){
-		global $adb;
-		$allTaxes = getAllTaxes();
-		//purge des produits du solde actif
-		$query = 'DELETE FROM vtiger_inventoryproductrel
-			WHERE id = ?';
-		$adb->pquery($query, array($soldeActifId));
-		$query = 'DELETE FROM vtiger_inventorysubproductrel
-			WHERE id = ?';
-		$adb->pquery($query, array($soldeActifId));
-		
-		//insertion des lignes de produits pour le solde actif
-		
-		//sélection des produits
-		$params = $variationIds;
-		if($soldeReferenceId)
-			array_push($params, $soldeReferenceId);
-		$query = 'SELECT `vtiger_inventoryproductrel`.`productid`
-			, IFNULL(vtiger_products.unit_price, vtiger_service.unit_price) AS `listprice`
-			, MAX(`vtiger_inventoryproductrel`.`sequence_no`) AS `sequence_no`
-			, SUM(`vtiger_inventoryproductrel`.`quantity`) AS `quantity`
-			, MAX(`vtiger_inventoryproductrel`.`discount_percent`) AS discount_percent
-			, SUM(`vtiger_inventoryproductrel`.`discount_amount`) AS discount_amount
-			, GROUP_CONCAT(DISTINCT `vtiger_inventoryproductrel`.`comment` SEPARATOR " - ") AS `comment`
-			, GROUP_CONCAT(DISTINCT `vtiger_inventoryproductrel`.`description` SEPARATOR " - ") AS `description`
-			, MAX(`vtiger_inventoryproductrel`.`incrementondel`) AS `incrementondel`
-		';
-		foreach($allTaxes as $taxInfos){
-			$query .= ', MIN(`vtiger_inventoryproductrel`.`tax'.$taxInfos['taxid'].'`) AS `tax'.$taxInfos['taxid'].'`';
-		}
-		$query .= '
-			FROM `vtiger_inventoryproductrel`
-			JOIN vtiger_crmentity
-				ON vtiger_crmentity.crmid = `vtiger_inventoryproductrel`.id
-			JOIN vtiger_crmentity AS vtiger_crmentity_products
-				ON vtiger_crmentity_products.crmid = `vtiger_inventoryproductrel`.productid
-			LEFT JOIN vtiger_products
-				ON vtiger_products.productid = `vtiger_inventoryproductrel`.productid
-			LEFT JOIN vtiger_service
-				ON vtiger_service.serviceid = `vtiger_inventoryproductrel`.productid
-			WHERE vtiger_crmentity_products.deleted = 0
-			AND `vtiger_inventoryproductrel`.`id` IN ('.generateQuestionMarks($params).')
-			
-			GROUP BY `vtiger_inventoryproductrel`.`productid`, IFNULL(vtiger_products.unit_price, vtiger_service.unit_price)
-			/* skip les quantites a 0 */
-			HAVING SUM(`vtiger_inventoryproductrel`.`quantity`) != 0
-			
-			/* tri pour definir le sequence_no dans la reinsertion */
-			ORDER BY vtiger_crmentity.createdtime, `sequence_no`
-		';
-		$result = $adb->pquery($query, $params);
-		if(!$result){
-			echo "<pre>$query</pre>";
-			var_dump($params);
-			$adb->echoError('Erreur dans updateSaleOrderSolde');
-			die();
-		}
-		//insertion de chaque produit
-		$fieldNames = array('productid', 'quantity', 'listprice', 'discount_percent', 'discount_amount', 'comment', 'description', 'incrementondel');
-		foreach($allTaxes as $taxInfos){
-			$fieldNames[] = 'tax'.$taxInfos['taxid'];
-		}
-
-		$query = 'INSERT INTO vtiger_inventoryproductrel
-			(`id`, sequence_no, '.implode(',', $fieldNames) . ')
-		';
-		$params = array();
-		$sequence_no = 1;
-		while($row = $adb->getNextRow($result, false)){
-			if(count($params) === 0){
-				$query .= ' VALUES(';
-			} else {
-				$query .= ', (';
-			}
-			$query .= '?, ?, '.generateQuestionMarks($fieldNames);
-			$params[] = $soldeActifId;
-			$params[] = $sequence_no++;
-			foreach($fieldNames as $fieldName)
-				$params[] = $row[$fieldName];
-			$query .= ')';
-		}
-		if($params){
-			$result = $adb->pquery($query, $params);
-			
-			if(!$result){
-				echo "<pre>$query</pre>";
-				var_dump($params);
-				$adb->echoError('Erreur dans updateSaleOrderSolde');
-				die();
-			}
-		}
-	}
-	
-	/* Recalcul du solde global */
-	private function setSaleOrderTotal($salesorderId){
-		global $adb;
-		$allTaxes = getAllTaxes();
-		$taxesQuery = '';
-		foreach($allTaxes as $taxInfos){
-			$taxesQuery .= ' * (1 + IFNULL(tax'.$taxInfos['taxid'].', 0)/100)';
-		}
-		$query = 'UPDATE vtiger_salesorder
-			SET total = ROUND((
-				SELECT SUM(quantity * (listprice * ( 1 - IFNULL(discount_percent, 0)/100) '.$taxesQuery.' - IFNULL(discount_amount, 0))) AS total
-				FROM vtiger_inventoryproductrel
-				WHERE vtiger_inventoryproductrel.id = ?)
-				 * ( 1 - IFNULL(discount_percent, 0)/100) - IFNULL(discount_amount, 0)
-				, 2)
-			, subtotal = total
-			WHERE vtiger_salesorder.salesorderid = ?
-		';
-		$params = array($salesorderId, $salesorderId);
-		$result = $adb->pquery($query, $params);
-		if(!$result){
-			echo "<pre>$query</pre>";
-			var_dump($params);
-			$adb->echoError('Erreur dans setSaleOrderTotal');
-			die();
-		}
-	}
-	
-	/**
-	 * Retourne les infos des derniers dossiers par ordre décroissant de date de création,
-	 * et pas au-delà du dernier dossier de Solde clôt ou du premier Inventaire.
-	 * On peut avoir
-	 * 	1) Solde actif
-	 * 	2) Variation
-	 * 	3) Solde précédent clôt
-	 * ou
-	 * 	1) Variation
-	 * 	2) Solde précédent actif
-	 */
-	private function getContactDepotsVentesInfos($contactId){
-		$query = 'SELECT crmid, createdtime, typedossier, sostatus, contactid
-			FROM vtiger_salesorder
-			JOIN vtiger_crmentity
-				ON vtiger_salesorder.salesorderid = vtiger_crmentity.crmid
-			WHERE vtiger_crmentity.deleted = 0
-			AND vtiger_salesorder.contactid = ?';
-		$query .= ' ORDER BY createdtime DESC';
-		
-		global $adb;
-		$result = $adb->pquery($query, array($contactId));
-		if(!$result){
-			$adb->echoError('Erreur dans getContactDepotsVentes');
-			return;
-		}
-		$dossiers = array();
-		$soldeInactif = false;
-		while ($row = $adb->getNextRow($result, false)){
-			$row['createdtime'] = new DateTime($row['createdtime']);
-			if($row['typedossier'] === 'Inventaire'
-			|| $row['typedossier'] === 'Solde'){
-				if($row['sostatus'] === 'Cancelled'
-				|| $row['sostatus'] === 'Archived'){
-					if(count($dossiers) === 0){
-						//le dossier est annulé mais c'est le premier (peut être le seul)
-						$soldeInactif = $row;
-						continue;
-					}
-					$dossiers[] = $row;
-					break;
-				}
-				if($row['typedossier'] === 'Inventaire'){
-					$dossiers[] = $row;
-					break;
-				}
-			}
-			elseif($row['sostatus'] === 'Cancelled'
-				|| $row['sostatus'] === 'Archived')
-				//skip dossier Annulé qui n'est pas de type Solde
-				continue;
-			$dossiers[] = $row;
-		}
-		if(count($dossiers) === 0 && $soldeInactif){
-			//unique dossier mais annulé
-			$dossiers[] = $soldeInactif;
-		}
-		return $dossiers;
-	}
-	
-	/**
-	 * Retourne l'identifiant du solde actif
-	 * Crée le dossier si il n'est pas plus récent qu'un dossier de variation
-	 * @param $dossiers : infos de salesorder triés par date de création décroissante
-	 * @return : salesorderid
-	 */
-	private function getSoldeActifId($dossiers){
-		//dossiers
-		$soldeActif = false;
-		$variation = false;
-		$soldeInactif = false;
-		//recherche des dossiers par type et statut
-		foreach($dossiers as $dossier){
-			if($dossier['typedossier'] === 'Inventaire'
-			|| $dossier['typedossier'] === 'Solde'){
-				if($dossier['sostatus'] === 'Cancelled'
-				|| $dossier['sostatus'] === 'Archived'){
-					$soldeInactif = $dossier;
-				}
-				else{
-					$soldeActif = $dossier;
-					if($dossier['typedossier'] === 'Inventaire')
-						break;
-				}
-			}
-			elseif(!$variation){
-				//1er dossier de variation
-				$variation = $dossier;
-			}
-		}
-		//analyse du dossier de solde actif
-		if(!$variation && $soldeActif){
-			return $soldeActif['crmid'];
-		}
-		elseif(!$variation && $soldeInactif){
-			return $soldeInactif['crmid'];
-		}
-		elseif($variation && $soldeActif){
-			if($soldeActif['createdtime'] >= $variation['createdtime'] ){
-				//Solde déjà constitué
-				return $soldeActif['crmid'];
-			}
-			//Le dossier de Solde est plus vieux que le dossier de variation
-			//on ferme le dossier de solde
-			//on duplique le dossier de variation (pour l'adresse qui est plus à jour) pour en créer le nouveau solde
-			$this->setSalesOrderStatus($soldeActif['crmid'], 'Archived');
-			$soldeRecordModel = $this->duplicateSalesOrder($variation['crmid'], 'Approved', 'Solde');
-			return $soldeRecordModel->getId();
-		}
-		elseif($variation && $soldeInactif){
-			//Le dossier de Solde n'est pas actif
-			//on duplique le dossier le plus récent (pour l'adresse qui est plus à jour) pour en créer le nouveau solde
-			if($soldeInactif['createdtime'] >= $variation['createdtime'] ){
-				$soldeRecordModel = $this->duplicateSalesOrder($soldeInactif['crmid'], 'Approved', 'Solde');
-			} else {
-				$soldeRecordModel = $this->duplicateSalesOrder($variation['crmid'], 'Approved', 'Solde');
-			}
-			return $soldeRecordModel->getId();
-		}
-		elseif($variation){
-			//Le dossier de Solde n'existe pas
-			//on duplique le dossier de variation pour en créer le nouveau solde
-			$soldeRecordModel = $this->duplicateSalesOrder($variation['crmid'], 'Approved', 'Solde');
-			return $soldeRecordModel->getId();
-		}
-		else {
-			die("SalesOrder::getSoldeActifId : qu'est ce qu'on fait là ?");
-		}
-	}
-	
-	/**
-	 * Retourne l'identifiant du solde précédent (de référence pour les quantités de produits)
-	 * @param $dossiers : infos de salesorder triés par date de création décroissante
-	 * @return : salesorderid
-	 */
-	private function getSoldeReferenceId($dossiers){
-		//dossiers
-		$soldeActif = false;
-		$variation = false;
-		$soldeInactif = false;
-		//recherche des dossiers par type et statut
-		foreach($dossiers as $dossier){
-			if($dossier['typedossier'] === 'Inventaire'
-			|| $dossier['typedossier'] === 'Solde'){
-				if($dossier['sostatus'] === 'Cancelled'
-				|| $dossier['sostatus'] === 'Archived'){
-					$soldeInactif = $dossier;
-				}
-				else{
-					$soldeActif = $dossier;
-				}
-				if($dossier['typedossier'] === 'Inventaire')
-					break;
-			}
-			elseif(!$variation){
-				//1er dossier de variation
-				$variation = $dossier;
-			}
-		}
-		//analyse du dossier de solde actif
-		if($soldeInactif){
-			return $soldeInactif['crmid'];
-		}
-		elseif(!$variation && $soldeActif){
-			return $soldeActif['crmid'];
-		}
-		elseif($variation && $soldeActif){
-			if($soldeActif['createdtime'] < $variation['createdtime'] ){
-				//Solde ancien à fermer
-				return $soldeActif['crmid'];
-			}
-			//Le dossier de Solde est plus récent que le dossier de variation et il n'y a pas de solde inactif !!!
-			return $soldeActif['crmid'];
-		}
-		elseif($variation){
-			//Le dossier de Solde n'existe pas
-			return false;
-		}
-		else {
-			//Le dossier de Solde n'existe pas, uniquement inventaire
-			return false;
-		}
-	}
-	
-	/**
-	 * Retourne les identifiants des variations entre la référence et le solde
-	 * @param $dossiers : infos de salesorder triés par date de création décroissante
-	 * @return : salesorderid[]
-	 */
-	private function getVariationIds($dossiers){
-		//dossiers
-		$variations = array();
-		//recherche des dossiers par type et statut
-		foreach($dossiers as $dossier){
-			if($dossier['typedossier'] !== 'Inventaire'
-			&& $dossier['typedossier'] !== 'Solde'){
-				$variations[] = $dossier['crmid'];
-			}
-		}
-		return $variations;
-	}
-	
-	private function setSalesOrderStatus($salesOrderId, $soStatus){
-		global $adb;
-		$query = 'UPDATE vtiger_salesorder
-			JOIN vtiger_crmentity
-				ON vtiger_salesorder.salesorderid = vtiger_crmentity.crmid
-			SET vtiger_salesorder.sostatus = ?
-			, vtiger_crmentity.modifiedtime = NOW()
-			WHERE vtiger_crmentity.crmid = ?';
-		$result = $adb->pquery($query, array($soStatus, $salesOrderId));
-		if(!$result){
-			$adb->echoError('Erreur dans setSalesOrderStatus');
-			die();
-		}
-	}
-	
-	/**
-	 * Duplicate record
-	 * @return new record model
-	 */
-	private function duplicateSalesOrder($salesOrderId, $soStatus, $typeDossier){
-		$sourceRecordModel = Vtiger_Record_Model::getInstanceById($salesOrderId, 'SalesOrder');
-		$newRecordModel = Vtiger_Record_Model::getCleanInstance('SalesOrder');
-		foreach($sourceRecordModel->getModule()->getFields() as $fieldModel){
-			$newRecordModel->set($fieldModel->getName(), $sourceRecordModel->get($fieldModel->getName()));
-		}
-		$newRecordModel->set('sostatus', $soStatus);
-		$newRecordModel->set('typedossier', $typeDossier);
-		$newRecordModel->save();
-		
-		//Change la date de création, en ajoutant une minute pour s'assurer d'être en-tête de liste
-		global $adb;
-		$query = 'UPDATE vtiger_crmentity
-			SET createdtime = ?
-			WHERE crmid = ?';
-		$createdTime = new DateTime();
-		$createdTime->modify('+1 minutes');
-		$createdTime = $createdTime->format('Y-m-d H:i:00');
-		$params = array($createdTime, $newRecordModel->getId());
-		$result = $adb->pquery($query, $params);
-		if(!$result){
-			var_dump($query, $params);
-			$adb->echoError('Erreur dans duplicateSalesOrder');
-			die();
-		}
-		return $newRecordModel;
-	}
-	
-	/*******************************
-	 * /fin de GESTION DU DOSSIER DE SOLDE
-	 *******************************/
-	
-	
-	/* ED150928
-	 */
-	function trash($module, $id) {
-		$sourceRecordModel = Vtiger_Record_Model::getInstanceById($id, $module);
-		$contactId = $sourceRecordModel->get("contact_id");
-		$typeDossier = $sourceRecordModel->get("typedossier");
-		
-		parent::trash($module, $id);
-		
-		if($typeDossier !== 'Solde'
-		&& $contactId){
-			$this->updateSaleOrderSolde($contactId);
-		}
-		$this->refreshQtyInDemand(false, $id);
-	}
-	
-
-	/** ED150928
-	 * Function to restore a deleted record of specified module with given crmid
-	 * @param $module -- module name:: Type varchar
-	 * @param $entity_ids -- list of crmids :: Array
-	 */
-	function restore($module, $id) {
-		parent::restore($module, $id);
-		$this->refreshQtyInDemand(false, $id);
-	}
-	
 	/** Function to get activities associated with the Sales Order
 	 *  This function accepts the id as arguments and execute the MySQL query using the id
 	 *  and sends the query and the id as arguments to renderRelatedActivities() method
@@ -692,10 +147,10 @@ class SalesOrder extends CRMEntity {
 		$log->debug("Entering get_activities(".$id.") method ...");
 		$this_module = $currentModule;
 
-		$related_module = vtlib_getModuleNameById($rel_tab_id);
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
 		require_once("modules/$related_module/Activity.php");
 		$other = new Activity();
-		vtlib_setup_modulevars($related_module, $other);
+        vtlib_setup_modulevars($related_module, $other);
 		$singular_modname = vtlib_toSingular($related_module);
 
 		$parenttab = getParentTab();
@@ -792,9 +247,11 @@ class SalesOrder extends CRMEntity {
 			(vtiger_users.user_name not like '') then $userNameSql else vtiger_groups.groupname
 			end as user_name from vtiger_invoice
 			inner join vtiger_crmentity on vtiger_crmentity.crmid=vtiger_invoice.invoiceid
-			inner join vtiger_invoicecf on vtiger_invoicecf.invoiceid=vtiger_invoice.invoiceid
 			left outer join vtiger_account on vtiger_account.accountid=vtiger_invoice.accountid
 			inner join vtiger_salesorder on vtiger_salesorder.salesorderid=vtiger_invoice.salesorderid
+            LEFT JOIN vtiger_invoicecf ON vtiger_invoicecf.invoiceid = vtiger_invoice.invoiceid
+			LEFT JOIN vtiger_invoicebillads ON vtiger_invoicebillads.invoicebilladdressid = vtiger_invoice.invoiceid
+			LEFT JOIN vtiger_invoiceshipads ON vtiger_invoiceshipads.invoiceshipaddressid = vtiger_invoice.invoiceid
 			left join vtiger_users on vtiger_users.id=vtiger_crmentity.smownerid
 			left join vtiger_groups on vtiger_groups.groupid=vtiger_crmentity.smownerid
 			where vtiger_crmentity.deleted=0 and vtiger_salesorder.salesorderid=".$id;
@@ -872,17 +329,17 @@ class SalesOrder extends CRMEntity {
 	 */
 	function generateReportsSecQuery($module,$secmodule,$queryPlanner){
 		$matrix = $queryPlanner->newDependencyMatrix();
-		$matrix->setDependency('vtiger_crmentitySalesOrder', array('vtiger_usersSalesOrder', 'vtiger_groupsSalesOrder', 'vtiger_lastModifiedBySalesOrder'));		
+		$matrix->setDependency('vtiger_crmentitySalesOrder', array('vtiger_usersSalesOrder', 'vtiger_groupsSalesOrder', 'vtiger_lastModifiedBySalesOrder'));
 		$matrix->setDependency('vtiger_inventoryproductrelSalesOrder', array('vtiger_productsSalesOrder', 'vtiger_serviceSalesOrder'));
-		$matrix->setDependency('vtiger_salesorder',array('vtiger_crmentitySalesOrder', "vtiger_currency_info$secmodule",
-				'vtiger_salesordercf', 'vtiger_potentialRelSalesOrder', 'vtiger_sobillads','vtiger_soshipads', 
-				'vtiger_inventoryproductrelSalesOrder', 'vtiger_contactdetailsSalesOrder', 'vtiger_accountSalesOrder',
-				'vtiger_invoice_recurring_info','vtiger_quotesSalesOrder'));
-		
 		if (!$queryPlanner->requireTable('vtiger_salesorder', $matrix)) {
 			return '';
 		}
-		
+        $matrix->setDependency('vtiger_salesorder',array('vtiger_crmentitySalesOrder', "vtiger_currency_info$secmodule",
+				'vtiger_salesordercf', 'vtiger_potentialRelSalesOrder', 'vtiger_sobillads','vtiger_soshipads',
+				'vtiger_inventoryproductrelSalesOrder', 'vtiger_contactdetailsSalesOrder', 'vtiger_accountSalesOrder',
+				'vtiger_invoice_recurring_info','vtiger_quotesSalesOrder'));
+
+
 		$query = $this->getRelationQuery($module,$secmodule,"vtiger_salesorder","salesorderid", $queryPlanner);
 		if ($queryPlanner->requireTable("vtiger_crmentitySalesOrder",$matrix)){
 			$query .= " left join vtiger_crmentity as vtiger_crmentitySalesOrder on vtiger_crmentitySalesOrder.crmid=vtiger_salesorder.salesorderid and vtiger_crmentitySalesOrder.deleted=0";
@@ -900,13 +357,12 @@ class SalesOrder extends CRMEntity {
 			$query .= " left join vtiger_currency_info as vtiger_currency_info$secmodule on vtiger_currency_info$secmodule.id = vtiger_salesorder.currency_id";
 		}
 		if ($queryPlanner->requireTable("vtiger_inventoryproductrelSalesOrder", $matrix)){
-			$query .= " left join vtiger_inventoryproductrel as vtiger_inventoryproductrelSalesOrder on vtiger_salesorder.salesorderid = vtiger_inventoryproductrelSalesOrder.id";
 		}
 		if ($queryPlanner->requireTable("vtiger_productsSalesOrder")){
-			$query .= " left join vtiger_products as vtiger_productsSalesOrder on vtiger_productsSalesOrder.productid = vtiger_inventoryproductrelSalesOrder.productid";
+			$query .= " left join vtiger_products as vtiger_productsSalesOrder on vtiger_productsSalesOrder.productid = vtiger_inventoryproductreltmpSalesOrder.productid";
 		}
 		if ($queryPlanner->requireTable("vtiger_serviceSalesOrder")){
-			$query .= " left join vtiger_service as vtiger_serviceSalesOrder on vtiger_serviceSalesOrder.serviceid = vtiger_inventoryproductrelSalesOrder.productid";
+			$query .= " left join vtiger_service as vtiger_serviceSalesOrder on vtiger_serviceSalesOrder.serviceid = vtiger_inventoryproductreltmpSalesOrder.productid";
 		}
 		if ($queryPlanner->requireTable("vtiger_groupsSalesOrder")){
 			$query .= " left join vtiger_groups as vtiger_groupsSalesOrder on vtiger_groupsSalesOrder.groupid = vtiger_crmentitySalesOrder.smownerid";
@@ -931,6 +387,9 @@ class SalesOrder extends CRMEntity {
 		}
 		if ($queryPlanner->requireTable("vtiger_lastModifiedBySalesOrder")){
 			$query .= " left join vtiger_users as vtiger_lastModifiedBySalesOrder on vtiger_lastModifiedBySalesOrder.id = vtiger_crmentitySalesOrder.modifiedby ";
+		}
+		if ($queryPlanner->requireTable("vtiger_createdbySalesOrder")){
+			$query .= " left join vtiger_users as vtiger_createdbySalesOrder on vtiger_createdbySalesOrder.id = vtiger_crmentitySalesOrder.smcreatorid ";
 		}
 		return $query;
 	}
@@ -968,10 +427,11 @@ class SalesOrder extends CRMEntity {
 		elseif($return_module == 'Contacts') {
 			$relation_query = 'UPDATE vtiger_salesorder SET contactid=? WHERE salesorderid=?';
 			$this->db->pquery($relation_query, array(null, $id));
-		} else {
-			$sql = 'DELETE FROM vtiger_crmentityrel WHERE (crmid=? AND relmodule=? AND relcrmid=?) OR (relcrmid=? AND module=? AND crmid=?)';
-			$params = array($id, $return_module, $return_id, $id, $return_module, $return_id);
-			$this->db->pquery($sql, $params);
+		} elseif($return_module == 'Documents') {
+            $sql = 'DELETE FROM vtiger_senotesrel WHERE crmid=? AND notesid=?';
+            $this->db->pquery($sql, array($id, $return_id));
+        } else {
+			parent::unlinkRelationship($id, $return_module, $return_id);
 		}
 	}
 
@@ -1019,7 +479,8 @@ class SalesOrder extends CRMEntity {
 	* @param reference variable - where condition is passed when the query is executed
 	* Returns Export SalesOrder Query.
 	*/
-	function create_export_query($where){
+	function create_export_query($where)
+	{
 		global $log;
 		global $current_user;
 		$log->debug("Entering create_export_query(".$where.") method ...");
@@ -1061,137 +522,91 @@ class SalesOrder extends CRMEntity {
 		$log->debug("Exiting create_export_query method ...");
 		return $query;
 	}
-	
-	
 
-	 /**
-	 * Function to get Contact related Products
-	 * @param  integer   $id  - contactid
-	 * returns related Products record in array format
+    /**
+	 * Function which will give the basic query to find duplicates
+	 * @param <String> $module
+	 * @param <String> $tableColumns
+	 * @param <String> $selectedColumns
+	 * @param <Boolean> $ignoreEmpty
+     * @param <Array> $requiredTables 
+	 * @return string
 	 */
-	 function get_products($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-		global $log, $singlepane_view,$currentModule,$current_user;
-		$log->debug("Entering get_products(".$id.") method ...");
-		$this_module = $currentModule;
+	// Note : remove getDuplicatesQuery API once vtiger5 code is removed
+    function getQueryForDuplicates($module, $tableColumns, $selectedColumns = '', $ignoreEmpty = false,$requiredTables = array()) {
+		if(is_array($tableColumns)) {
+			$tableColumnsString = implode(',', $tableColumns);
+		}
+        $selectClause = "SELECT " . $this->table_name . "." . $this->table_index . " AS recordid," . $tableColumnsString;
 
-		$related_module = vtlib_getModuleNameById($rel_tab_id);
-		require_once("modules/$related_module/$related_module.php");
-		$other = new $related_module();
-		vtlib_setup_modulevars($related_module, $other);
-		$singular_modname = vtlib_toSingular($related_module);
+        // Select Custom Field Table Columns if present
+        if (isset($this->customFieldTable))
+            $query .= ", " . $this->customFieldTable[0] . ".* ";
 
-		$parenttab = getParentTab();
+        $fromClause = " FROM $this->table_name";
 
-		if($singlepane_view == 'true')
-			$returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-		else
-			$returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
+        $fromClause .= " INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = $this->table_name.$this->table_index";
 
-		$button = '';
-
-		if($actions) {
-			if(is_string($actions)) $actions = explode(',', strtoupper($actions));
-			if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
+		if($this->tab_name) {
+			foreach($this->tab_name as $tableName) {
+				if($tableName != 'vtiger_crmentity' && $tableName != $this->table_name && $tableName != 'vtiger_inventoryproductrel' && in_array($tableName,$requiredTables)) {
+                    if($tableName == 'vtiger_invoice_recurring_info') {
+						$fromClause .= " LEFT JOIN " . $tableName . " ON " . $tableName . '.' . $this->tab_name_index[$tableName] .
+							" = $this->table_name.$this->table_index";
+					}elseif($this->tab_name_index[$tableName]) {
+						$fromClause .= " INNER JOIN " . $tableName . " ON " . $tableName . '.' . $this->tab_name_index[$tableName] .
+							" = $this->table_name.$this->table_index";
+					}
+				}
 			}
-			if(in_array('ADD', $actions) && isPermitted($related_module,1, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_ADD_NEW'). " ". getTranslatedString($singular_modname) ."' class='crmbutton small create'" .
-					" onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
-					" value='". getTranslatedString('LBL_ADD_NEW'). " " . getTranslatedString($singular_modname) ."'>&nbsp;";
+		}
+        $fromClause .= " LEFT JOIN vtiger_users ON vtiger_users.id = vtiger_crmentity.smownerid
+						LEFT JOIN vtiger_groups ON vtiger_groups.groupid = vtiger_crmentity.smownerid";
+
+        $whereClause = " WHERE vtiger_crmentity.deleted = 0";
+        $whereClause .= $this->getListViewSecurityParameter($module);
+
+		if($ignoreEmpty) {
+			foreach($tableColumns as $tableColumn){
+				$whereClause .= " AND ($tableColumn IS NOT NULL AND $tableColumn != '') ";
 			}
 		}
 
-		$query = 'SELECT vtiger_products.productid, vtiger_products.productname, vtiger_products.productcode,
-		 		  vtiger_products.commissionrate, vtiger_products.qty_per_unit,
-				  /*vtiger_products.unit_price * (1 + IFNULL(vtiger_producttaxrel.percentage, 0)/100) AS unit_price,*/
-				  vtiger_crmentity.crmid, vtiger_crmentity.smownerid
-				FROM vtiger_products
-				INNER JOIN vtiger_inventoryproductrel
-					ON vtiger_inventoryproductrel.productid=vtiger_products.productid
-				INNER JOIN vtiger_productcf
-					ON vtiger_products.productid = vtiger_productcf.productid
-				INNER JOIN vtiger_crmentity
-					ON vtiger_crmentity.crmid = vtiger_products.productid
-				/*LEFT JOIN vtiger_producttaxrel
-					ON vtiger_products.productid = vtiger_producttaxrel.productid*/
-				LEFT JOIN vtiger_users
-					ON vtiger_users.id=vtiger_crmentity.smownerid
-				LEFT JOIN vtiger_groups
-					ON vtiger_groups.groupid = vtiger_crmentity.smownerid
-			   WHERE vtiger_inventoryproductrel.id = '.$id.' and vtiger_crmentity.deleted = 0';
+        if (isset($selectedColumns) && trim($selectedColumns) != '') {
+            $sub_query = "SELECT $selectedColumns FROM $this->table_name AS t " .
+                    " INNER JOIN vtiger_crmentity AS crm ON crm.crmid = t." . $this->table_index;
+            // Consider custom table join as well.
+            if (isset($this->customFieldTable)) {
+                $sub_query .= " LEFT JOIN " . $this->customFieldTable[0] . " tcf ON tcf." . $this->customFieldTable[1] . " = t.$this->table_index";
+            }
+            $sub_query .= " WHERE crm.deleted=0 GROUP BY $selectedColumns HAVING COUNT(*)>1";
+        } else {
+            $sub_query = "SELECT $tableColumnsString $fromClause $whereClause GROUP BY $tableColumnsString HAVING COUNT(*)>1";
+        }
 
-		$return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-
-		if($return_value == null) $return_value = Array();
-		$return_value['CUSTOM_BUTTON'] = $button;
-
-		$log->debug("Exiting get_products method ...");
-		return $return_value;
-	 }
-
-	 /**
-	 * Function to get Contact related services
-	 * @param  integer   $id  - contactid
-	 * returns related Products record in array format
-	 */
-	 function get_services($id, $cur_tab_id, $rel_tab_id, $actions=false) {
-		global $log, $singlepane_view,$currentModule,$current_user;
-		$log->debug("Entering get_services(".$id.") method ...");
-		$this_module = $currentModule;
-
-		$related_module = vtlib_getModuleNameById($rel_tab_id);
-		require_once("modules/$related_module/$related_module.php");
-		$other = new $related_module();
-		vtlib_setup_modulevars($related_module, $other);
-		$singular_modname = vtlib_toSingular($related_module);
-
-		$parenttab = getParentTab();
-
-		if($singlepane_view == 'true')
-			$returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
-		else
-			$returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
-
-		$button = '';
-
-		if($actions) {
-			if(is_string($actions)) $actions = explode(',', strtoupper($actions));
-			if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='button' onclick=\"return window.open('index.php?module=$related_module&return_module=$currentModule&action=Popup&popuptype=detailview&select=enable&form=EditView&form_submit=false&recordid=$id&parenttab=$parenttab','test','width=640,height=602,resizable=0,scrollbars=0');\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
-			}
-			if(in_array('ADD', $actions) && isPermitted($related_module,1, '') == 'yes') {
-				$button .= "<input title='".getTranslatedString('LBL_ADD_NEW'). " ". getTranslatedString($singular_modname) ."' class='crmbutton small create'" .
-					" onclick='this.form.action.value=\"EditView\";this.form.module.value=\"$related_module\"' type='submit' name='button'" .
-					" value='". getTranslatedString('LBL_ADD_NEW'). " " . getTranslatedString($singular_modname) ."'>&nbsp;";
-			}
+		$i = 1;
+		foreach($tableColumns as $tableColumn){
+			$tableInfo = explode('.', $tableColumn);
+			$duplicateCheckClause .= " ifnull($tableColumn,'null') = ifnull(temp.$tableInfo[1],'null')";
+			if (count($tableColumns) != $i++) $duplicateCheckClause .= " AND ";
 		}
 
-		$query = 'SELECT vtiger_service.serviceid
-				/*  vtiger_service.unit_price * (1 + IFNULL(vtiger_producttaxrel.percentage, 0)/100) AS unit_price,*/
-				  vtiger_crmentity.crmid, vtiger_crmentity.smownerid
-				FROM vtiger_service
-				INNER JOIN vtiger_inventoryproductrel
-					ON vtiger_inventoryproductrel.productid=vtiger_service.serviceid
-				INNER JOIN vtiger_servicecf
-					ON vtiger_service.serviceid = vtiger_servicecf.serviceid 
-				INNER JOIN vtiger_crmentity
-					ON vtiger_crmentity.crmid = vtiger_service.serviceid
-				/*LEFT JOIN vtiger_producttaxrel
-					ON vtiger_service.serviceid = vtiger_producttaxrel.productid*/
-				LEFT JOIN vtiger_users
-					ON vtiger_users.id=vtiger_crmentity.smownerid
-				LEFT JOIN vtiger_groups
-					ON vtiger_groups.groupid = vtiger_crmentity.smownerid
-			   WHERE vtiger_inventoryproductrel.id = '.$id.' and vtiger_crmentity.deleted = 0';
+        $query = $selectClause . $fromClause .
+                " LEFT JOIN vtiger_users_last_import ON vtiger_users_last_import.bean_id=" . $this->table_name . "." . $this->table_index .
+                " INNER JOIN (" . $sub_query . ") AS temp ON " . $duplicateCheckClause .
+                $whereClause .
+                " ORDER BY $tableColumnsString," . $this->table_name . "." . $this->table_index . " ASC";
+        return $query;
+    }
 
-		$return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
-
-		if($return_value == null) $return_value = Array();
-		$return_value['CUSTOM_BUTTON'] = $button;
-
-		$log->debug("Exiting get_services method ...");
-		return $return_value;
-	 }
+	/**
+	 * Function to get importable mandatory fields
+	 * By default some fields like Quantity, List Price is not mandaroty for Invertory modules but
+	 * import fails if those fields are not mapped during import.
+	 */
+	function getMandatoryImportableFields() {
+		return getInventoryImportableMandatoryFeilds($this->moduleName);
+	}
 }
 
 ?>

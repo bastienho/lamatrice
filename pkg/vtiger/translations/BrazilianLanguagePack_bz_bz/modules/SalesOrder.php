@@ -8,7 +8,8 @@
  * All Rights Reserved.
  ************************************************************************************/
 $languageStrings = array(
-	'SINGLE_SalesOrder'            => 'Pedido Venda'                , 
+    'SalesOrder'                   => 'Pedidos de Vendas'                , 
+	'SINGLE_SalesOrder'            => 'Pedidos de Venda'                , 
 	'LBL_EXPORT_TO_PDF'            => 'Exportar para PDF'           , 
 	'LBL_SEND_MAIL_PDF'            => 'Send Email with PDF'         , // TODO: Review
 	'LBL_ADD_RECORD'               => 'Add Sales Order'             , 
@@ -34,4 +35,9 @@ $languageStrings = array(
 	'Sent'                         => 'Enviado'                     , 
 	'Credit Invoice'               => 'Fatura Crédito'             , 
 	'Paid'                         => 'Pago'                        , 
+
+  'LBL_THIS' => 'Este',
+  'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'é excluído do sistema.por favor, remover ou substituir este item',
+  'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'Este item de linha é excluída do sistema,por favor, remova esta linha de itens',
+
 );

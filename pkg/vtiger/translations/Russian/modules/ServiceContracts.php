@@ -10,8 +10,8 @@
 $languageStrings = array(
 	'ServiceContracts'             => 'Сервисные Контракты', 
 	'SINGLE_ServiceContracts'      => 'Сервисные Контракты', 
-	'LBL_ADD_RECORD'               => 'Add Service Contract'        , // TODO: Review
-	'LBL_RECORDS_LIST'             => 'Service Contracts List'      , // TODO: Review
+	'LBL_ADD_RECORD'               => 'Добавить контракта службы'        , 
+	'LBL_RECORDS_LIST'             => 'Контракты на обслуживание Список'      , 
 	'LBL_SERVICE_CONTRACT_INFORMATION' => 'Информация Сервисного Контракта', 
 	'Contract No'                  => 'Контракт №'        , 
 	'Start Date'                   => 'Начало'                , 
@@ -22,4 +22,24 @@ $languageStrings = array(
 	'Progress'                     => 'Прогрес (в %)'       , 
 	'Planned Duration'             => 'Плановая Продолжительность (в Днях)', 
 	'Actual Duration'              => 'Фактическая Продолжительность (в Днях)', 
+        'Type'                         => 'Тип' ,
+    'Related to'                   => 'В связи с'              ,
+	'Hours'                        => 'Часов',
+	'Days'                         => 'Дней',
+	'Incidents'                    => 'Происшествия',
+	'Normal'                       => 'Нормальный',
+	'Support'                      => 'Поддержка',
+	'Administrative'               => 'Административный',
+	'Undefined'                    => 'Неопределенный',
+	'In Planning'                  => 'В планирования',
+	'On Hold'                      => 'На Удержании',
+	'Complete'                     => 'Полный',
+	'Archived'                     => 'Архивные',
+	'Low'                          => 'Низкий',
+	'High'                         => 'Высокий',
+	'Services'                     => 'Сервисы',
+	'In Progress'                  => 'В Процессе',
+
+  'Service Contracts' => 'Сервисные Контракты',
+
 );

@@ -15,8 +15,8 @@ $languageStrings = array(
 	'LBL_CONTACT_INFORMATION'      => 'Contactinformatie'           , 
 	'LBL_CUSTOMER_PORTAL_INFORMATION' => 'Klantportaal informatie'     , 
 	'LBL_IMAGE_INFORMATION'        => 'Afbeelding:'                 , 
-	'LBL_COPY_OTHER_ADDRESS'       => 'Copy Other Address'          , // TODO: Review
-	'LBL_COPY_MAILING_ADDRESS'     => 'Copy Mailing Address'        , // TODO: Review
+	'LBL_COPY_OTHER_ADDRESS'       => 'Copy Andere Adres'          , // TODO: Review
+	'LBL_COPY_MAILING_ADDRESS'     => 'Copy Postadres'        , // TODO: Review
 	'Office Phone'                 => 'Telefoon Kantoor'            , 
 	'Home Phone'                   => 'Telefoon Thuis'              , 
 	'Title'                        => 'Titel'                       , 
@@ -33,13 +33,13 @@ $languageStrings = array(
 	'Mailing State'                => 'Postadres Provincie'         , 
 	'Mailing Zip'                  => 'Postadres Postcode'          , 
 	'Mailing Country'              => 'Postadres Land'              , 
-	'Mailing PO Box'               => 'Postadres Postbus'           , 
+	'Mailing Po Box'               => 'Postadres Postbus'           , 
 	'Other Street'                 => 'Bezoekadres straat'          , 
 	'Other City'                   => 'Bezoekadres Plaats'          , 
 	'Other State'                  => 'Bezoekadres Provincie'       , 
 	'Other Zip'                    => 'Bezoekadres Postcode'        , 
 	'Other Country'                => 'Bezoekadres Land'            , 
-	'Other PO Box'                 => 'Bezoekadres Postbus'         , 
+	'Other Po Box'                 => 'Bezoekadres Postbus'         , 
 	'Contact Image'                => 'Contactfoto'                 , 
 	'Mr.'                          => 'heer'                        , 
 	'Ms.'                          => 'mevrouw'                     , 
@@ -48,10 +48,14 @@ $languageStrings = array(
 	'Prof.'                        => 'prof.'                       , 
 	'User List'                    => 'Gebruikerslijst'             , 
 	'Contact Id' => 'Contact Id',
+    'Support Start Date'           => 'Ondersteuning Start Datum'   ,
+    'Support End Date'             => 'Ondersteuning Einddatum'     , 
+	'LBL_TRANSACTIONS' => 'Transacties',
+
+  'Other Phone' => 'Secundaire Telefoon',
+  'Email' => 'Primaire E-Mail',
+  'Secondary Email' => 'Secundaire E-Mail',
+
 );
 $jsLanguageStrings = array(
-	'LBL_SYNC_BUTTON'              => 'Synchronize Now'             , // TODO: Review
-	'LBL_SYNCRONIZING'             => 'Synchronizing....'           , // TODO: Review
-	'LBL_NOT_SYNCRONIZED'          => 'You have not synchronized yet', // TODO: Review
-	'LBL_FIELD_MAPPING'            => 'Field Mapping'               , // TODO: Review
 );

@@ -51,66 +51,11 @@ class Vtiger_Reference_UIType extends Vtiger_Base_UIType {
 					return $db->query_result($nameResult, 0, 'first_name').' '.$db->query_result($nameResult, 0, 'last_name');
 				}
 			} else {
+				$fieldModel = $this->get('field');
 				$entityNames = getEntityName($referenceModuleName, array($value));
-				$label = $entityNames[$value];
-				
-				$focus = CRMEntity::getInstance($referenceModuleName);
-				if(isset($focus->uicolor_field)){
-					
-					$uicolorField = Vtiger_Field_Model::getInstance( $focus->uicolor_field, $referenceModule);
-					if($uicolorField) {
-						$uicolorFieldName = $uicolorField->getName();
-						$uicolorList = Vtiger_Cache::get('Field-UIColor-List-' . $uicolorFieldName, $uicolorField->id);
-						if(!$uicolorList)
-							$uicolorList = array();
-						if(@$uicolorList[$value]){
-							
-						}
-						else {
-							
-							switch($uicolorField->get('uitype')){
-							case '33':
-							case '15':
-							case '16':
-								/* picklist, les uicolor sont dans la table du picklist */
-								/* toutes les valeurs du picklist */
-								$pickListValuesData = array();
-								$pickListValues = Vtiger_Util_Helper::getPickListValues($uicolorFieldName, $pickListValuesData);
-							//var_dump($pickListValuesData);
-								/* les valeurs du champ pour chaque id */
-								$fieldValueList = getEntityFieldValue($referenceModule, $uicolorField, array($value));
-							//var_dump($fieldValueList);
-							
-								/* concordance avec les id */
-								foreach($fieldValueList as $id => $pickValue){
-									if(strpos($pickValue, ' |##| ')){
-										$pickValue = substr($pickValue, 0, strpos($pickValue,' |##| '));
-									}
-									$uicolorList[$id] = @$pickListValuesData[decode_html($pickValue)]['uicolor'];
-								}
-								break;
-							default:
-								/* valeur du champ comme couleur */
-								$fieldValueList = getEntityFieldValue($referenceModule, $uicolorField, array($value));
-								foreach($fieldValueList as $id => $fieldValue){
-									$uicolorList[$id] = $fieldValue;
-								}
-								
-								break;
-							}
-							//echo "ICICIICIC IC IC " . $uicolorField->getName(); var_dump($this->uicolorList[$uicolorFieldName]);
-							Vtiger_Cache::set('Field-UIColor-List-' . $uicolorFieldName, $uicolorField->id, $uicolorList);
-						     
-						}
-						if(@$uicolorList[$value])
-							$label = '<div class="picklistvalue-uicolor" style="background-color:'. $uicolorList[$value] . '">&nbsp;</div>'
-								. $label;
-							
-					}
-				}
-
 				$linkValue = "<a href='index.php?module=$referenceModuleName&view=".$referenceModule->getDetailViewName()."&record=$value'
-							title='".vtranslate($referenceModuleName, $referenceModuleName)."'>$label</a>";
+							title='".vtranslate($fieldModel->get('label'), $referenceModuleName).":". $entityNames[$value] ."' "
+							. "data-original-title='".vtranslate($referenceModuleName, $referenceModuleName)."'>$entityNames[$value]</a>";
 				return $linkValue;
 			}
 		}
@@ -130,6 +75,14 @@ class Vtiger_Reference_UIType extends Vtiger_Base_UIType {
 			return $entityNames[$value];
 		}
 		return '';
+	}
+
+	public function getListSearchTemplateName() {
+		$fieldModel = $this->get('field');
+		if($fieldModel->get('uitype') == '52' || $fieldModel->get('uitype') == '77'){
+			return 'uitypes/OwnerFieldSearchView.tpl';
+		}
+		return parent::getListSearchTemplateName();
 	}
 
 }

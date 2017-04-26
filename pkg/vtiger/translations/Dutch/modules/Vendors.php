@@ -27,6 +27,10 @@ $languageStrings = array(
 	'306-Internet Sales'           => '306-Internet verkoop'        , 
 	'307-Service-Hardware Labor'   => '307-Dienst-Hardware arbeid'  , 
 	'308-Sales-Books'              => '308-Verkoop-Boeken'          , 
+
+  'Phone' => 'Primaire Telefoon',
+  'Email' => 'Primaire E-Mail',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Weet u zeker dat u wilt verwijderen?', 

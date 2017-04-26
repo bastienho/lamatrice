@@ -16,24 +16,30 @@ class Vtiger_MassSave_Action extends Vtiger_Mass_Action {
 		$currentUserPriviligesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 
 		if(!$currentUserPriviligesModel->hasModuleActionPermission($moduleModel->getId(), 'Save')) {
-			throw new AppException(vtranslate($moduleName).' '.vtranslate('LBL_NOT_ACCESSIBLE'));
+			throw new AppException(vtranslate($moduleName, $moduleName).' '.vtranslate('LBL_NOT_ACCESSIBLE'));
 		}
 	}
 
 	public function process(Vtiger_Request $request) {
+		vglobal('VTIGER_TIMESTAMP_NO_CHANGE_MODE', $request->get('_timeStampNoChangeMode',false));
 		$moduleName = $request->getModule();
 		$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
 		$recordModels = $this->getRecordModelsFromRequest($request);
-		$recordCounter = 0;
+		$allRecordSave= true;
 		foreach($recordModels as $recordId => $recordModel) {
 			if(Users_Privileges_Model::isPermitted($moduleName, 'Save', $recordId)) {
 				$recordModel->save();
-				$recordCounter++;
+			} else {
+				$allRecordSave= false;
 			}
 		}
-
+		vglobal('VTIGER_TIMESTAMP_NO_CHANGE_MODE', false);
 		$response = new Vtiger_Response();
-		$response->setResult(sprintf('%s enregistrement(s) modifié(s)', $recordCounter));
+		if($allRecordSave) {
+			$response->setResult(true);
+		} else {
+		   $response->setResult(false);
+		}
 		$response->emit();
 	}
 
@@ -67,8 +73,13 @@ class Vtiger_MassSave_Action extends Vtiger_Mass_Action {
 					}
 					$recordModel->set($fieldName, $fieldValue);
 				} else {
-					$uiTypeModel = $fieldModel->getUITypeModel();
-					$recordModel->set($fieldName, $uiTypeModel->getUserRequestValue($recordModel->get($fieldName)));
+					$uiType = $fieldModel->get('uitype');
+					if($uiType == 70) {
+						$recordModel->set($fieldName, $recordModel->get($fieldName));
+					}  else {
+						$uiTypeModel = $fieldModel->getUITypeModel();
+						$recordModel->set($fieldName, $uiTypeModel->getUserRequestValue($recordModel->get($fieldName)));
+					}
 				}
 			}
 			$recordModels[$recordId] = $recordModel;

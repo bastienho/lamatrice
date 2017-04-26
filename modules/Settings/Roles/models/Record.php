@@ -130,7 +130,7 @@ class Settings_Roles_Record_Model extends Settings_Vtiger_Record_Model {
 
 		$parentRoleString = $this->getParentRoleString();
 
-		$sql = 'SELECT * FROM vtiger_role WHERE parentrole LIKE ?';
+		$sql = 'SELECT * FROM vtiger_role WHERE parentrole LIKE ? ORDER BY depth';
 		$params = array($parentRoleString.'::%');
 		$result = $db->pquery($sql, $params);
 		$noOfRoles = $db->num_rows($result);
@@ -336,10 +336,19 @@ class Settings_Roles_Record_Model extends Settings_Vtiger_Record_Model {
 	 * @param <Settings_Roles_Record_Model> $transferToRole
 	 */
 	public function delete($transferToRole) {
+		require_once('modules/Users/CreateUserPrivilegeFile.php');
 		$db = PearDatabase::getInstance();
 		$roleId = $this->getId();
 		$transferRoleId = $transferToRole->getId();
 
+		// get all the users tp recreate user_privileges files
+		$usersResult = $db->pquery('SELECT userid FROM vtiger_user2role WHERE roleid = ?', array($roleId));
+		$usersCount = $db->num_rows($usersResult);
+		$users = array();
+		for($i=0; $i<$usersCount; $i++) {
+			$users[] = $db->query_result($usersResult, $i, 'userid');
+		}
+		
 		$db->pquery('UPDATE vtiger_user2role SET roleid=? WHERE roleid=?', array($transferRoleId, $roleId));
 
 		$db->pquery('DELETE FROM vtiger_role2profile WHERE roleid=?', array($roleId));
@@ -362,6 +371,11 @@ class Settings_Roles_Record_Model extends Settings_Vtiger_Record_Model {
 			$roleModel->set('depth', $newChildDepth);
 			$roleModel->set('parentrole', $newChildParentRoleString);
 			$roleModel->save();
+		}
+
+		foreach($users as $userId) {
+			createUserPrivilegesfile($userId);
+			createUserSharingPrivilegesfile($userId);
 		}
 	}
 
@@ -442,13 +456,20 @@ class Settings_Roles_Record_Model extends Settings_Vtiger_Record_Model {
 	 */
 	public static function getInstanceById($roleId) {
 		$db = PearDatabase::getInstance();
-
-		$sql = 'SELECT * FROM vtiger_role WHERE roleid = ?';
-		$params = array($roleId);
-		$result = $db->pquery($sql, $params);
-		if($db->num_rows($result) > 0) {
-			return self::getInstanceFromQResult($result, 0);
-		}
+        
+        $instance = Vtiger_Cache::get('roleById',$roleId);
+        if($instance){
+            return $instance;
+        }
+        
+        $sql = 'SELECT * FROM vtiger_role WHERE roleid = ?';
+        $params = array($roleId);
+        $result = $db->pquery($sql, $params);
+        if($db->num_rows($result) > 0) {
+            $instance =  self::getInstanceFromQResult($result, 0);
+            Vtiger_Cache::set('roleById',$roleId,$instance);
+            return $instance;
+        }
 		return null;
 	}
 

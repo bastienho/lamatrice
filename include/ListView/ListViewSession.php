@@ -87,6 +87,7 @@ class ListViewSession {
 						$recordPageMapping[$recordId] = $start;
 						if($recordId == $currentRecordId){
 							$searchKey = count($recordList)-1;
+							$_REQUEST['start'] = $start;
 						}
 					}
 				}
@@ -116,6 +117,7 @@ class ListViewSession {
 			if($currentModule=='Documents' && !empty($folderId)){
 				$list_query = preg_replace("/[\n\r\s]+/"," ",$list_query);
 				$list_query = explode('ORDER BY', $list_query);
+                $default_orderby = $list_query[1];
 				$list_query = $list_query[0];
 				$list_query .= " AND vtiger_notes.folderid=$folderId";
 				$order_by = $instance->getOrderByForFolder($folderId);
@@ -124,10 +126,12 @@ class ListViewSession {
 				$tablename = (($tablename != '')?($tablename."."):'');
 				if(!empty($order_by)){
 				    $list_query .= ' ORDER BY '.$tablename.$order_by.' '.$sorder;
-				}
+				}else{
+                    $list_query .= ' ORDER BY '.$default_orderby.'';
+                }
 			}
 			if($start !=1){
-				$recordCount = ($list_max_entries_per_page+2 * $bufferRecordCount);
+				$recordCount = ($list_max_entries_per_page * $start + $bufferRecordCount);
 			}else{
 				$recordCount = ($list_max_entries_per_page+ $bufferRecordCount);
 			}
@@ -138,17 +142,11 @@ class ListViewSession {
 			}
 
 			$resultAllCRMIDlist_query=$adb->pquery($list_query,array());
-			
-			/*ED150318*/
-			if(!$resultAllCRMIDlist_query){
-				echo( "<pre>$list_query</pre>");
-				throw new Exception('Erreur dans la requ&ecirc;te');
-			}
-			
 			$navigationRecordList = array();
 			while($forAllCRMID = $adb->fetch_array($resultAllCRMIDlist_query)) {
 				$navigationRecordList[] = $forAllCRMID[$instance->table_index];
 			}
+
 			$pageCount = 0;
 			$current = $start;
 			if($start ==1){
@@ -187,7 +185,7 @@ class ListViewSession {
 		if(!empty($_REQUEST['start'])){
 			$start = $_REQUEST['start'];
 			if($start == 'last'){
-				$count_result = $adb->query( Vtiger_Functions::mkCountQuery( $query));
+				$count_result = $adb->query(Vtiger_Functions::mkCountQuery( $query));
 				$noofrows = $adb->query_result($count_result,0,"count");
 				if($noofrows > 0){
 					$start = ceil($noofrows/$list_max_entries_per_page);

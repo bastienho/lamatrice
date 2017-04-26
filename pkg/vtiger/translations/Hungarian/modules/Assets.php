@@ -25,4 +25,7 @@ $languageStrings = array(
 	'Notes'                        => 'Leírás:'                   , 
 	'In Service'                   => 'Karbantartás alatt'         , 
 	'Out-of-service'               => 'Üzemképes'                 , 
+
+  'Assets' => 'Eszközök',
+
 );

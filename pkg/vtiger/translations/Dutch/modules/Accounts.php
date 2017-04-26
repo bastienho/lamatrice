@@ -31,15 +31,26 @@ $languageStrings = array(
 	'Investor'                     => 'Investeerder'                , 
 	'Press'                        => 'Pers'                        , 
 	'Prospect'                     => 'Prospect'                    , 
-	'Reseller'                     => 'Wederverkoper'               , 
+	'Reseller'                     => 'Wederverkoper'               ,
+        'Type'                         => 'Type'                        , 
 	'LBL_START_DATE'               => 'Startdatum'                  , 
 	'LBL_END_DATE'                 => 'Einddatum'                   , 
 	'LBL_DUPLICATES_EXIST'         => 'Organisatienaam bestaat al'  , 
-	'LBL_COPY_SHIPPING_ADDRESS'    => 'Copy Shipping Address'       , // TODO: Review
-	'LBL_COPY_BILLING_ADDRESS'     => 'Copy Billing Address'        , // TODO: Review
+	'LBL_COPY_SHIPPING_ADDRESS'    => 'Copy verzendadres'       , // TODO: Review
+	'LBL_COPY_BILLING_ADDRESS'     => 'Kopieer factuuradres'        , // TODO: Review
+    'LBL_IMAGE_INFORMATION' => 'Profielfoto',
+    'Organization Image' => 'Organisatie Afbeelding',
+
+  'Other Phone' => 'Secundaire Telefoon',
+  'Phone' => 'Primaire Telefoon',
+  'Email' => 'Primaire E-Mail',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Weet u zeker dat u wilt verwijderen?', 
 	'LBL_DELETE_CONFIRMATION'      => 'Bij het verwijderen van deze organisatie worden ook de gerelateerde Verkoopkansen en Offertes verwijderd. Weet u zeker dat u deze Organisatie wilt verwijderen?', 
 	'LBL_MASS_DELETE_CONFIRMATION' => 'Bij het verwijderen van deze organisatie(s) worden ook de gerelateerde Verkoopkansen en Offertes verwijderd. Weet u zeker dat u deze Organisatie(s) wilt verwijderen?', 
+
+  'JS_DUPLICATE_CREATION_CONFIRMATION' => 'Naam van de organisatie al Bestaat.Wilt u een dubbele record?',
+
 );

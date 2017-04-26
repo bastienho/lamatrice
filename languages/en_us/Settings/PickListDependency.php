@@ -9,6 +9,7 @@
  *************************************************************************************/
 $languageStrings = array(
 	'LBL_ADD_RECORD' => 'Add Picklist Dependency',
+    'PickListDependency' => 'PickList Dependency',
 	'LBL_PICKLIST_DEPENDENCY' => 'Picklist Dependency',
 	'LBL_SELECT_MODULE' => 'Module',
 	'LBL_SOURCE_FIELD' => 'Source Field',
@@ -22,6 +23,9 @@ $languageStrings = array(
 	'LBL_SELECT_SOURCE_VALUES' => 'Select Source Values',
 	'LBL_SELECT_SOURCE_PICKLIST_VALUES' => 'Select Source Picklist Values',
 	'LBL_ERR_CYCLIC_DEPENDENCY' => 'This dependency setup is not allowed as it ends up in some cyclic dependency',
+	'LBL_SELECT_ALL_VALUES' => 'Select All',
+	'LBL_UNSELECT_ALL_VALUES' => 'Unselect All',
+    'LBL_CYCLIC_DEPENDENCY_ERROR' => 'This could end up in cyclic redundancy as %s field is already configured for %s field',
 );
 
 $jsLanguageStrings = array(

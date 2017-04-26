@@ -19,33 +19,9 @@ class SalesOrder_Record_Model extends Inventory_Record_Model {
 		return "index.php?module=".$invoiceModuleModel->getName()."&view=".$invoiceModuleModel->getEditViewName()."&salesorder_id=".$this->getId();
 	}
 
-	
-	/**
-	 * ED150629
-	 * getPicklistValuesDetails
-	 */
-	public function getPicklistValuesDetails($fieldname){
-		switch($fieldname){
-			case 'sostatus'://status du dépôt-vente
-				return array(
-					'Created' => array( 'label' => 'Créé', 'icon' => 'ui-icon ui-icon-check' ),
-					'Approved' => array( 'label' => 'Validé', 'icon' => 'ui-icon ui-icon-check darkgreen' ),
-					'Delivered' => array( 'label' => 'Livré', 'icon' => 'ui-icon ui-icon-locked darkgreen' ),
-					'Archived' => array( 'label' => 'Archivé', 'icon' => 'ui-icon ui-icon-close blue' ),
-					'Cancelled' => array( 'label' => 'Annulé', 'icon' => 'ui-icon ui-icon-close darkred' ),
-				);
-				break;
-			case 'typedossier'://type de dossier
-				$cancelledStatus = $this->get('sostatus') === 'Cancelled';//ne fonctionne pas pour les listview
-				return array(
-					'Inventaire' => array( 'label' => 'Inventaire', 'icon' => 'ui-icon ui-icon-pin-s ' . ($cancelledStatus ? 'red' : 'darkgreen') ),
-					'Solde' => array( 'label' => 'Solde', 'icon' => 'ui-icon ui-icon-flag ' . ($cancelledStatus ? 'red' : 'darkgreen') ),
-					'Commande' => array( 'label' => 'Commande', 'icon' => 'ui-icon ui-icon-transferthick-e-w ' . ($cancelledStatus ? 'red' : 'blue') ),
-					'Facture' => array( 'label' => 'Facture', 'icon' => 'ui-icon ui-icon-print ' . ($cancelledStatus ? 'red' : 'blue') ),
-				);
-				break;
-			default:
-				return parent::getPicklistValuesDetails($fieldname);
-		}
+	function getCreatePurchaseOrderUrl() {
+		$purchaseOrderModuleModel = Vtiger_Module_Model::getInstance('PurchaseOrder');
+		return "index.php?module=".$purchaseOrderModuleModel->getName()."&view=".$purchaseOrderModuleModel->getEditViewName()."&salesorder_id=".$this->getId();
 	}
+
 }

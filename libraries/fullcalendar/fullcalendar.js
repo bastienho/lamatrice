@@ -47,14 +47,12 @@ var defaults = {
 	titleFormat: {
 		month: 'MMMM yyyy',
 		week: "MMM d[ yyyy]{ '&#8212;'[ MMM] d yyyy}",
-		day: 'dddd, MMM d, yyyy',
-		year: "MMMM yyyy - '" + app.vtranslate('LBL_WEEK') + "' W" //TODO Translate
+		day: 'dddd, MMM d, yyyy'
 	},
 	columnFormat: {
 		month: 'ddd',
 		week: 'ddd M/d',
-		day: 'dddd M/d',
-		year: 'W\'<br>\'d\'&nbsp;\'MMM'
+		day: 'dddd M/d'
 	},
 	timeFormat: { // for event elements
 		'': 'h(:mm)t' // default
@@ -1552,17 +1550,6 @@ function formatDates(date1, date2, format, options) {
 	return res;
 };
 
-/* ED141022
- * add Date.prototype.getWeekNumber function
-*/
-if (Date.prototype.getWeekNumber === undefined) {
-	Date.prototype.getWeekNumber = function(){
-	    var d = new Date(+this);
-	    d.setHours(0,0,0);
-	    d.setDate(d.getDate()+4-(d.getDay()||7));
-	    return Math.ceil((((d-new Date(d.getFullYear(),0,1))/8.64e7)+1)/7);
-	};
-}
 
 var dateFormatters = {
 	s	: function(d)	{ return d.getSeconds() },
@@ -1582,7 +1569,7 @@ var dateFormatters = {
 	MMM	: function(d,o)	{ return o.monthNamesShort[d.getMonth()] },
 	MMMM: function(d,o)	{ return o.monthNames[d.getMonth()] },
 	yy	: function(d)	{ return (d.getFullYear()+'').substring(2) },
-	yyyy	: function(d)	{ return d.getFullYear() },
+	yyyy: function(d)	{ return d.getFullYear() },
 	t	: function(d)	{ return d.getHours() < 12 ? 'a' : 'p' },
 	tt	: function(d)	{ return d.getHours() < 12 ? 'am' : 'pm' },
 	T	: function(d)	{ return d.getHours() < 12 ? 'A' : 'P' },
@@ -1594,9 +1581,7 @@ var dateFormatters = {
 			return 'th';
 		}
 		return ['st', 'nd', 'rd'][date%10-1] || 'th';
-	},
-	/* ED141022 */
-	W	: function(d)	{ return d.getWeekNumber(); }
+	}
 };
 
 
@@ -1910,7 +1895,7 @@ function setDayID(cell, date) {
 }
 
 
-function getSkinCss(event, opt) { /* ED141023 */
+function getSkinCss(event, opt) {
 	var source = event.source || {};
 	var eventColor = event.color;
 	var sourceColor = source.color;
@@ -1969,557 +1954,6 @@ function firstDefined() {
 		}
 	}
 }
-
-
-/**
- *
- * ED141021
- */
-
-fcViews.year = YearView;
-
-function YearView(element, calendar) {
-	var t = this;
-	
-	
-	// exports
-	t.render = render;
-	
-	
-	// imports
-	BasicYearView.call(t, element, calendar, 'year');
-	var opt = t.opt;
-	var renderBasic = t.renderBasic;
-	var formatDate = calendar.formatDate;
-	
-	
-	
-	function render(date, delta) {
-		if (delta) {
-			addMonths(date, delta);
-			date.setDate(1);
-		}
-		var start = cloneDate(date, true);
-		//lundi de la semaine du 1er du mois précédent
-		start.addMonths(-1);
-		start.setDate(1);
-		start.addDays(1 - start.getDay());
-		
-		var end = addMonths(cloneDate(start), 7);
-		var visStart = cloneDate(start);
-		var visEnd = cloneDate(end);
-		var rowCnt = 1;
-		t.title = formatDate(addMonths(cloneDate(start), 1), opt('titleFormat'));
-		t.start = start;
-		t.end = end;
-		t.visStart = visStart;
-		t.visEnd = visEnd;
-		renderBasic(3, rowCnt, 184, true);
-	}
-}
-
-
-
-
-function BasicYearView(element, calendar, viewName) {
-	var t = this;
-	
-	
-	// exports
-	t.renderBasic = renderBasic;
-	t.setHeight = setHeight;
-	t.setWidth = setWidth;
-	t.renderDayOverlay = renderDayOverlay;
-	t.defaultSelectionEnd = defaultSelectionEnd;
-	t.renderSelection = renderSelection;
-	t.clearSelection = clearSelection;
-	t.reportDayClick = reportDayClick; // for selection (kinda hacky)
-	t.dragStart = dragStart;
-	t.dragStop = dragStop;
-	t.defaultEventEnd = defaultEventEnd;
-	t.getHoverListener = function() { return hoverListener };
-	t.colContentLeft = colContentLeft;
-	t.colContentRight = colContentRight;
-	t.dayOfWeekCol = dayOfWeekCol;
-	t.dateCell = dateCell_year;
-	t.cellDate = cellDate;
-	t.cellIsAllDay = function() { return true };
-	t.allDayRow = allDayRow;
-	t.allDayBounds = allDayBounds;
-	t.getRowCnt = function() { return rowCnt };
-	t.getColCnt = function() { return colCnt };
-	t.getColWidth = function() { return colWidth };
-	t.getDaySegmentContainer = function() { return daySegmentContainer };
-	
-	// imports
-	View.call(t, element, calendar, viewName);
-	OverlayManager.call(t);
-	SelectionManager.call(t);
-	BasicEventRenderer.call(t);
-	var opt = t.opt;
-	var trigger = t.trigger;
-	var clearEvents = t.clearEvents;
-	var renderOverlay = t.renderOverlay;
-	var clearOverlays = t.clearOverlays;
-	var daySelectionMousedown = t.daySelectionMousedown;
-	var formatDate = calendar.formatDate;
-	
-	
-	// locals
-	
-	var head;
-	var headCells;
-	var body;
-	var bodyRows;
-	var bodyCells;
-	var bodyFirstCells;
-	var bodyCellTopInners;
-	var daySegmentContainer;
-	
-	var viewWidth;
-	var viewHeight;
-	var colWidth;
-	
-	var rowCnt, colCnt;
-	var coordinateGrid;
-	var hoverListener;
-	var colContentPositions;
-	
-	var rtl, dis, dit;
-	var firstDay;
-	var nwe;
-	var tm;
-	var colFormat;
-	
-	
-	
-	/* Rendering
-	------------------------------------------------------------*/
-	
-	
-	disableTextSelection(element.addClass('fc-grid'));
-	
-	
-	function renderBasic(maxr, r, c, showNumbers) {
-		rowCnt = r;
-		colCnt = c;
-		updateOptions();
-		var firstTime = !body;
-		if (firstTime) {
-			buildSkeleton(maxr, showNumbers);
-		}else{
-			clearEvents();
-		}
-		updateCells(firstTime);
-	}
-	
-	
-	
-	function updateOptions() {
-		rtl = opt('isRTL');
-		if (rtl) {
-			dis = -1;
-			dit = colCnt - 1;
-		}else{
-			dis = 1;
-			dit = 0;
-		}
-		firstDay = opt('firstDay');
-		nwe = opt('weekends') ? 0 : 1;
-		tm = opt('theme') ? 'ui' : 'fc';
-		colFormat = opt('columnFormat');
-	}
-	
-	
-	
-	function buildSkeleton(maxRowCnt, showNumbers) {
-		var s;
-		var headerClass = tm + "-widget-header";
-		var contentClass = tm + "-widget-content";
-		var i, j;
-		var table;
-		
-		s =
-			"<table class='fc-border-separate' style='width:100%' cellspacing='0'>" +
-			"<thead>" +
-			"<tr>";
-		for (i=0; i<colCnt; i+=7) {
-			s +=
-				"<th class='fc- " + headerClass + "' colspan=\"7\"/>"; // need fc- for setDayID
-		}
-		s +=
-			"</tr>" +
-			"</thead>" +
-			"<tbody>";
-		for (i=0; i<maxRowCnt; i++) {
-			s +=
-				"<tr class='fc-category" + i + "'>";
-			for (j=0; j<colCnt; j++) {
-				s +=
-					"<td class='fc- " + contentClass + " fc-day" + (i*colCnt+j) + "'>" + // need fc- for setDayID
-					"<div>" +
-					(showNumbers ?
-						"<div class='fc-day-number'/>" :
-						''
-						) +
-					"<div class='fc-day-content'>" + 
-					"<div style='position:relative'>&nbsp;</div>" +
-					"</div>" +
-					"</div>" +
-					"</td>";
-			}
-			s +=
-				"</tr>";
-		}
-		s +=
-			"</tbody>" +
-			"</table>";
-		table = $(s).appendTo(element);
-		
-		head = table.find('thead');
-		headCells = head.find('th');
-		body = table.find('tbody');
-		bodyRows = body.find('tr');
-		bodyCells = body.find('td');
-		bodyFirstCells = bodyCells.filter(':first-child');
-		bodyCellTopInners = bodyRows.eq(0).find('div.fc-day-content div');
-		
-		markFirstLast(head.add(head.find('tr'))); // marks first+last tr/th's
-		markFirstLast(bodyRows); // marks first+last td's
-		bodyRows.eq(0).addClass('fc-first'); // fc-last is done in updateCells
-		
-		dayBind(bodyCells);
-		
-		daySegmentContainer =
-			$("<div style='position:absolute;z-index:8;top:0;left:0'/>")
-				.appendTo(element);
-	}
-	
-	
-	
-	function updateCells(firstTime) {
-		var dowDirty = firstTime || rowCnt == 1; // could the cells' day-of-weeks need updating?
-		var month = t.start.getMonth();
-		var today = clearTime(new Date());
-		var cell;
-		var date;
-		var row;
-	
-		if (dowDirty) {
-			headCells.each(function(i, _cell) {
-				cell = $(_cell);
-				date = indexDate((i * 7));
-				cell.html(formatDate(date, colFormat));
-				setDayID(cell, date);
-			});
-		}
-		
-		bodyCells.each(function(i, _cell) {
-			cell = $(_cell);
-			date = indexDate(i);
-			/*if (date.getMonth() == month) {
-				cell.removeClass('fc-other-month');
-			}else{
-				cell.addClass('fc-other-month');
-			}*/
-			if (+date == +today) {
-				cell.addClass(tm + '-state-highlight fc-today');
-			}else{
-				cell.removeClass(tm + '-state-highlight fc-today');
-			}
-			/*if (date.getDay() == 1) {
-				cell.find('div.fc-day-number').text(date.getDate());
-			}*/
-			if (dowDirty) {
-				setDayID(cell, date);
-			}
-		});
-		
-		bodyRows.each(function(i, _row) {
-			row = $(_row);
-			if (i < rowCnt) {
-				row.show();
-				if (i == rowCnt-1) {
-					row.addClass('fc-last');
-				}else{
-					row.removeClass('fc-last');
-				}
-			}else{
-				row.hide();
-			}
-		});
-	}
-	
-	
-	
-	function setHeight(height) {
-		viewHeight = height;
-		
-		var bodyHeight = viewHeight - head.height();
-		var rowHeight;
-		var rowHeightLast;
-		var cell;
-			
-		if (opt('weekMode') == 'variable') {
-			rowHeight = rowHeightLast = Math.floor(bodyHeight / (rowCnt==1 ? 2 : 6));
-		}else{
-			rowHeight = Math.floor(bodyHeight / rowCnt);
-			rowHeightLast = bodyHeight - rowHeight * (rowCnt-1);
-		}
-		
-		bodyFirstCells.each(function(i, _cell) {
-			if (i < rowCnt) {
-				cell = $(_cell);
-				setMinHeight(
-					cell.find('> div'),
-					(i==rowCnt-1 ? rowHeightLast : rowHeight) - vsides(cell)
-				);
-			}
-		});
-		
-	}
-	
-	// total width
-	function setWidth(width) {
-		viewWidth = width;
-		colContentPositions.clear();
-		colWidth = Math.floor(viewWidth / colCnt);
-		setOuterWidth(headCells.slice(0, -1), colWidth);
-	}
-	
-	
-	
-	/* Day clicking and binding
-	-----------------------------------------------------------*/
-	
-	
-	function dayBind(days) {
-		days.click(dayClick)
-			.mousedown(daySelectionMousedown);
-	}
-	
-	
-	function dayClick(ev) {
-		if (!opt('selectable')) { // if selectable, SelectionManager will worry about dayClick
-			var index = parseInt(this.className.match(/fc\-day(\d+)/)[1]); // TODO: maybe use .data
-			var date = indexDate(index);
-			trigger('dayClick', this, date, true, ev);
-		}
-	}
-	
-	
-	
-	/* Semi-transparent Overlay Helpers
-	------------------------------------------------------*/
-	
-	
-	function renderDayOverlay(overlayStart, overlayEnd, refreshCoordinateGrid) { // overlayEnd is exclusive
-		if (refreshCoordinateGrid) {
-			coordinateGrid.build();
-		}
-		var rowStart = cloneDate(t.visStart);
-		var rowEnd = addDays(cloneDate(rowStart), colCnt);
-		for (var i=0; i<rowCnt; i++) {
-			var stretchStart = new Date(Math.max(rowStart, overlayStart));
-			var stretchEnd = new Date(Math.min(rowEnd, overlayEnd));
-			if (stretchStart < stretchEnd) {
-				var colStart, colEnd;
-				if (rtl) {
-					colStart = dayDiff(stretchEnd, rowStart)*dis+dit+1;
-					colEnd = dayDiff(stretchStart, rowStart)*dis+dit+1;
-				}else{
-					colStart = dayDiff(stretchStart, rowStart);
-					colEnd = dayDiff(stretchEnd, rowStart);
-				}
-				dayBind(
-					renderCellOverlay(i, colStart, i, colEnd-1)
-				);
-			}
-			addDays(rowStart, 7);
-			addDays(rowEnd, 7);
-		}
-	}
-	
-	
-	function renderCellOverlay(row0, col0, row1, col1) { // row1,col1 is inclusive
-		var rect = coordinateGrid.rect(row0, col0, row1, col1, element);
-		return renderOverlay(rect, element);
-	}
-	
-	
-	
-	/* Selection
-	-----------------------------------------------------------------------*/
-	
-	
-	function defaultSelectionEnd(startDate, allDay) {
-		return cloneDate(startDate);
-	}
-	
-	
-	function renderSelection(startDate, endDate, allDay) {
-		renderDayOverlay(startDate, addDays(cloneDate(endDate), 1), true); // rebuild every time???
-	}
-	
-	
-	function clearSelection() {
-		clearOverlays();
-	}
-	
-	
-	function reportDayClick(date, allDay, ev) {
-		var cell = dateCell(date);
-		var _element = bodyCells[cell.row*colCnt + cell.col];
-		trigger('dayClick', _element, date, allDay, ev);
-	}
-	
-	
-	
-	/* External Dragging
-	-----------------------------------------------------------------------*/
-	
-	
-	function dragStart(_dragElement, ev, ui) {
-		hoverListener.start(function(cell) {
-			clearOverlays();
-			if (cell) {
-				renderCellOverlay(cell.row, cell.col, cell.row, cell.col);
-			}
-		}, ev);
-	}
-	
-	
-	function dragStop(_dragElement, ev, ui) {
-		var cell = hoverListener.stop();
-		clearOverlays();
-		if (cell) {
-			var d = cellDate(cell);
-			trigger('drop', _dragElement, d, true, ev, ui);
-		}
-	}
-	
-	
-	
-	/* Utilities
-	--------------------------------------------------------*/
-	
-	
-	function defaultEventEnd(event) {
-		return cloneDate(event.start);
-	}
-	
-	
-	coordinateGrid = new CoordinateGrid(function(rows, cols) {
-		var e, n, p;
-		headCells.each(function(i, _e) {
-			e = $(_e);
-			n = e.offset().left;
-			if (i) {
-				p[1] = n;
-			}
-			p = [n];
-			cols[i] = p;
-		});
-		p[1] = n + e.outerWidth();
-		bodyRows.each(function(i, _e) {
-			if (i < rowCnt) {
-				e = $(_e);
-				n = e.offset().top;
-				if (i) {
-					p[1] = n;
-				}
-				p = [n];
-				rows[i] = p;
-			}
-		});
-		p[1] = n + e.outerHeight();
-	});
-	
-	
-	hoverListener = new HoverListener(coordinateGrid);
-	
-	
-	colContentPositions = new HorizontalPositionCache(function(col) {
-		return bodyCellTopInners.eq(col);
-	});
-	
-	
-	function colContentLeft(col) {
-		return colContentPositions.left(col);
-	}
-	
-	
-	function colContentRight(col) {
-		return colContentPositions.right(col);
-	}
-	
-	
-	
-	
-	function dateCell(date) {
-		return {
-			row: Math.floor(dayDiff(date, t.visStart) / 7),
-			col: dayOfWeekCol(date.getDay())
-		};
-	}
-	
-	/* ED141023
-	 *
-	 */
-	function dateCell_year(date) {
-		return {
-			row: 1,
-			col: dayDiff(date, t.visStart)
-		};
-	}
-	
-	
-	function cellDate(cell) {
-		return _cellDate(cell.row, cell.col);
-	}
-	
-	
-	function _cellDate(row, col) {
-		return addDays(cloneDate(t.visStart), row*7 + col*dis+dit);
-		// what about weekends in middle of week?
-	}
-	
-	
-	function indexDate(index) {
-		return _cellDate(Math.floor(index/colCnt), index%colCnt);
-	}
-	
-	
-	function dayOfWeekCol(dayOfWeek) {
-		return ((dayOfWeek - Math.max(firstDay, nwe) + colCnt) % colCnt) * dis + dit;
-	}
-	
-	
-	
-	
-	function allDayRow(i) {
-		return bodyRows.eq(i);
-	}
-	
-	
-	function allDayBounds(i) {
-		return {
-			left: 0,
-			right: viewWidth
-		};
-	}
-	
-	
-}
-
-
-
-
-/*
- *
- */
-
-
 
 
 
@@ -3394,7 +2828,6 @@ function AgendaView(element, calendar, viewName) {
 	
 	// exports
 	t.renderAgenda = renderAgenda;
-	//ED t.renderBasic = renderAgenda;
 	t.setWidth = setWidth;
 	t.setHeight = setHeight;
 	t.beforeHide = beforeHide;
@@ -4446,26 +3879,6 @@ function AgendaEventRenderer() {
 	
 	
 	function slotSegHtml(event, seg) {
-		//SG140908 création description d'evenement
-		event.description = "";
-		if (event.cflbls !== undefined) {		
-			for (cfname in event.cflbls) {
-				//alert (cfname + " - " + event.cflbls[cfname] + " - " + event[cfname] );
-				if (event[cfname] != null && event[cfname] != '') {
-					event.description += "<div class='event-description-customfield "+ cfname +"'>" + event.cflbls[cfname] + " : " + event[cfname].split("|##|") + "</div>";
-						}				
-				}
-		}
-		if (event.activitytype && event.activitytype != '') event.description += "<div class='event-description-activitytype'>" + event.activitytype + "</div>";
-		
-		if (event.parenttype && event.parenttype != '') {
-			event.description += "<div class='event-description-parent'>" + htmlEscape(event.parenttype) + " : " + htmlEscape(event.parentname) + "</div>";
-		}
-		if (event.contactname && event.contactname != '') {
-			event.description += "<div class='event-description-contact'> Contact : " + htmlEscape(event.contactname) + "</div>";
-		}
-		//END
-		
 		var html = "<";
 		var url = event.url;
 		var skinCss = getSkinCss(event, opt);
@@ -4502,10 +3915,6 @@ function AgendaEventRenderer() {
 			"<div class='fc-event-content'>" +
 			"<div class='fc-event-title'>" +
 			htmlEscape(event.title) +
-			/* ED140902 */
-				"<div class='fc-event-description'>" +
-				event.description +
-				"</div>" +
 			"</div>" +
 			"</div>" +
 			"<div class='fc-event-bg'></div>" +
@@ -5063,7 +4472,6 @@ function View(element, calendar, viewName) {
 
 }
 
-// render d'un evenement
 function DayEventRenderer() {
 	var t = this;
 
@@ -5099,7 +4507,6 @@ function DayEventRenderer() {
 	var renderDayOverlay = t.renderDayOverlay;
 	var clearOverlays = t.clearOverlays;
 	var clearSelection = t.clearSelection;
-	var viewName = t.name; //ED141023
 	
 	
 	
@@ -5213,27 +4620,8 @@ function DayEventRenderer() {
 				if (seg.isEnd) {
 					classes.push('fc-corner-left');
 				}
-				/* ED 141023
-				 *
-				 */
-				if (viewName == 'year') {
-					leftCol = dateCell(seg.start).col;
-					var dateEnd;
-					// 7 days mini
-					if (dayDiff(seg.end, seg.start) < 7) {
-						dateEnd = cloneDate(seg.start);
-						dateEnd.addDays(7 -1);
-					}
-					else {
-						dateEnd = cloneDate(seg.end);
-						dateEnd.addDays(-1);
-					}
-					rightCol = dateCell(dateEnd).col;
-				}
-				else {
-					leftCol = dayOfWeekCol(seg.end.getDay()-1);
-					rightCol = dayOfWeekCol(seg.start.getDay());
-				}
+				leftCol = dayOfWeekCol(seg.end.getDay()-1);
+				rightCol = dayOfWeekCol(seg.start.getDay());
 				left = seg.isEnd ? colContentLeft(leftCol) : minLeft;
 				right = seg.isStart ? colContentRight(rightCol) : maxLeft;
 			}else{
@@ -5243,50 +4631,11 @@ function DayEventRenderer() {
 				if (seg.isEnd) {
 					classes.push('fc-corner-right');
 				}
-				/* ED 141023
-				 *
-				 */
-				if (viewName == 'year') {
-					leftCol = dateCell(seg.start).col;
-					var dateEnd;
-					// 7 days mini
-					if (dayDiff(seg.end, seg.start) < 7) {
-						dateEnd = cloneDate(seg.start);
-						dateEnd.addDays(7 -1);
-					}
-					else {
-						dateEnd = cloneDate(seg.end);
-						dateEnd.addDays(-1);
-					}
-					rightCol = dateCell(dateEnd).col;
-				}
-				else {
-					leftCol = dayOfWeekCol(seg.start.getDay());
-					rightCol = dayOfWeekCol(seg.end.getDay()-1);
-				}
+				leftCol = dayOfWeekCol(seg.start.getDay());
+				rightCol = dayOfWeekCol(seg.end.getDay()-1);
 				left = seg.isStart ? colContentLeft(leftCol) : minLeft;
 				right = seg.isEnd ? colContentRight(rightCol) : maxLeft;
 			}
-			
-			//SG1409 ajout description
-			event.description = "";
-			if (event.activitytype && event.activitytype!='') event.description += "<div class='event-description-activitytype'>" + event.activitytype + "</div>";
-			//Affichage des custom fields
-			if (event.cflbls !== undefined) {		
-				for (cfname in event.cflbls) {
-					if (event[cfname] != null && event[cfname] != '') {
-						event.description += "<div class='event-description-customfield "+ cfname +"'>" + event.cflbls[cfname] + " : " + event[cfname].split("|##|") + "</div>";
-							}				
-				}
-			}
-			if (event.parenttype && event.parenttype != '') {
-				event.description += "<div class='event-description-parent'>" + htmlEscape(event.parenttype)+ " : " + htmlEscape(event.parentname) + "</div>"
-				}
-			if (event.contactname && event.contactname != '') {
-				event.description += "<div class='event-description-contact'> Contact : " + htmlEscape(event.contactname) + "</div>"
-				}	
-			//END
-			
 			classes = classes.concat(event.className);
 			if (event.source) {
 				classes = classes.concat(event.source.className || []);
@@ -5314,10 +4663,6 @@ function DayEventRenderer() {
 			}
 			html +=
 				"<span class='fc-event-title'>" + htmlEscape(event.title) + "</span>" +
-				/* ED140902 */
-					"<div class='fc-event-description'>" +
-					event.description +
-					"</div>" +
 				"</div>";
 			if (seg.isEnd && isEventResizable(event)) {
 				html +=

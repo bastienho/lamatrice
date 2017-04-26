@@ -59,6 +59,21 @@ if(!defined('INSTALLATION_MODE')) {
 
 Migration_Index_View::ExecuteQuery('UPDATE com_vtiger_workflows SET filtersavedinnew = 5', array());
 
+// Core workflow schema dependecy introduced in 6.1.0
+$adb=PearDatabase::getInstance();
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('schtypeid'));
+if (!($adb->num_rows($result))) { $adb->pquery("ALTER TABLE com_vtiger_workflows ADD schtypeid INT(10)", array()); }
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('schtime'));
+if (!($adb->num_rows($result))) { $adb->pquery("ALTER TABLE com_vtiger_workflows ADD schtime TIME", array()); }
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('schdayofmonth'));
+if (!($adb->num_rows($result))) {$adb->pquery("ALTER TABLE com_vtiger_workflows ADD schdayofmonth VARCHAR(100)", array());}
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('schdayofweek'));
+if (!($adb->num_rows($result))) {$adb->pquery("ALTER TABLE com_vtiger_workflows ADD schdayofweek VARCHAR(100)", array());}
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('schannualdates'));
+if (!($adb->num_rows($result))) {$adb->pquery("ALTER TABLE com_vtiger_workflows ADD schannualdates VARCHAR(100)", array());}
+$result = $adb->pquery("show columns from com_vtiger_workflows like ?", array('nexttrigger_time'));
+if (!($adb->num_rows($result))) {$adb->pquery("ALTER TABLE com_vtiger_workflows ADD nexttrigger_time DATETIME", array());}
+
 if(!defined('INSTALLATION_MODE')) {
 	Migration_Index_View::ExecuteQuery("CREATE TABLE IF NOT EXISTS com_vtiger_workflow_tasktypes (
 					id int(11) NOT NULL,
@@ -729,12 +744,30 @@ Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_links MODIFY column linkt
 Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_links MODIFY column linklabel VARCHAR(50)', array());
 Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_links MODIFY column handler_class VARCHAR(50)', array());
 Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_links MODIFY column handler VARCHAR(50)', array());
+
 //--
 //Add ModComments to HelpDesk and Faq module
+
+$moduleInstance = Vtiger_Module::getInstance('ModComments');
+$customer = Vtiger_Field::getInstance('customer', $moduleInstance);
+if (!$customer) {
+	$customer = new Vtiger_Field();
+	$customer->name = 'customer';
+	$customer->label = 'Customer';
+	$customer->uitype = '10';
+	$customer->displaytype = '3';
+	$blockInstance = Vtiger_Block::getInstance('LBL_MODCOMMENTS_INFORMATION', $moduleInstance);
+	$blockInstance->addField($customer);
+	$customer->setRelatedModules(array('Contacts'));
+}
+
 require_once 'modules/ModComments/ModComments.php';
 ModComments::addWidgetTo(array("HelpDesk", "Faq"));
 global $current_user, $VTIGER_BULK_SAVE_MODE;
 $VTIGER_BULK_SAVE_MODE = true;
+
+$customerPortalSettings = new Settings_CustomerPortal_Module_Model();
+$portal_user_id = $customerPortalSettings->getCurrentPortalUser();
 
 $stopLoop = false;
 $pageCount = 0;
@@ -748,18 +781,30 @@ do {
 	for($i=0; $i<$rows; $i++) {
 		$modComments = CRMEntity::getInstance('ModComments');
 		$modComments->column_fields['commentcontent'] = decode_html($adb->query_result($ticketComments, $i, 'comments'));
-		$ownerId = $adb->query_result($ticketComments, $i, 'ownerid');
-		$current_user->id = $ownerId;
-		$modComments->column_fields['assigned_user_id'] = $modComments->column_fields['creator'] = $ownerId;
 		$modComments->column_fields['createdtime'] = $adb->query_result($ticketComments, $i, 'createdtime');
 		$modComments->column_fields['modifiedtime'] = $adb->query_result($ticketComments, $i, 'createdtime');
 		$modComments->column_fields['related_to'] = $adb->query_result($ticketComments, $i, 'ticketid');
+		
+		// Contact linked comments should be carried over (http://code.vtiger.com/vtiger/vtigercrm/issues/130)
+		$ownerId = $adb->query_result($ticketComments, $i, 'ownerid');
+		$ownerType = $adb->query_result($ticketComments, $i, 'ownertype');
+		if ($ownerType == 'customer') {
+			$modComments->column_fields['customer'] = $ownerId;
+			$current_user->id = $ownerId = $portal_user_id; // Owner of record marked to PortalUser, reference marked to Contact.
+		} else {
+			$current_user->id = $ownerId;
+		}
+		$modComments->column_fields['assigned_user_id'] = $modComments->column_fields['creator'] = $ownerId;
+		
 		$modComments->save('ModComments');
 		Migration_Index_View::ExecuteQuery('UPDATE vtiger_crmentity SET modifiedtime = ?, smcreatorid = ?, modifiedby = ? WHERE crmid = ?',
 			array($modComments->column_fields['createdtime'], $ownerId, $ownerId, $modComments->id));
 	}
 	++$pageCount;
 } while (!$stopLoop);
+
+// Restore the UserId
+$current_user->id = Users::getActiveAdminId();
 
 $stopLoop = false;
 $pageCount = 0;
@@ -779,7 +824,7 @@ do {
 		$modComments->column_fields['related_to'] = $adb->query_result($faqComments, $i, 'faqid');
 		$modComments->save('ModComments');
 		Migration_Index_View::ExecuteQuery('UPDATE vtiger_crmentity SET modifiedtime = ?, smcreatorid = ?, modifiedby = ? WHERE crmid = ?',
-			array($modComments->column_fields['createdtime'], '6', '6', $modComments->id));
+			array($modComments->column_fields['createdtime'], $current_user->id, $current_user->id, $modComments->id));
 	}
 	++$pageCount;
 } while (!$stopLoop);
@@ -803,7 +848,7 @@ do {
 		$labelInfo = getEntityName($row['setype'], array(intval($row['crmid'])), true);
 
 		if ($labelInfo) {
-			$label = $labelInfo[$row['crmid']];
+			$label = decode_html($labelInfo[$row['crmid']]);
 			Migration_Index_View::ExecuteQuery('UPDATE vtiger_crmentity SET label=? WHERE crmid=? AND setype=?',
 						array($label, $row['crmid'], $row['setype']));
 		}
@@ -821,18 +866,7 @@ Migration_Index_View::ExecuteQuery('CREATE INDEX vtiger_crmentity_labelidx ON vt
 $homeModule = Vtiger_Module::getInstance('Home');
 Vtiger_Event::register($homeModule, 'vtiger.entity.aftersave', 'Vtiger_RecordLabelUpdater_Handler', 'modules/Vtiger/RecordLabelUpdater.php');
 
-$moduleInstance = Vtiger_Module::getInstance('ModComments');
-$customer = Vtiger_Field::getInstance('customer', $moduleInstance);
-if (!$customer) {
-	$customer = new Vtiger_Field();
-	$customer->name = 'customer';
-	$customer->label = 'Customer';
-	$customer->uitype = '10';
-	$customer->displaytype = '3';
-	$blockInstance = Vtiger_Block::getInstance('LBL_MODCOMMENTS_INFORMATION', $moduleInstance);
-	$blockInstance->addField($customer);
-	$customer->setRelatedModules(array('Contacts'));
-}
+
 
 $moduleInstance = Vtiger_Module::getInstance('Potentials');
 $filter = Vtiger_Filter::getInstance('All', $moduleInstance);
@@ -1265,8 +1299,6 @@ $adb->query("CREATE TABLE IF NOT EXISTS vtiger_notescf (notesid INT(19), FOREIGN
 if(!defined('INSTALLATION_MODE')) {
 	Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_salutationtype ADD COLUMN sortorderid INT(1)', array());
 }
-
-Migration_Index_View::ExecuteQuery('ALTER TABLE vtiger_field ADD COLUMN summaryfield int(1) DEFAULT 0', array());
 
 $summaryFields = array(
 	'Accounts'	=> array('assigned_user_id', 'email1', 'phone', 'bill_city', 'bill_country', 'website'),
@@ -1894,6 +1926,24 @@ if (!$usersRowHeightField) {
 	$field->setPicklistValues(array('wide', 'medium', 'narrow'));
 }
 
+$moduleInstance = Vtiger_Module::getInstance('HelpDesk');
+$block = Vtiger_Block::getInstance('LBL_TICKET_INFORMATION', $moduleInstance);
+$fromPortal = Vtiger_Field_Model::getInstance('from_portal', $moduleInstance);
+
+if(!$fromPortal){
+    $field = new Vtiger_Field();
+    $field->name = 'from_portal';
+    $field->label = 'From Portal';
+    $field->table ='vtiger_ticketcf';
+    $field->column = 'from_portal';
+    $field->columntype = 'varchar(3)';
+    $field->typeofdata = 'C~O';
+    $field->uitype = 56;
+    $field->displaytype = 3;
+    $field->presence = 0;
+    $block->addField($field);
+}
+
 //Start: Customer - Feature #10254 Configuring all Email notifications including Ticket notifications
 $moduleName = 'HelpDesk';
 //Start: Moving Entity methods of Comments to Workflows
@@ -2447,3 +2497,8 @@ $module->addLink('DETAILVIEWSIDEBARWIDGET', 'Google Map', 'module=Google&view=Ma
 Migration_Index_View::ExecuteQuery('DELETE FROM vtiger_settings_field WHERE name=?', array('LBL_BACKUP_SERVER_SETTINGS'));
 
 // Changes ends as on 2013.11.29
+Migration_Index_View::ExecuteQuery("CREATE TABLE IF NOT EXISTS vtiger_faqcf ( 
+                                faqid int(19), 
+                                PRIMARY KEY (faqid), 
+                                CONSTRAINT fk_1_vtiger_faqcf FOREIGN KEY (faqid) REFERENCES vtiger_faq(id) ON DELETE CASCADE 
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8", array()); 

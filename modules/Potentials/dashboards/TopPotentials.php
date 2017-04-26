@@ -31,6 +31,9 @@ class Potentials_TopPotentials_Dashboard extends Vtiger_IndexAjax_View {
 		$viewer->assign('WIDGET', $widget);
 		$viewer->assign('MODULE_NAME', $moduleName);
 		$viewer->assign('MODELS', $models);
+		$currentUser = Users_Record_Model::getCurrentUserModel();
+		$userCurrencyInfo = getCurrencySymbolandCRate($currentUser->get('currency_id'));
+		$viewer->assign('USER_CURRENCY_SYMBOL', $userCurrencyInfo['symbol']);
 
 		$content = $request->get('content');
 		if(!empty($content)) {

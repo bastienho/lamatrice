@@ -9,11 +9,6 @@
 *
  ********************************************************************************/
 
-include_once('config.php');
-require_once('include/logging.php');
-require_once('include/utils/utils.php');
-require_once('user_privileges/default_module_view.php');
-
 class PriceBooks extends CRMEntity {
 	var $log;
 	var $db;
@@ -45,7 +40,7 @@ class PriceBooks extends CRMEntity {
                                 'Price Book Name'=>Array('pricebook'=>'bookname')
                                 );
 	var $search_fields_name = Array(
-                                        'Price Book Name'=>'bookname',
+                                        'Price Book Name'=>'bookname'
                                      );
 
 	//Added these variables which are used as default order by and sortorder in ListView
@@ -74,10 +69,7 @@ class PriceBooks extends CRMEntity {
 	}
 
 	/* Function to Update the List prices for all the products of a current price book
-	   with its Unit price, if the Currency for Price book has changed.
-	
-		ED151226 adds field listpriceunit
-	*/
+	   with its Unit price, if the Currency for Price book has changed. */
 	function updateListPrices() {
 		global $log, $adb;
 		$log->debug("Entering function updateListPrices...");
@@ -89,7 +81,6 @@ class PriceBooks extends CRMEntity {
 		for($i=0;$i<$numRows;$i++) {
 			$product_id = $adb->query_result($prod_res,$i,'productid');
 			$list_price = $adb->query_result($prod_res,$i,'listprice');
-			$list_price_unit = $adb->query_result($prod_res,$i,'listpriceunit');
 			$used_currency = $adb->query_result($prod_res,$i,'usedcurrency');
 			$product_currency_info = getCurrencySymbolandCRate($used_currency);
 			$product_conv_rate = $product_currency_info['rate'];
@@ -98,85 +89,119 @@ class PriceBooks extends CRMEntity {
 			$conversion_rate = $pb_conv_rate / $product_conv_rate;
 			$computed_list_price = $list_price * $conversion_rate;
 
-			$query = "update vtiger_pricebookproductrel set listprice=?, listpriceunit=?, usedcurrency=? where pricebookid=? and productid=?";
-			$params = array($computed_list_price, $list_price_unit, $pricebook_currency, $this->id, $product_id);
+			$query = "update vtiger_pricebookproductrel set listprice=?, usedcurrency=? where pricebookid=? and productid=?";
+			$params = array($computed_list_price, $pricebook_currency, $this->id, $product_id);
 			$adb->pquery($query, $params);
 		}
 		$log->debug("Exiting function updateListPrices...");
 	}
 
-	/** ED151208 cette fonction était requise par ailleurs
-	 *
-	 *	function used to get product list related to a pricebook
+	/**	function used to get the products which are related to the pricebook
 	 *	@param int $id - pricebook id
-	 *	@return array - array which will be returned from the function GetRelatedList
-	 */
-	function get_pricebook_products($id, $cur_tab_id, $rel_tab_id, $actions=false)
-	{
-		global $log,$singlepane_view,$currentModule;
+         *      @return array - return an array which will be returned from the function getPriceBookRelatedProducts
+        **/
+	function get_pricebook_products($id, $cur_tab_id, $rel_tab_id, $actions=false) {
+		global $log, $singlepane_view,$currentModule,$current_user;
 		$log->debug("Entering get_pricebook_products(".$id.") method ...");
+		$this_module = $currentModule;
 
-		$related_module = vtlib_getModuleNameById($rel_tab_id);
-		checkFileAccessForInclusion("modules/$related_module/$related_module.php");
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
 		require_once("modules/$related_module/$related_module.php");
-		$focus = new $related_module();
+		$other = new $related_module();
+        vtlib_setup_modulevars($related_module, $other);
 		$singular_modname = vtlib_toSingular($related_module);
 
+		$parenttab = getParentTab();
 
-		$query = "SELECT vtiger_crmentity.crmid, vtiger_products.*
-			FROM vtiger_products
-			INNER JOIN vtiger_crmentity
-				ON vtiger_crmentity.crmid=vtiger_products.productid
-			INNER JOIN vtiger_pricebookproductrel
-				ON vtiger_pricebookproductrel.productid = vtiger_products.productid
-			WHERE vtiger_crmentity.deleted=0
-			AND vtiger_pricebookproductrel.pricebookid = $id";
+		if($singlepane_view == 'true')
+			$returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
+		else
+			$returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
+
+		$button = '';
+
+		if($actions) {
+			if(is_string($actions)) $actions = explode(',', strtoupper($actions));
+			if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
+				$button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='submit' name='button' onclick=\"this.form.action.value='AddProductsToPriceBook';this.form.module.value='$related_module';this.form.return_module.value='$currentModule';this.form.return_action.value='PriceBookDetailView'\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
+			}
+		}
+
+		$query = 'SELECT vtiger_products.productid, vtiger_products.productname, vtiger_products.productcode, vtiger_products.commissionrate,
+						vtiger_products.qty_per_unit, vtiger_products.unit_price, vtiger_crmentity.crmid, vtiger_crmentity.smownerid,
+						vtiger_pricebookproductrel.listprice
+				FROM vtiger_products
+				INNER JOIN vtiger_pricebookproductrel ON vtiger_products.productid = vtiger_pricebookproductrel.productid
+				INNER JOIN vtiger_crmentity on vtiger_crmentity.crmid = vtiger_products.productid
+				INNER JOIN vtiger_pricebook on vtiger_pricebook.pricebookid = vtiger_pricebookproductrel.pricebookid
+				LEFT JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid
+				LEFT JOIN vtiger_groups ON vtiger_groups.groupid = vtiger_crmentity.smownerid '
+				. getNonAdminAccessControlQuery($related_module, $current_user) .'
+				WHERE vtiger_pricebook.pricebookid = '.$id.' and vtiger_crmentity.deleted = 0';
+
+		$this->retrieve_entity_info($id,$this_module);
+		$return_value = getPriceBookRelatedProducts($query,$this,$returnset);
+
+		if($return_value == null) $return_value = Array();
+		$return_value['CUSTOM_BUTTON'] = $button;
+
 		$log->debug("Exiting get_pricebook_products method ...");
-
-		$return_value = GetRelatedList($currentModule, $related_module, $focus, $query, $button, $returnset);
-
-		if($return_value == null) $return_value = Array();
-		$return_value['CUSTOM_BUTTON'] = $button;
-
 		return $return_value;
 	}
 
-	/** ED151208 cette fonction était requise par ailleurs
-	 *
-	 *	function used to get service list related to a pricebook
+	/**	function used to get the services which are related to the pricebook
 	 *	@param int $id - pricebook id
-	 *	@return array - array which will be returned from the function GetRelatedList
-	 */
-	function get_pricebook_services($id, $cur_tab_id, $rel_tab_id, $actions=false)
-	{
-		global $log,$singlepane_view,$currentModule;
+         *      @return array - return an array which will be returned from the function getPriceBookRelatedServices
+        **/
+	function get_pricebook_services($id, $cur_tab_id, $rel_tab_id, $actions=false) {
+		global $log, $singlepane_view,$currentModule,$current_user;
 		$log->debug("Entering get_pricebook_services(".$id.") method ...");
+		$this_module = $currentModule;
 
-		$related_module = vtlib_getModuleNameById($rel_tab_id);
-		checkFileAccessForInclusion("modules/$related_module/$related_module.php");
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
 		require_once("modules/$related_module/$related_module.php");
-		$focus = new $related_module();
+		$other = new $related_module();
+        vtlib_setup_modulevars($related_module, $other);
 		$singular_modname = vtlib_toSingular($related_module);
 
+		$parenttab = getParentTab();
 
-		$query = "SELECT vtiger_crmentity.crmid, vtiger_service.*
+		if($singlepane_view == 'true')
+			$returnset = '&return_module='.$this_module.'&return_action=DetailView&return_id='.$id;
+		else
+			$returnset = '&return_module='.$this_module.'&return_action=CallRelatedList&return_id='.$id;
+
+		$button = '';
+
+		if($actions) {
+			if(is_string($actions)) $actions = explode(',', strtoupper($actions));
+			if(in_array('SELECT', $actions) && isPermitted($related_module,4, '') == 'yes') {
+				$button .= "<input title='".getTranslatedString('LBL_SELECT')." ". getTranslatedString($related_module). "' class='crmbutton small edit' type='submit' name='button' onclick=\"this.form.action.value='AddServicesToPriceBook';this.form.module.value='$related_module';this.form.return_module.value='$currentModule';this.form.return_action.value='PriceBookDetailView'\" value='". getTranslatedString('LBL_SELECT'). " " . getTranslatedString($related_module) ."'>&nbsp;";
+			}
+		}
+
+		$query = 'SELECT vtiger_service.serviceid, vtiger_service.servicename, vtiger_service.commissionrate,
+					vtiger_service.qty_per_unit, vtiger_service.unit_price, vtiger_crmentity.crmid, vtiger_crmentity.smownerid,
+					vtiger_pricebookproductrel.listprice
 			FROM vtiger_service
-			INNER JOIN vtiger_crmentity
-				ON vtiger_crmentity.crmid=vtiger_service.serviceid
-			INNER JOIN vtiger_pricebookproductrel
-				ON vtiger_pricebookproductrel.productid = vtiger_service.serviceid
-			WHERE vtiger_crmentity.deleted=0
-			AND vtiger_pricebookproductrel.pricebookid = $id";
-		$log->debug("Exiting get_pricebook_services method ...");
+			INNER JOIN vtiger_pricebookproductrel on vtiger_service.serviceid = vtiger_pricebookproductrel.productid
+			INNER JOIN vtiger_crmentity on vtiger_crmentity.crmid = vtiger_service.serviceid
+			INNER JOIN vtiger_pricebook on vtiger_pricebook.pricebookid = vtiger_pricebookproductrel.pricebookid
+			LEFT JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid
+			LEFT JOIN vtiger_groups ON vtiger_groups.groupid = vtiger_crmentity.smownerid '
+			. getNonAdminAccessControlQuery($related_module, $current_user) .'
+			WHERE vtiger_pricebook.pricebookid = '.$id.' and vtiger_crmentity.deleted = 0';
 
-		$return_value = GetRelatedList($currentModule, $related_module, $focus, $query, $button, $returnset);
+		$this->retrieve_entity_info($id,$this_module);
+		$return_value = $other->getPriceBookRelatedServices($query,$this,$returnset);
 
 		if($return_value == null) $return_value = Array();
 		$return_value['CUSTOM_BUTTON'] = $button;
 
+		$log->debug("Exiting get_pricebook_services method ...");
 		return $return_value;
 	}
-	
+
 	/**	function used to get whether the pricebook has related with a product or not
 	 *	@param int $id - product id
 	 *	@return true or false - if there are no pricebooks available or associated pricebooks for the product is equal to total number of pricebooks then return false, else return true
@@ -249,6 +274,9 @@ class PriceBooks extends CRMEntity {
 				if ($queryplanner->requireTable("vtiger_lastModifiedByPriceBooks")){
 				    $query .= " left join vtiger_users as vtiger_lastModifiedByPriceBooks on vtiger_lastModifiedByPriceBooks.id = vtiger_crmentity.modifiedby ";
 				}
+                if($queryplanner->requireTable('vtiger_createdby'.$module)){
+                    $query .= " left join vtiger_users as vtiger_createdby".$module." on vtiger_createdby".$module.".id = vtiger_crmentity.smcreatorid";
+                }
 				return $query;
 	}
 
@@ -263,10 +291,10 @@ class PriceBooks extends CRMEntity {
 		$matrix = $queryplanner->newDependencyMatrix();
 
 		$matrix->setDependency("vtiger_crmentityPriceBooks",array("vtiger_usersPriceBooks","vtiger_groupsPriceBooks"));
-		$matrix->setDependency("vtiger_pricebook",array("vtiger_crmentityPriceBooks","vtiger_currency_infoPriceBooks"));
 		if (!$queryplanner->requireTable('vtiger_pricebook', $matrix)) {
 			return '';
 		}
+        $matrix->setDependency("vtiger_pricebook",array("vtiger_crmentityPriceBooks","vtiger_currency_infoPriceBooks"));
 
 		$query = $this->getRelationQuery($module,$secmodule,"vtiger_pricebook","pricebookid", $queryplanner);
 		// TODO Support query planner
@@ -285,6 +313,9 @@ class PriceBooks extends CRMEntity {
 		if ($queryplanner->requireTable("vtiger_lastModifiedByPriceBooks")){
 		    $query .=" left join vtiger_users as vtiger_lastModifiedByPriceBooks on vtiger_lastModifiedByPriceBooks.id = vtiger_crmentityPriceBooks.smownerid";
 		}
+        if ($queryplanner->requireTable("vtiger_createdbyPriceBooks")){
+			$query .= " left join vtiger_users as vtiger_createdbyPriceBooks on vtiger_createdbyPriceBooks.id = vtiger_crmentityPriceBooks.smcreatorid ";
+		}
 		return $query;
 	}
 
@@ -301,40 +332,146 @@ class PriceBooks extends CRMEntity {
 		return $rel_tables[$secmodule];
 	}
 
-	
-
-	/**
-	 * Save the related module record information. Triggered from CRMEntity->saveentity method or updateRelations.php
-	 * @param String This module name
-	 * @param Integer This module record number
-	 * @param String Related module name
-	 * @param mixed Integer or Array of related module record number
-	 */
-	function save_related_module($module, $crmid, $with_module, $with_crmid) {
+	function createRecords($obj){
 		global $adb;
-		if (!is_array($with_crmid))
-			$with_crmid = Array($with_crmid);
-		foreach ($with_crmid as $relcrmid) {
+		$moduleName = $obj->module;
+		$moduleHandler = vtws_getModuleHandlerFromName($moduleName, $obj->user);
+		$moduleMeta = $moduleHandler->getMeta();
+		$moduleObjectId = $moduleMeta->getEntityId();
+		$moduleFields = $moduleMeta->getModuleFields();
+		$focus = CRMEntity::getInstance($moduleName);
+        $moduleSubject = 'bookname';
 
-			$checkpresence = $adb->pquery("SELECT productid FROM vtiger_pricebookproductrel WHERE
-				pricebookid = ? AND productid = ?", Array($crmid, $relcrmid));
-			// Relation already exists? No need to add again
-			if ($checkpresence && $adb->num_rows($checkpresence))
-				continue;
+		$tableName = Import_Utils_Helper::getDbTableName($obj->user);
+		$sql = 'SELECT * FROM ' . $tableName . ' WHERE status = '. Import_Data_Action::$IMPORT_RECORD_NONE .' GROUP BY '. $moduleSubject;
 
-			$query = "INSERT INTO vtiger_pricebookproductrel(`pricebookid`, `productid`, `listprice`, `listpriceunit`, `usedcurrency`)";
-			if($with_module === 'Products')
-				$query .= " SELECT ?, productid, unit_price, 'HT', currency_id
-						 FROM vtiger_products
-						 WHERE productid = ?";
-			elseif($with_module === 'Services')
-				$query .= " SELECT ?, serviceid, unit_price, 'HT', currency_id
-						 FROM vtiger_service
-						 WHERE serviceid = ?";
-			$result = $adb->pquery($query, Array($crmid, $relcrmid));
-			if(!$result)
-				$adb->echoError();
+		if($obj->batchImport) {
+			$importBatchLimit = getImportBatchLimit();
+			$sql .= ' LIMIT '. $importBatchLimit;
 		}
+		$result = $adb->query($sql);
+		$numberOfRecords = $adb->num_rows($result);
+
+		if ($numberOfRecords <= 0) {
+			return;
+		}
+		$bookNameList = array();
+		$fieldMapping = $obj->fieldMapping;
+		$fieldColumnMapping = $moduleMeta->getFieldColumnMapping();
+		for ($i = 0; $i < $numberOfRecords; ++$i) {
+			$row = $adb->raw_query_result_rowdata($result, $i);
+			$rowId = $row['id'];
+			$subject = $row['bookname'];
+			$entityInfo = null;
+			$fieldData = array();
+			$subject = str_replace("\\", "\\\\", $subject);
+			$subject = str_replace('"', '""', $subject);
+			$sql = 'SELECT * FROM ' . $tableName . ' WHERE status = '. Import_Data_Action::$IMPORT_RECORD_NONE .' AND '. $moduleSubject . ' = "'. $subject .'"';
+			$subjectResult = $adb->query($sql);
+			$count = $adb->num_rows($subjectResult);
+			$subjectRowIDs = $fieldArray = $productList = array();
+			for ($j = 0; $j < $count; ++$j) {
+				$subjectRow = $adb->raw_query_result_rowdata($subjectResult, $j);
+				array_push($subjectRowIDs, $subjectRow['id']);
+				$productList[$j]['relatedto'] = $subjectRow['relatedto'];
+				$productList[$j]['listprice'] = $subjectRow['listprice'];
+			}
+			foreach ($fieldMapping as $fieldName => $index) {
+				$fieldData[$fieldName] = $row[strtolower($fieldName)];
+			}
+
+            $entityInfo = $this->importRecord($obj, $fieldData, $productList);
+            unset($productList);
+			if ($entityInfo == null) {
+                $entityInfo = array('id' => null, 'status' => Import_Data_Action::$IMPORT_RECORD_FAILED);
+            } else if(!$entityInfo['status']){
+                $entityInfo['status'] = Import_Data_Action::$IMPORT_RECORD_CREATED;
+            }
+
+                $entityIdComponents = vtws_getIdComponents($entityInfo['id']);
+                $recordId = $entityIdComponents[1];
+                if(!empty($recordId)) {
+                    $entityfields = getEntityFieldNames($moduleName);
+                    $label = '';
+                    if(is_array($entityfields['fieldname'])){
+                        foreach($entityfields['fieldname'] as $field){
+                            $label .= $fieldData[$field]." ";
+                        }
+                    }else {
+                        $label = $fieldData[$entityfields['fieldname']];
+                    }
+
+                    $adb->pquery('UPDATE vtiger_crmentity SET label=? WHERE crmid=?', array(trim($label), $recordId));
+                    //updating solr while import records
+                    $recordModel = Vtiger_Record_Model::getCleanInstance($moduleName);
+                    $focus = $recordModel->getEntity();
+                    $focus->id = $recordId;
+                    $focus->column_fields = $fieldData;
+                    $this->entityData[] = VTEntityData::fromCRMEntity($focus);
+                }
+
+                $label = trim($label);
+                $adb->pquery('UPDATE vtiger_crmentity SET label=? WHERE crmid=?', array($label, $recordId));
+                //Creating entity data of updated records for post save events
+                if ($entityInfo['status'] !== Import_Data_Action::$IMPORT_RECORD_CREATED) {
+                    $recordModel = Vtiger_Record_Model::getCleanInstance($moduleName);
+                    $focus = $recordModel->getEntity();
+                    $focus->id = $recordId;
+                    $focus->column_fields = $entityInfo;
+                    $this->entitydata[] = VTEntityData::fromCRMEntity($focus);
+                }
+				
+			foreach($subjectRowIDs as $id){
+				$obj->importedRecordInfo[$id] = $entityInfo;
+				$obj->updateImportStatus($id, $entityInfo);
+			}
+		}
+
+        $obj->entitydata = null;
+		$result = null;
+		return true;
+	}
+
+	function importRecord($obj, $fieldData, $productList) {
+		$moduleName = 'PriceBooks';
+		$moduleHandler = vtws_getModuleHandlerFromName($moduleName, $obj->user);
+		$moduleMeta = $moduleHandler->getMeta();
+		unset($fieldData['listprice']); unset($fieldData['relatedto']);
+		$fieldData = $obj->transformForImport($fieldData, $moduleMeta);
+		try{
+			$entityInfo = vtws_create($moduleName, $fieldData, $obj->user);
+			if($entityInfo && $productList){
+				$this->relatePriceBookWithProduct($entityInfo, $productList);
+			}
+		} catch (Exception $e){
+		}
+		$entityInfo['status'] = $obj->getImportRecordStatus('created');
+		return $entityInfo;
+	}
+
+	function relatePriceBookWithProduct($entityinfo, $productList) {
+		if(count($productList) > 0){
+			foreach($productList as $product){
+				if(!$product['relatedto'])
+					continue;
+				$productName = $product['relatedto'];
+				$productName = explode('::::', $productName);
+				$productId = getEntityId($productName[0], $productName[1]);
+                $presence = isRecordExists($productId);
+                if($presence){
+                    $productInstance = Vtiger_Record_Model::getInstanceById($productId);
+                    $pricebookId = vtws_getIdComponents($entityinfo['id']);
+                    if($productInstance){
+                        $recordModel = Vtiger_Record_Model::getInstanceById($pricebookId[1]);
+                        $recordModel->updateListPrice($productId, $product['listprice']);
+                    }
+                }
+			}
+		}
+	}
+
+	function getGroupQuery($tableName){
+		return 'SELECT status FROM '.$tableName.' GROUP BY bookname';
 	}
 }
 ?>

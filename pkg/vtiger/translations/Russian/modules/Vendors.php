@@ -10,8 +10,8 @@
 $languageStrings = array(
 	'Vendors'                      => 'Поставщики'        , 
 	'SINGLE_Vendors'               => 'Поставщик'          , 
-	'LBL_ADD_RECORD'               => 'Add Vendor'                  , // TODO: Review
-	'LBL_RECORDS_LIST'             => 'Vendors List'                , // TODO: Review
+	'LBL_ADD_RECORD'               => 'Добавить продавца'                  , 
+	'LBL_RECORDS_LIST'             => 'Продавцы Список'                , 
 	'LBL_VENDOR_INFORMATION'       => 'Информация о Поставщике:', 
 	'LBL_VENDOR_ADDRESS_INFORMATION' => 'Адресная Информация:', 
 	'Vendor Name'                  => 'Название Поставщика', 
@@ -27,9 +27,13 @@ $languageStrings = array(
 	'306-Internet Sales'           => '306-Продажи-Интернет', 
 	'307-Service-Hardware Labor'   => '307-Сервис-Работа', 
 	'308-Sales-Books'              => '308-Продажи-Книги', 
+
+  'Phone' => 'Основной Телефон',
+  'Email' => 'Основной Адрес Электронной Почты',
+
 );
 $jsLanguageStrings = array(
-	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Are you sure you want to delete?', // TODO: Review
-	'LBL_DELETE_CONFIRMATION'      => 'Deleting this Vendor will remove its related PurchaseOrders. Are you sure you want to delete this Vendor?', // TODO: Review
-	'LBL_MASS_DELETE_CONFIRMATION' => 'Deleting this vendor(s) will remove its related Purchase Orders. Are you sure you want to delete the selected Records?', // TODO: Review
+	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Вы уверены, что хотите удалить?', 
+	'LBL_DELETE_CONFIRMATION'      => 'Удаление этого продавца удалит связанные с ним PurchaseOrders. Вы уверены, что хотите удалить этот Производитель?', 
+	'LBL_MASS_DELETE_CONFIRMATION' => 'Удаление этого поставщика (ов) удалит связанные с ним Заказы. Вы уверены, что хотите удалить выбранные записи?', 
 );

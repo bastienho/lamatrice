@@ -65,82 +65,17 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 	registerEventForTaxes : function(){
 		var thisInstance = this;
 		var formElem = this.getForm();
-		//checkboxes
-		if (jQuery('.taxes[checked]').length > 1) {
-			jQuery('#switcc-TTC-HT').prop( "disabled", true );
-			jQuery('#switcc-TTC-HT').attr('checked', false);
-		}
-
 		jQuery('.taxes').on('change',function(e){
 			var elem = thisInstance.getCurrentElem(e);
 			var taxBox  = elem.data('taxName');
-
-			if (thisInstance.getUseMultipleTaxes()) {
-				if (jQuery('.taxes:checked').length > 1) {
-					jQuery('#switcc-TTC-HT').prop( "disabled", true );
-					jQuery('#switcc-TTC-HT').attr('checked', false);
-					$("#temporary_unit_price").val(thisInstance.getUnitPrice().val());
-				} else {
-					jQuery('#switcc-TTC-HT').prop( "disabled", false );
-				}
-			}
-
 			if(elem.is(':checked')) {
-				//ED150521 : rule "Only one tax allowed"
-				if (!thisInstance.getUseMultipleTaxes()) {
-					jQuery('.taxes:not([data-tax-name="'+taxBox+'"]').removeAttr('checked');
-					elem.parents('table:first').find('input[type="text"][name^="tax"]:not([name="'+taxBox+'"]').addClass('hide');
-				}
-
-				thisInstance.setUnitPrice()
-				
 				jQuery('input[name='+taxBox+']',formElem).removeClass('hide').show();
 			}else{
 				jQuery('input[name='+taxBox+']',formElem).addClass('hide');
 			}
-			//ED151016
-			thisInstance.showTaxedPrice();
+
 		});
 		return this;
-	},
-	
-	/** ED150522
-	 * may product use multiple taxes
-	 */
-	getUseMultipleTaxes : function(){
-		var $useMultipleTaxes = $('#products-use-multiple-taxes')
-		, useMultipleTaxes = $useMultipleTaxes.length == 0 || $useMultipleTaxes.val() != 'false'
-		;
-		return useMultipleTaxes;
-	},
-	
-	/** ED151016
-	 * show price with tax amount
-	 */
-	showTaxedPrice : function(){
-		var thisInstance = this
-		, formElem = thisInstance.getForm()
-		, unitPrice = thisInstance.getDataBaseFormatUnitPrice()
-		;
-		formElem.find('.taxes').each(function(){
-			var isChecked = this.checked
-			, $tdInput = $(this).parents('td:first').next()
-			, $label = $tdInput.find('.taxedPrice');
-			if (!isChecked) {
-				$label.hide();
-				return;
-			}
-			var $input = $tdInput.find('input.detailedViewTextBox')
-			, taxRate = parseFloat($input.val().replace(',','.'));
-			if ($label.length === 0) 
-				$label = $('<span class="taxedPrice"/>')
-					.css('margin-left', '1em')
-					.insertAfter($input);
-			else
-				$label.show();
-			$label.html(parseFloat(unitPrice).toFixed(2) + '&nbsp;&euro; / ' + (unitPrice * ( 1 + taxRate / 100)).toFixed(2) + '&nbsp;&euro;');
-			
-		});
 	},
 	
 	/**
@@ -171,14 +106,11 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 			var parentElem = thisInstance.getCurrentElem(e).closest('tr');
 			var unitPriceFieldData = thisInstance.getUnitPrice().data();
 			var unitPrice = thisInstance.getDataBaseFormatUnitPrice();
-			var groupSeperator = unitPriceFieldData.groupSeperator;
-			var re = new RegExp(groupSeperator, 'g');
-			unitPrice = unitPrice.replace(re, '');
 			var conversionRate = jQuery('.conversionRate',parentElem).val();
 			var price = parseFloat(unitPrice) * parseFloat(conversionRate);
 			var userPreferredDecimalPlaces = unitPriceFieldData.numberOfDecimalPlaces;
 			price = price.toFixed(userPreferredDecimalPlaces);
-			var calculatedPrice = price.toString().replace('.',unitPriceFieldData.decimalSeperator);
+			var calculatedPrice = price.toString().replace('.',unitPriceFieldData.decimalSeparator);
 			jQuery('.convertedPrice',parentElem).val(calculatedPrice);
 		});
 		return this;
@@ -194,8 +126,11 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 				unitPrice = 0;
 			}else{
 				var fieldData = field.data();
-				var strippedValue = unitPrice.replace(fieldData.groupSeperator, '');
-				strippedValue = strippedValue.replace(fieldData.decimalSeperator, '.');
+				//As replace is doing replace of single occurence and using regex 
+				//replace has a problem with meta characters  like (.,$),so using split and join
+				var strippedValue = unitPrice.split(fieldData.groupSeparator);
+				strippedValue = strippedValue.join("");
+				strippedValue = strippedValue.replace(fieldData.decimalSeparator, '.');
 				unitPrice = strippedValue;
 			}
 			return unitPrice;
@@ -236,24 +171,29 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 				var conversionRate = jQuery('.conversionRate',parentRow).val();
 				var unitPriceFieldData = thisInstance.getUnitPrice().data();
 				var unitPrice = thisInstance.getDataBaseFormatUnitPrice();
-				var groupSeperator = unitPriceFieldData.groupSeperator;
-				var re = new RegExp(groupSeperator, 'g');
-				unitPrice = unitPrice.replace(re, '');
 				var price = parseFloat(unitPrice)*parseFloat(conversionRate);
 				jQuery('input',parentRow).attr('disabled', true).removeAttr('disabled');
 				jQuery('button.currencyReset', parentRow).attr('disabled', true).removeAttr('disabled');
 				var userPreferredDecimalPlaces = unitPriceFieldData.numberOfDecimalPlaces;
 				price = price.toFixed(userPreferredDecimalPlaces);
-				var calculatedPrice = price.toString().replace('.',unitPriceFieldData.decimalSeperator);
+				var calculatedPrice = price.toString().replace('.',unitPriceFieldData.decimalSeparator);
 				jQuery('input.convertedPrice',parentRow).val(calculatedPrice)
 			}else{
+				var baseCurrency = jQuery('.baseCurrency', parentRow);
+				if (baseCurrency.is(':checked')) {
+					var currencyName = jQuery('.currencyName', parentRow).text();
+					var params = {
+									'type' : 'error',
+									'title': app.vtranslate('JS_ERROR'),
+									'text' : app.vtranslate('JS_BASE_CURRENCY_CHANGED_TO_DISABLE_CURRENCY') + '"' + currencyName + '"'
+								};
+					Vtiger_Helper_Js.showPnotify(params);
+					elem.prop('checked', true);
+					return;
+				}
 				jQuery('input',parentRow).attr('disabled', true);
 				jQuery('input.enableCurrency',parentRow).removeAttr('disabled');
 				jQuery('button.currencyReset', parentRow).attr('disabled', 'disabled');
-				var baseCurrency = jQuery('.baseCurrency', parentRow);
-				if(baseCurrency.is(':checked')){
-					baseCurrency.removeAttr('checked');
-				}
 			}
 		})
 		return this;
@@ -323,15 +263,23 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 						thisInstance.baseCurrency = thisInstance.getUnitPrice().val();
 						var multiCurrencyEditUI = jQuery('.multiCurrencyEditUI');
 						thisInstance.multiCurrencyContainer = multiCurrencyEditUI;
-						thisInstance.calculateConversionRate();
-						thisInstance.registerEventForEnableCurrency().registerEventForEnableBaseCurrency()
-											.registerEventForResetCurrency().triggerForBaseCurrencyCalc();
+                        thisInstance.calculateConversionRate();
+						thisInstance.registerEventForEnableCurrency();
+						thisInstance.registerEventForEnableBaseCurrency();
+						thisInstance.registerEventForResetCurrency();
+						thisInstance.triggerForBaseCurrencyCalc();
 					}
+                    var moreCurrenciesContainer = jQuery('#moreCurrenciesContainer').find('.multiCurrencyEditUI');
 					var contentInsideForm = moreCurrenciesUi.find('.multiCurrencyContainer').html();
 					moreCurrenciesUi.find('.multiCurrencyContainer').remove();
 					var form = '<form id="currencyContainer"></form>'
 					jQuery(form).insertAfter(moreCurrenciesUi.find('.modal-header'));
 					moreCurrenciesUi.find('form').html(contentInsideForm);
+                    moreCurrenciesContainer.find('input[name^=curname]').each(function(index,element){
+                    	var dataValue = jQuery(element).val();
+                        var dataId = jQuery(element).attr('id');
+                        moreCurrenciesUi.find('#'+dataId).val(dataValue);
+                    });
 
 					var modalWindowParams = {
 						data : moreCurrenciesUi,
@@ -353,14 +301,14 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 		jQuery.each(baseCurrency,function(key,val){
 			if(jQuery(val).is(':checked')){
 				var baseCurrencyRow = jQuery(val).closest('tr');
-				baseCurrencyRow.find('.currencyReset').trigger('click');
-			}else{
-                var baseCurrencyRow = jQuery(val).closest('tr');
+                if(parseFloat(baseCurrencyRow.find('.convertedPrice').val()) == 0) {
+                	baseCurrencyRow.find('.currencyReset').trigger('click');
+                }
+			} else {
+				var baseCurrencyRow = jQuery(val).closest('tr');
                 baseCurrencyRow.find('.convertedPrice').val('');
             }
 		})
-		//ED151016
-		this.showTaxedPrice();
 	},
 	
 	/**
@@ -372,8 +320,6 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 		unitPrice.on('change',function(){
 			thisInstance.triggerForBaseCurrencyCalc();
 		})
-		//ED151016 init TTC
-		thisInstance.showTaxedPrice();
 	},
 
 	registerRecordPreSaveEvent : function(form) {
@@ -389,6 +335,7 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 				e.preventDefault();
 				thisInstance.getMoreCurrenciesUI().then(function(data){
 					thisInstance.preSaveConfigOfForm(form);
+					InitialFormData = form.serialize();
 					form.submit();
 				})
 			}else if(multiCurrencyContent.length > 0){
@@ -453,6 +400,11 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 		var savedValuesOfMultiCurrency = modalContainer.find('.currencyContent').html();
 		var moreCurrenciesContainer = jQuery('#moreCurrenciesContainer');
 		moreCurrenciesContainer.find('.currencyContent').html(savedValuesOfMultiCurrency);
+        modalContainer.find('input[name^=curname]').each(function(index,element){
+        	var dataValue = jQuery(element).val();
+            var dataId = jQuery(element).attr('id');
+            moreCurrenciesContainer.find('.currencyContent').find('#'+dataId).val(dataValue);
+        });
 		app.hideModalWindow();
 	},
 	
@@ -488,73 +440,6 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 			}
 		});
 	},
-
-	getHTFromeTTC: function() {//tmp
-		var thisInstance = this
-		, formElem = thisInstance.getForm()
-		, temporaryPriceInput = $("#temporary_unit_price")
-		, TTC_price = parseFloat(temporaryPriceInput.val().replace(',','.'))
-		, taxeQuantity = 0
-		, HT_Price = 0
-		;
-
-		formElem.find('.taxes').each(function(){
-			var isChecked = this.checked
-			, $tdInput = $(this).parents('td:first').next()
-			, $label = $tdInput.find('.taxedPrice');
-			if (isChecked) {
-				++taxeQuantity;
-				if (taxeQuantity > 1) {
-					//tmp uncheck TTC !! //TMP called update price on taxes checked !!
-					HT_Price = TTC_price;
-					return false;
-				}
-
-				var $input = $tdInput.find('input.detailedViewTextBox')
-				, taxRate = parseFloat($input.val().replace(',','.'));
-
-				HT_Price = TTC_price / ( 1 + taxRate / 100);
-			}
-			
-		});
-
-		return HT_Price;// TMP !!!!
-	},
-
- 	setUnitPrice: function(){
- 		var isTTC = jQuery('#switcc-TTC-HT').is(":checked");
- 		var priceInput = this.getUnitPrice();
- 		var temporaryPriceInput = $("#temporary_unit_price");
-
- 		if (isTTC) {
- 			var HT_Price = this.getHTFromeTTC();
- 			priceInput.val(HT_Price);
- 		} else {
-			priceInput.val(temporaryPriceInput.val());
-		}
-
-		this.triggerForBaseCurrencyCalc();
-	},
-
-	registerSwitchTTC_HC: function(){
-		var thisInstance = this;
-		var priceInput = this.getUnitPrice();
-		var temporaryPriceInput = priceInput.clone().attr('id', 'temporary_unit_price').insertAfter(priceInput);
-		priceInput.css('display', 'none');
-		$('<span class="span"><label style="float:left;" for="switcc-TTC-HT">TTC</label> <input type="checkbox" id="switcc-TTC-HT"></span>')
-					.css('margin-left', '1em')
-					.css('margin-right', '1em')
-					.insertAfter(temporaryPriceInput);
-		var switchTTC_HT = jQuery('#switcc-TTC-HT');
-
-		switchTTC_HT.on('change', function(){
-			thisInstance.setUnitPrice();
-		});
-
-		temporaryPriceInput.on('change',function(){
-			thisInstance.setUnitPrice();
-		});
-	},
 	
 	registerEvents : function(){
 		this._super();
@@ -562,6 +447,5 @@ Vtiger_Edit_Js("Products_Edit_Js",{
 		this.registerEventForTaxes();
 		this.registerEventForUnitPrice();
 		this.registerRecordPreSaveEvent();
-		this.registerSwitchTTC_HC();
 	}
 })

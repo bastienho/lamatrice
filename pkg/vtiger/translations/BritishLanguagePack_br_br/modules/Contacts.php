@@ -33,13 +33,13 @@ $languageStrings = array(
 	'Mailing State'                => 'Invoice County'              , 
 	'Mailing Zip'                  => 'Invoice Postcode'            , 
 	'Mailing Country'              => 'Invoice Country'             , 
-	'Mailing PO Box'               => 'Mailing P.O. Box'            , 
+	'Mailing Po Box'               => 'Mailing P.O. Box'            , 
 	'Other Street'                 => 'Delivery Street'             , 
 	'Other City'                   => 'Delivery City'               , 
 	'Other State'                  => 'Delivery County'             , 
 	'Other Zip'                    => 'Delivery Postcode'           , 
 	'Other Country'                => 'Delivery Country'            , 
-	'Other PO Box'                 => 'Other P.O. Box'              , 
+	'Other Po Box'                 => 'Other P.O. Box'              , 
 	'Contact Image'                => 'Contact Image'               , 
 	'Mr.'                          => 'Mr.'                         , 
 	'Ms.'                          => 'Ms.'                         , 
@@ -48,10 +48,14 @@ $languageStrings = array(
 	'Prof.'                        => 'Prof.'                       , 
 	'User List'                    => 'User List'                   , 
 	'Contact Id' => 'Contact Id',
+    'Support Start Date'           => 'Support Start Date'          ,
+    'Support End Date'             => 'Support End Date'            ,
+	'LBL_TRANSACTIONS' => 'Transactions',
+
+  'Other Phone' => 'Secondary Phone',
+  'Email' => 'Primary Email',
+  'Secondary Email' => 'Secondary Email',
+
 );
 $jsLanguageStrings = array(
-	'LBL_SYNC_BUTTON'              => 'Synchronize Now'             , // TODO: Review
-	'LBL_SYNCRONIZING'             => 'Synchronizing....'           , // TODO: Review
-	'LBL_NOT_SYNCRONIZED'          => 'You have not synchronized yet', // TODO: Review
-	'LBL_FIELD_MAPPING'            => 'Field Mapping'               , // TODO: Review
 );

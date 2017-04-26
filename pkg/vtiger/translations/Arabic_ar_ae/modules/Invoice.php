@@ -2,13 +2,14 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
 	//DetailView Actions
+    'Invoice' => 'الفواتير',
 	'SINGLE_Invoice' => 'الفواتير',
 	'LBL_EXPORT_TO_PDF' => 'تصدير إلى PDF',
     'LBL_SEND_MAIL_PDF' => 'إرسال البريد الإلكتروني مع PDF',
@@ -41,6 +42,9 @@ $languageStrings = array(
 	'LBL_THIS' => 'هذا',
 	'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'ملغي من النظام، يرجي ازالة او استبدال هذا البند',
 	'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'هذا البند ملغي من النظام، الرجاء ازالة هذا البند',
+	'LBL_NOT_A_BUNDLE' => 'ليس حزمة',
+	'LBL_SUB_PRODUCTS' => 'المنتجات الفرعية',
+	'LBL_ACTION' => 'عمل',
 );
 
 $jsLanguageStrings = array(

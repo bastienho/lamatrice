@@ -17,7 +17,7 @@ $languageStrings = array(
 	// Blocks
 	'LBL_CAMPAIGN_INFORMATION' => 'Campaign Details',
 	'LBL_EXPECTATIONS_AND_ACTUALS' => 'Expectations & Actuals',
-	
+
 	//Field Labels
 	'Campaign Name' => 'Campaign Name',
 	'Campaign No' => 'Campaign No', 
@@ -38,7 +38,7 @@ $languageStrings = array(
 	'Actual Response Count' => 'Actual Response Count',
 	'Actual Sales Count' => 'Actual Sales Count',
 	'Actual ROI' => 'Actual ROI',
-	
+
 	//Added for existing Picklist Entries
 
 	'Webinar'=>'Webinar',
@@ -58,10 +58,14 @@ $languageStrings = array(
 	'Good'=>'Good',
 	'Average'=>'Average',
 	'Poor'=>'Poor',
-	
+
 	// status fields 
 	'--None--'=>'--None--',
 	'Contacted - Successful' => 'Contacted - Successful',
 	'Contacted - Unsuccessful' => 'Contacted - Unsuccessful',
 	'Contacted - Never Contact Again' => 'Contacted - Never Contact Again',
+);
+
+$jsLanguageStrings = array(
+	'JS_APPENDED_TO_EXISTING_LIST' => '%s from the selected list will be appended with the existing list.',
 );

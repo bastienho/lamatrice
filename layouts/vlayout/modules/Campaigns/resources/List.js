@@ -17,7 +17,7 @@ Vtiger_List_Js("Campaigns_List_Js",{},{
 		var selectedIdsElement = jQuery('#selectedIds');
 		var selectedIdsDataAttr = 'selectedIds';
 		var selectedIdsElementDataAttributes = selectedIdsElement.data();
-		var selectedIds = selectedIdsElementDataAttributes === null ? '' : selectedIdsElementDataAttributes[selectedIdsDataAttr];
+		var selectedIds = selectedIdsElementDataAttributes[selectedIdsDataAttr];
 		if (selectedIds == "") {
 			selectedIds = new Array();
 			this.writeSelectedIds(selectedIds);

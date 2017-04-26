@@ -40,14 +40,17 @@ $languageStrings = array(
 	'LBL_CONVERT_LEAD'             => 'Converteer Lead:'            , 
 	'LBL_TRANSFER_RELATED_RECORD'  => 'Verplaats gerelateerde record naar', 
 	'LBL_CONVERT_LEAD_ERROR'       => 'U moet of Organisatie of Contact selecteren om Lead te converteren', 
-	'LBL_CONVERT_LEAD_ERROR_TITLE' => 'Modules Uitgeschakelt'       , 
-	'CANNOT_CONVERT'               => 'Geen Conversie Mogelijk'     , 
-	'LBL_FOLLOWING_ARE_POSSIBLE_REASONS' => 'Hetvolgende is een van de mogelijke redenen', 
 	'LBL_LEADS_FIELD_MAPPING_INCOMPLETE' => 'Niet alle verplichte velden zijn gekoppeld', 
-	'LBL_MANDATORY_FIELDS_ARE_EMPTY' => 'Enkele van de verplichte velden zijn leeg', 
 	'LBL_LEADS_FIELD_MAPPING'      => 'Leads Maatwerk Veldmapping'  , 
-	'LBL_CUSTOM_FIELD_MAPPING'     => 'Bewerk Veld Mapping'         , 
-	'LBL_WEBFORMS'                 => 'Configureer Webformulieren'  , 
+	'LBL_CUSTOM_FIELD_MAPPING'     => 'Lead Conversie data mapping'         , 
+    'LBL_IMAGE_INFORMATION' => 'Profielfoto',
+    'Lead Image' => 'Lead Afbeelding',
+	
+
+  'Phone' => 'Primaire Telefoon',
+  'Secondary Email' => 'Secundaire E-Mail',
+  'Email' => 'Primaire E-Mail',
+
 );
 $jsLanguageStrings = array(
 	'JS_SELECT_CONTACTS'           => 'Selecteer Contacten om verder te gaan', 

@@ -8,6 +8,8 @@
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
+    
+    'Invoice'   =>  'Invoices',
 	//DetailView Actions
 	'SINGLE_Invoice' => 'Invoice',
 	'LBL_EXPORT_TO_PDF' => 'Export to PDF',
@@ -41,6 +43,9 @@ $languageStrings = array(
 	'LBL_THIS' => 'This',
 	'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'is deleted from the system.please remove or replace this item',
 	'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'This line item is deleted from the system,please remove this line items',
+	'LBL_NOT_A_BUNDLE' => 'Not a Bundle',
+	'LBL_SUB_PRODUCTS'	=> 'Sub Products',
+	'LBL_ACTION'	=> 'Action',
 );
 
 $jsLanguageStrings = array(

@@ -132,38 +132,12 @@ jQuery.Class('Settings_Menu_Editor_Js', {}, {
 		}
 	},
 	
-	/* ED141226 */
-	registerChangeRoleEvent : function(container){
-		$("#roleselector").change(function(){
-			var href = document.location.href;
-			href = href
-				.replace(/\&duplicate-roleid=[^\&]*/, '')
-				.replace(/\&roleid=[^\&]*/, '') + '&roleid=' + this.value;
-			document.location.href = href;
-		});
-	},
-	
-	/* ED141226 */
-	registerChangeDuplicateRoleEvent : function(container){
-		$("#duplicateroleselector").change(function(){
-			var href = document.location.href;
-			href = href.replace(/\&duplicate-roleid=[^\&]*/, '') + '&duplicate-roleid=' + this.value;
-			$('#duplicaterole-reload')
-				.attr('href', href)
-				.removeClass('hide');
-		});
-	},
-	
 	registerEvents : function(e){
 		var thisInstance = this;
 		var container = thisInstance.getContainer();
 		var selectElement = thisInstance.getMenuListSelectElement();
 		var select2Element = app.getSelect2ElementFromSelect(selectElement);
 		var form = thisInstance.getForm();
-		
-		/* ED141226 */
-		this.registerChangeRoleEvent(container);
-		this.registerChangeDuplicateRoleEvent(container);
 		
 		//register all select2 Elements
 		app.showSelect2ElementView(container.find('select.select2'), {_maximumSelectionSize: 7, dropdownCss : {'z-index' : 0}});

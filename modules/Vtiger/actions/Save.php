@@ -13,14 +13,33 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 	public function checkPermission(Vtiger_Request $request) {
 		$moduleName = $request->getModule();
 		$record = $request->get('record');
-		if(!Users_Privileges_Model::isPermitted($moduleName, 'Save', $record)) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+
+		$actionName = ($record) ? 'EditView' : 'CreateView';
+		if(!Users_Privileges_Model::isPermitted($moduleName, $actionName, $record)) {
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
 		}
+
+		if(!Users_Privileges_Model::isPermitted($moduleName, 'Save', $record)) {
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
+		}
+
+		if ($record) {
+			$recordEntityName = getSalesEntityType($record);
+			if ($recordEntityName !== $moduleName) {
+				throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
+			}
+		}
+	}
+	
+	public function validateRequest(Vtiger_Request $request) {
+		return $request->validateWriteAccess();
 	}
 
 	public function process(Vtiger_Request $request) {
 		$recordModel = $this->saveRecord($request);
-		if($request->get('relationOperation')) {
+		if ($request->get('returntab_label')){
+			$loadUrl = 'index.php?'.$request->getReturnURL();
+		} else if($request->get('relationOperation')) {
 			$parentModuleName = $request->get('sourceModule');
 			$parentRecordId = $request->get('sourceRecord');
 			$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentRecordId, $parentModuleName);
@@ -28,8 +47,14 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 			$loadUrl = $parentRecordModel->getDetailViewUrl();
 		} else if ($request->get('returnToList')) {
 			$loadUrl = $recordModel->getModule()->getListViewUrl();
+		} else if ($request->get('returnmodule') && $request->get('returnview')) {
+			$loadUrl = 'index.php?'.$request->getReturnURL();
 		} else {
 			$loadUrl = $recordModel->getDetailViewUrl();
+		}
+		$appName = $request->get('appName');
+		if(strlen($appName) > 0){
+			$loadUrl = $loadUrl.$appName;
 		}
 		header("Location: $loadUrl");
 	}
@@ -41,6 +66,12 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 	 */
 	public function saveRecord($request) {
 		$recordModel = $this->getRecordModelFromRequest($request);
+        if($request->get('imgDeleted')) {
+            $imageIds = $request->get('imageid');
+            foreach($imageIds as $imageId) {
+                $status = $recordModel->deleteImage($imageId);
+            }
+        }
 		$recordModel->save();
 		if($request->get('relationOperation')) {
 			$parentModuleName = $request->get('sourceModule');
@@ -48,33 +79,14 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 			$parentRecordId = $request->get('sourceRecord');
 			$relatedModule = $recordModel->getModule();
 			$relatedRecordId = $recordModel->getId();
+			if($relatedModule->getName() == 'Events'){
+				$relatedModule = Vtiger_Module_Model::getInstance('Calendar');
+			}
 
 			$relationModel = Vtiger_Relation_Model::getInstance($parentModuleModel, $relatedModule);
 			$relationModel->addRelation($parentRecordId, $relatedRecordId);
 		}
-		
-		/* ED150207
-		 * modules\Vtiger\views\Edit.php and vlayout\modules\Vtiger\EditViewBlocks.tpl add this <input name="isDuplicateFrom"/>
-		 * Needs <input name="duplicateRelated" value="0|1|Contacts,Invoices,..."/> or override
-		 */
-		// duplicate
-		if( ! $request->get('record') ){
-			if( $request->get('isDuplicateFrom') ) 
-				$duplicateFrom = $request->get('isDuplicateFrom');
-			else
-				$duplicateFrom = preg_replace('/^.*&record=(\d+).*$/','$1',$_SERVER['HTTP_REFERER']);
-			if($duplicateFrom
-			&& (/*true ||*/ $request->get('duplicateRelated'))){
-				$relatedModules = $request->get('duplicateRelated');
-				if(!is_string($relatedModules) || is_numeric($relatedModules[0]) || $relatedModules[0] == 'on' || $relatedModules[0] == 'true')
-					$relatedModules = $relatedModules != '0';
-				else
-					$relatedModules = explode(',',$relatedModules);
-				$moduleName = $request->get('sourceModule');
-				$recordModel->duplicateRelatedRecords($duplicateFrom, $recordModel);
-				//die();
-			}
-		}
+        $this->savedRecordId = $recordModel->getId();
 		return $recordModel;
 	}
 
@@ -84,6 +96,7 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 	 * @return Vtiger_Record_Model or Module specific Record Model instance
 	 */
 	protected function getRecordModelFromRequest(Vtiger_Request $request) {
+
 		$moduleName = $request->getModule();
 		$recordId = $request->get('record');
 
@@ -91,49 +104,27 @@ class Vtiger_Save_Action extends Vtiger_Action_Controller {
 
 		if(!empty($recordId)) {
 			$recordModel = Vtiger_Record_Model::getInstanceById($recordId, $moduleName);
-			$modelData = $recordModel->getData();
 			$recordModel->set('id', $recordId);
 			$recordModel->set('mode', 'edit');
 		} else {
 			$recordModel = Vtiger_Record_Model::getCleanInstance($moduleName);
-			$modelData = $recordModel->getData();
 			$recordModel->set('mode', '');
 		}
+
 		$fieldModelList = $moduleModel->getFields();
 		foreach ($fieldModelList as $fieldName => $fieldModel) {
 			$fieldValue = $request->get($fieldName, null);
+			$fieldDataType = $fieldModel->getFieldDataType();
+			if($fieldDataType == 'time'){
+				$fieldValue = Vtiger_Time_UIType::getTimeValueWithSeconds($fieldValue);
+			}
 			if($fieldValue !== null) {
-				$fieldDataType = $fieldModel->getFieldDataType();
-				if($fieldValue !== null) {
-					if(!is_array($fieldValue)) {
-						$fieldValue = trim($fieldValue);
-						if($fieldDataType === 'time'){
-							$fieldValue = Vtiger_Time_UIType::getTimeValueWithSeconds($fieldValue);
-						}
-					}
-					$recordModel->set($fieldName, $fieldValue);
+				if(!is_array($fieldValue) && $fieldDataType != 'currency') {
+					$fieldValue = trim($fieldValue);
 				}
+				$recordModel->set($fieldName, $fieldValue);
 			}
 		}
 		return $recordModel;
-	}
-	
-	/**
-	 * ED151208
-	 * Modifie la date de création
-	 * 	utilisé par les documents. cf modules\Documents\actions\Save.php
-	 *
-	 */
-	function updateCreateTime(Vtiger_Request $request, $recordModel){
-		if($request->get('createdtime')){
-			$query = "UPDATE vtiger_crmentity
-				SET createdtime = ?
-				WHERE crmid = ?";
-			global $adb;
-			$date = getValidDBInsertDateTimeValue($request->get('createdtime'));
-			if(!$date) return;
-			$recordId = $recordModel->getId();
-			$adb->pquery($query, array($date, $recordId));
-		}
 	}
 }

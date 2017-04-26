@@ -20,14 +20,11 @@ jQuery.Class("Settings_Vtiger_ConfigEditor_Js",{},{
 		jQuery.each(data, function(key, value) {
 			updatedFields[key] = value;
 		})
-		//ED150521 config_domain
-		var config_domain = this.getConfigDomain(form);
 		
 		var params = {
 			'module' : app.getModuleName(),
 			'parent' : app.getParentModuleName(),
 			'action' : 'ConfigEditorSaveAjax',
-			'config_domain' : config_domain,
 			'updatedFields' : JSON.stringify(updatedFields)
 		}
 		AppConnector.request(params).then(
@@ -39,20 +36,6 @@ jQuery.Class("Settings_Vtiger_ConfigEditor_Js",{},{
 			}
 		);
 		return aDeferred.promise();
-	},
-	
-	/* ED150521
-	 *
-	 */
-	getConfigDomain : function(form){
-		//ED150521 config_domain
-		var detailUrl = form.data('detailUrl')
-		, matches = /&config_domain=([^&]+)/.exec(detailUrl)
-		, config_domain = matches === null ? '' : matches[1]
-		;
-		return config_domain;
-		//console.log(detailUrl);
-		//console.log(config_domain);
 	},
 	
 	/*

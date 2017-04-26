@@ -61,18 +61,27 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 			$params[] = $dateFilter['start'];
 			$params[] = $dateFilter['end'];
 		}
-
-		$result = $db->pquery('SELECT COUNT(*) count, sales_stage FROM vtiger_potential
+        if(vtws_isRoleBasedPicklist('sales_stage')) {
+            $currentUserModel = Users_Record_Model::getCurrentUserModel();
+            $picklistvaluesmap = getAssignedPicklistValues("sales_stage",$currentUserModel->getRole(), $db);
+            unset($picklistvaluesmap['Closed Won']);unset($picklistvaluesmap['Closed Lost']);
+            foreach($picklistvaluesmap as $picklistValue) $params[] = $picklistValue;
+        }
+        
+		$result = $db->pquery('SELECT COUNT(*) count, vtiger_potential.sales_stage FROM vtiger_potential
 						INNER JOIN vtiger_crmentity ON vtiger_potential.potentialid = vtiger_crmentity.crmid
-						AND deleted = 0 '.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()). $ownerSql . $dateFilterSql . ' AND sales_stage NOT IN ("Closed Won", "Closed Lost")
-							GROUP BY sales_stage ORDER BY count desc', $params);
+						INNER JOIN vtiger_sales_stage ON vtiger_potential.sales_stage = vtiger_sales_stage.sales_stage 
+                        AND deleted = 0 '.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()). $ownerSql . $dateFilterSql . ' AND vtiger_potential.sales_stage IN ('.  generateQuestionMarks($picklistvaluesmap).') 
+					    GROUP BY sales_stage ORDER BY vtiger_sales_stage.sortorderid', $params);
 		
 		$response = array();
 		for($i=0; $i<$db->num_rows($result); $i++) {
-			$saleStage = $db->query_result($result, $i, 'sales_stage');
-			$response[$i][0] = $saleStage;
+            // Dashboard showing UTF8 characters as encoded values
+			$saleStage = decode_html($db->query_result($result, $i, 'sales_stage'));
+			$response[$i][0] = vtranslate($saleStage, $this->getName());
 			$response[$i][1] = $db->query_result($result, $i, 'count');
 			$response[$i][2] = vtranslate($saleStage, $this->getName());
+            $response[$i]['link'] = $saleStage;
 		}
 		return $response;
 	}
@@ -86,21 +95,31 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 		$db = PearDatabase::getInstance();
 		//TODO need to handle security
 		$params = array();
-		$result = $db->pquery('SELECT COUNT(*) AS count, last_name, vtiger_potential.sales_stage FROM vtiger_potential
-						INNER JOIN vtiger_crmentity ON vtiger_potential.potentialid = vtiger_crmentity.crmid
-						INNER JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid AND vtiger_users.status="ACTIVE"
-						AND vtiger_crmentity.deleted = 0'.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()).'
+        if(vtws_isRoleBasedPicklist('sales_stage')) {
+            $currentUserModel = Users_Record_Model::getCurrentUserModel();
+            $picklistvaluesmap = getAssignedPicklistValues("sales_stage",$currentUserModel->getRole(), $db);
+            foreach($picklistvaluesmap as $picklistValue) $params[] = $picklistValue;
+        }
+		$result = $db->pquery('SELECT COUNT(*) AS count, concat(first_name," ",last_name) as last_name, vtiger_potential.sales_stage, vtiger_groups.groupname FROM vtiger_potential
+						INNER JOIN vtiger_crmentity ON vtiger_potential.potentialid = vtiger_crmentity.crmid AND vtiger_crmentity.deleted = 0
+						LEFT JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid AND vtiger_users.status="ACTIVE"
+						LEFT JOIN vtiger_groups ON vtiger_groups.groupid=vtiger_crmentity.smownerid'.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()).'
 						INNER JOIN vtiger_sales_stage ON vtiger_potential.sales_stage =  vtiger_sales_stage.sales_stage 
-						GROUP BY smownerid, sales_stage ORDER BY vtiger_sales_stage.sortorderid', $params);
+                        WHERE vtiger_potential.sales_stage IN ('.  generateQuestionMarks($picklistvaluesmap).') GROUP BY smownerid, sales_stage ORDER BY vtiger_sales_stage.sortorderid', $params);
 
 		$response = array();
 		for($i=0; $i<$db->num_rows($result); $i++) {
 			$row = $db->query_result_rowdata($result, $i);
-			$response[$i]['count'] = $row['count'];
-			$response[$i]['last_name'] = $row['last_name'];
-			$response[$i]['sales_stage'] = $row['sales_stage'];
-			//$response[$i][2] = $row['']
- 		}
+			$lastName = decode_html($row['last_name']);
+			if(!$lastName) {
+				$lastName = decode_html($row['groupname']);
+			}
+            $response[$i]['count'] = $row['count'];
+            $response[$i]['last_name'] = $lastName;
+            $response[$i]['link'] = decode_html($row['sales_stage']);
+            $response[$i]['sales_stage'] = vtranslate(decode_html($row['sales_stage']),  $this->getName());
+            //$response[$i][2] = $row['']
+        }
 		return $response;
 	}
 
@@ -112,15 +131,25 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 		$db = PearDatabase::getInstance();
 		//TODO need to handle security
 		$params = array();
-		$result = $db->pquery('SELECT sum(amount) AS amount, last_name, vtiger_potential.sales_stage FROM vtiger_potential
+        if(vtws_isRoleBasedPicklist('sales_stage')) {
+            $currentUserModel = Users_Record_Model::getCurrentUserModel();
+            $picklistvaluesmap = getAssignedPicklistValues("sales_stage",$currentUserModel->getRole(), $db);
+            unset($picklistvaluesmap['Closed Won']);unset($picklistvaluesmap['Closed Lost']);
+            foreach($picklistvaluesmap as $picklistValue) $params[] = $picklistValue;
+        }
+		$result = $db->pquery('SELECT sum(amount) AS amount, concat(first_name," ",last_name) as last_name, vtiger_potential.sales_stage FROM vtiger_potential
 						INNER JOIN vtiger_crmentity ON vtiger_potential.potentialid = vtiger_crmentity.crmid
 						INNER JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid AND vtiger_users.status="ACTIVE"
 						AND vtiger_crmentity.deleted = 0 '.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()).
 						'INNER JOIN vtiger_sales_stage ON vtiger_potential.sales_stage =  vtiger_sales_stage.sales_stage 
-						WHERE vtiger_potential.sales_stage NOT IN ("Closed Won", "Closed Lost")
+						WHERE vtiger_potential.sales_stage IN ('.generateQuestionMarks($picklistvaluesmap).') 
 						GROUP BY smownerid, sales_stage ORDER BY vtiger_sales_stage.sortorderid', $params);
 		for($i=0; $i<$db->num_rows($result); $i++) {
 			$row = $db->query_result_rowdata($result, $i);
+            $row['link'] = decode_html($row['sales_stage']);
+			$row['amount'] = CurrencyField::convertToUserFormat($row['amount'], null, false, true);
+            $row['last_name'] = decode_html($row['last_name']);
+            $row['sales_stage'] = vtranslate(decode_html($row['sales_stage']),  $this->getName());
 			$data[] = $row;
 		}
 		return $data;
@@ -137,18 +166,20 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 		$params[] = 'Closed Won';
 		if(!empty($dateFilter)) {
 			$dateFilterSql = ' AND createdtime BETWEEN ? AND ? ';
-			//client is not giving time frame so we are appending it
-			$params[] = $dateFilter['start']. ' 00:00:00';
-			$params[] = $dateFilter['end']. ' 23:59:59';
+			//appended time frame and converted to db time zone in showwidget.php
+			$params[] = $dateFilter['start'];
+			$params[] = $dateFilter['end'];
 		}
 		
-		$result = $db->pquery('SELECT sum(amount) amount, last_name,vtiger_users.id as id,DATE_FORMAT(closingdate, "%d-%m-%Y") AS closingdate  FROM vtiger_potential
+		$result = $db->pquery('SELECT sum(amount) amount, concat(first_name," ",last_name) as last_name,vtiger_users.id as id,DATE_FORMAT(closingdate, "%d-%m-%Y") AS closingdate  FROM vtiger_potential
 						INNER JOIN vtiger_crmentity ON vtiger_potential.potentialid = vtiger_crmentity.crmid
 						INNER JOIN vtiger_users ON vtiger_users.id=vtiger_crmentity.smownerid AND vtiger_users.status="ACTIVE"
 						AND vtiger_crmentity.deleted = 0 '.Users_Privileges_Model::getNonAdminAccessControlQuery($this->getName()).'WHERE sales_stage = ? '.' '.$dateFilterSql.' GROUP BY smownerid', $params);
 		$data = array();
 		for($i=0; $i<$db->num_rows($result); $i++) {
 			$row = $db->query_result_rowdata($result, $i);
+			$row['amount'] = CurrencyField::convertToUserFormat($row['amount'], null, false, true);
+                        $row['last_name'] = decode_html($row['last_name']);
 			$data[] = $row;
 		}
 		return $data;
@@ -199,8 +230,8 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 		if(!empty($dateFilter)) {
 			$dateFilterSql = ' AND createdtime BETWEEN ? AND ? ';
 			//client is not giving time frame so we are appending it
-			$params[] = $dateFilter['start']. ' 00:00:00';
-			$params[] = $dateFilter['end']. ' 23:59:59';
+			$params[] = $dateFilter['start'];
+			$params[] = $dateFilter['end'];
 		}
 		
 		$result = $db->pquery('SELECT forecast_amount, DATE_FORMAT(closingdate, "%m-%d-%Y") AS closingdate FROM vtiger_potential
@@ -225,13 +256,13 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 	 * @param Vtiger_Module_Model $relatedModule
 	 * @return <String>
 	 */
-	public function getRelationQuery($recordId, $functionName, $relatedModule) {
+	public function getRelationQuery($recordId, $functionName, $relatedModule, $relationId) {
 		if ($functionName === 'get_activities') {
 			$userNameSql = getSqlForNameInDisplayFormat(array('first_name' => 'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
 
 			$query = "SELECT CASE WHEN (vtiger_users.user_name not like '') THEN $userNameSql ELSE vtiger_groups.groupname END AS user_name,
 						vtiger_crmentity.*, vtiger_activity.activitytype, vtiger_activity.subject, vtiger_activity.date_start, vtiger_activity.time_start,
-						vtiger_activity.recurringtype, vtiger_activity.due_date, vtiger_activity.time_end, vtiger_seactivityrel.crmid AS parent_id,
+						vtiger_activity.recurringtype, vtiger_activity.due_date, vtiger_activity.time_end, vtiger_activity.visibility, vtiger_seactivityrel.crmid AS parent_id,
 						CASE WHEN (vtiger_activity.activitytype = 'Task') THEN (vtiger_activity.status) ELSE (vtiger_activity.eventstatus) END AS status
 						FROM vtiger_activity
 						INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = vtiger_activity.activityid
@@ -249,7 +280,7 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 				$query = appendFromClauseToQuery($query, $nonAdminQuery);
 			}
 		} else {
-			$query = parent::getRelationQuery($recordId, $functionName, $relatedModule);
+			$query = parent::getRelationQuery($recordId, $functionName, $relatedModule, $relationId);
 		}
 
 		return $query;
@@ -263,7 +294,10 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 		//$currentUser = Users_Record_Model::getCurrentUserModel();
 		$db = PearDatabase::getInstance();
 
-		$picklistValues = Vtiger_Util_Helper::getPickListValues('sales_stage');
+        if(vtws_isRoleBasedPicklist('sales_stage')) {
+            $currentUserModel = Users_Record_Model::getCurrentUserModel();
+            $picklistValues = getAssignedPicklistValues("sales_stage",$currentUserModel->getRole(), $db);
+        }
 		$data = array();
 		foreach ($picklistValues as $key => $picklistValue) {
 			$result = $db->pquery('SELECT SUM(amount) AS amount FROM vtiger_potential
@@ -274,8 +308,9 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 				$values = array();
 				$amount = $db->query_result($result, $i, 'amount');
 				if(!empty($amount)){
-					$values[0] = $db->query_result($result, $i, 'amount');
+					$values[0] = CurrencyField::convertToUserFormat($db->query_result($result, $i, 'amount'), null, false, true);
 					$values[1] = vtranslate($picklistValue, $this->getName());
+                    $values['link'] = $picklistValue;
 					$data[] = $values;
 				}
 				
@@ -318,13 +353,39 @@ class Potentials_Module_Model extends Vtiger_Module_Model {
 	 * @param <String> $parentModule - parent module name
 	 * @return <String> - query
 	 */
-	public function getSearchRecordsQuery($searchValue, $parentId=false, $parentModule=false) {
+	public function getSearchRecordsQuery($searchValue,$searchFields, $parentId=false, $parentModule=false) {
 		if($parentId && in_array($parentModule, array('Accounts', 'Contacts'))) {
-			$query = "SELECT * FROM vtiger_crmentity
+			$query = "SELECT ".implode(',',$searchFields)." FROM vtiger_crmentity
 						INNER JOIN vtiger_potential ON vtiger_potential.potentialid = vtiger_crmentity.crmid
 						WHERE deleted = 0 AND vtiger_potential.related_to = $parentId AND label like '%$searchValue%'";
 			return $query;
 		}
 		return parent::getSearchRecordsQuery($parentId, $parentModule);
 	}
+    
+    /**
+	 * Function returns Settings Links
+	 * @return Array
+	 */
+	public function getSettingLinks() {
+		$currentUserModel = Users_Record_Model::getCurrentUserModel();
+		$settingLinks = parent::getSettingLinks();
+		
+		if($currentUserModel->isAdminUser()) {
+			$settingLinks[] = array(
+					'linktype' => 'LISTVIEWSETTING',
+					'linklabel' => 'LBL_CUSTOM_FIELD_MAPPING',
+					'linkurl' => 'index.php?parent=Settings&module=Potentials&view=MappingDetail',
+					'linkicon' => '');
+			
+		}
+		return $settingLinks;
+	}
+    
+    /*
+     * Function to get supported utility actions for a module
+     */
+    function getUtilityActionsNames() {
+        return array('Import', 'Export', 'DuplicatesHandling');
+    }
 }

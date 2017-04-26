@@ -39,6 +39,7 @@ $languageStrings = array(
 	'LBL_SEVERITY'                 => 'Severity'                    , 
 	'LBL_CONVERT_FAQ'              => 'Convert to FAQ'              , 
 	'LBL_RELATED_TO'               => 'Related To'                  ,
+    'Related To'                   => 'Related to'                  ,
 
 	//added to support i18n in ticket mails
 	'Ticket ID' => 'Ticket ID',
@@ -83,4 +84,10 @@ $languageStrings = array(
 	'LBL_MAIL_SENT' => 'Mail has been sent to your mail id with the customer portal login details',
 	'LBL_ALTBODY' => 'This is the body in plain text for non-HTML mail clients',
 	'HelpDesk ID' => 'Ticket ID',
+
+  'Contact Name' => 'Contact Name',
+  'LBL_ADD_DOCUMENT' => 'Add Document',
+  'LBL_OPEN_TICKETS' => 'Open Tickets',
+  'LBL_CREATE_TICKET' => 'Create Ticket',
+
 );

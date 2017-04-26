@@ -13,8 +13,6 @@ class VTBatchEventTrigger extends VTEventTrigger{
 	function trigger($data){
 		$adb = $this->adb;
 
-var_dump($data);
-var_dump($this);
 		$eventInfos = self::lookupCache($this->name);
 		if($eventInfos === false) {
 			$eventInfos = self::getActiveEventInfos($this->adb, $this->name);

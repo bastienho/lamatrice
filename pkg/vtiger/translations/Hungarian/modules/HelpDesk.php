@@ -39,7 +39,7 @@ $languageStrings = array(
 	'LBL_SEVERITY'                 => 'Komolyság'                  , 
 	'LBL_CONVERT_FAQ'              => 'TudásTár bejegyzéssé átalakít', 
 	'LBL_RELATED_TO'               => 'Kapcsolódik'                ,
-
+    'Related To'                   => 'Kapcsolódóan'                ,
 	//added to support i18n in ticket mails
 	'Hi' => 'Helló',
 	'Dear' => 'Kedves',
@@ -82,4 +82,11 @@ $languageStrings = array(
 	'Ticket ID' => 'Kérés AZ',
 	'LBL_RESPONSE_TO_TICKET_NUMBER' => 'Válasz a Ticket Number',
 	'LBL_TICKET_NUMBER' => 'Ticket Number',
+
+  'Contact Name' => 'Kapcsolattartó Neve',
+  'LBL_SUBJECT' => 'Tárgy : ',
+  'LBL_ADD_DOCUMENT' => 'Az Új Dokumentum',
+  'LBL_OPEN_TICKETS' => 'Nyitott Jegyek',
+  'LBL_CREATE_TICKET' => 'Hozzon Létre Jegy',
+
 );

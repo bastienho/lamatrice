@@ -24,14 +24,8 @@
 			<div>
 				<span><strong>{vtranslate('LBL_EDIT_LIST_PRICE',$MODULE)}</strong></span>
 				&nbsp;:&nbsp;
-				<input class="input-medium" type="text" name="currentPrice" value="{$CURRENT_PRICE}" data-validation-engine="validate[required,funcCall[Vtiger_Currency_Validator_Js.invokeValidation]]" 
-						   data-decimal-seperator='{$USER_MODEL->get('currency_decimal_separator')}' data-group-seperator='{$USER_MODEL->get('currency_grouping_separator')}' />
-				&nbsp;
-				<select class="input-medium" name="currentPriceUnit">
-					{foreach item=PRICE_UNIT from=$PRICE_UNITS}
-						<option value="{$PRICE_UNIT}" {if $PRICE_UNIT eq $CURRENT_PRICE_UNIT}selected="selected"{/if}>{vtranslate($PRICE_UNIT, $MODULE)}</option>
-					{/foreach}
-				</select>
+				<input type="text" name="currentPrice" value="{$CURRENT_PRICE}" data-validation-engine="validate[required,funcCall[Vtiger_Currency_Validator_Js.invokeValidation]]" 
+						   data-decimal-separator='{$USER_MODEL->get('currency_decimal_separator')}' data-group-separator='{$USER_MODEL->get('currency_grouping_separator')}' />
 			</div>
 		</div>
 		{include file='ModalFooter.tpl'|@vtemplate_path:$MODULE}

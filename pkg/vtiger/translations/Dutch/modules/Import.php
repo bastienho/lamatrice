@@ -69,4 +69,35 @@ $languageStrings = array(
 	'LBL_DETAILS'                  => 'Details'                     , // TODO: Review
 	'skipped'                      => 'Skipped Records'             , // TODO: Review
 	'failed'                       => 'Failed Records'              , // TODO: Review
+    
+        'LBL_IMPORT_LINEITEMS_CURRENCY'=> 'Valuta (Artikelen)',
+
+	'LBL_SKIP_THIS_STEP' => 'Sla deze stap over',
+	'LBL_UPLOAD_ICS' => 'Upload ICS File',
+	'LBL_ICS_FILE' => 'ICS File',
+	'LBL_IMPORT_FROM_ICS_FILE' => 'Importeren uit ICS file',
+	'LBL_SELECT_ICS_FILE' => 'Kies een ICS-bestand',
+
+  'LBL_USE_SAVED_MAPS' => 'Gebruik Opgeslagen Kaarten',
+  'LBL_IMPORT_MAP_FIELDS' => 'Kaart van de coloumns te CRM-velden',
+  'LBL_UPLOAD_CSV' => 'Upload CSV-Bestand',
+  'LBL_UPLOAD_VCF' => 'VCF-Bestand uploaden',
+  'LBL_DUPLICATE_HANDLING' => 'Dubbele Behandeling',
+  'LBL_FIELD_MAPPING' => 'Veld Mapping',
+  'LBL_IMPORT_FROM_CSV_FILE' => 'Importeren van een CSV-bestand',
+  'LBL_SELECT_IMPORT_FILE_FORMAT' => 'Waar wil je importeren uit ?',
+  'LBL_CSV_FILE' => 'CSV-Bestand',
+  'LBL_VCF_FILE' => 'VCF-Bestand',
+  'LBL_GOOGLE' => 'Google',
+  'LBL_IMPORT_COMPLETED' => 'Import Voltooid',
+  'LBL_IMPORT_SUMMARY' => 'Importeren overzicht',
+  'LBL_DELETION_COMPLETED' => 'Verwijdering Voltooid',
+  'LBL_TOTAL_RECORDS_SCANNED' => 'Totaal aantal records gescand',
+  'LBL_SKIP_BUTTON' => 'Overslaan',
+  'LBL_DUPLICATE_RECORD_HANDLING' => 'Dubbele record behandeling',
+  'LBL_IMPORT_FROM_VCF_FILE' => 'Importeren uit een VCF-bestand',
+  'LBL_SELECT_VCF_FILE' => 'Selecteer VCF-bestand',
+  'LBL_DONE_BUTTON' => 'Gedaan',
+  'LBL_DELETION_SUMMARY' => 'Verwijderen samenvatting',
+
 );

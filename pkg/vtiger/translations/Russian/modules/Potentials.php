@@ -10,8 +10,8 @@
 $languageStrings = array(
 	'Potentials'                   => 'Сделки'                , 
 	'SINGLE_Potentials'            => 'Сделка'                , 
-	'LBL_ADD_RECORD'               => 'Add Opportunity'             , // TODO: Review
-	'LBL_RECORDS_LIST'             => 'Opportunities List'          , // TODO: Review
+	'LBL_ADD_RECORD'               => 'Добавить Возможность'             , 
+	'LBL_RECORDS_LIST'             => 'Возможности Список'          , 
 	'LBL_OPPORTUNITY_INFORMATION'  => 'Информация:'       , 
 	'Potential No'                 => 'Сделка №'            , 
 	'Amount'                       => 'Сумма'                  , 
@@ -19,12 +19,12 @@ $languageStrings = array(
 	'Sales Stage'                  => 'Стадия'                , 
 	'Probability'                  => 'Вероятность (%)'  , 
 	'Campaign Source'              => 'Кампания Источник', 
-	'Forecast Amount'              => 'Forecast Amount'             , // TODO: Review
-	'Funnel'                       => 'Sales Funnel'                , // TODO: Review
-	'Potentials by Stage'          => 'Opportunities by Stage'      , // TODO: Review
-	'Total Revenue'                => 'Revenue by Salesperson'      , // TODO: Review
-	'Top Potentials'               => 'Top Opportunities'           , // TODO: Review
-	'Forecast'                     => 'Sales Forecast'              , // TODO: Review
+	'Forecast Amount'              => 'Взвешенная Выручка'             , 
+	'Funnel'                       => 'Воронка продаж'                , 
+	'Potentials by Stage'          => 'Возможности по сцене'      , 
+	'Total Revenue'                => 'Выручка по продавцам'      , 
+	'Top Potentials'               => 'Топ Возможности'           , 
+	'Forecast'                     => 'Прогноз продаж'              , 
 	'Prospecting'                  => 'Переговоры'        , 
 	'Qualification'                => 'Оценка'                , 
 	'Needs Analysis'               => 'Нуждается в анализе', 
@@ -38,7 +38,26 @@ $languageStrings = array(
 	'--None--'                     => '--Нет--'                  , 
 	'Existing Business'            => 'Существующий Бизнес', 
 	'New Business'                 => 'Новый Бизнес'     , 
-	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Expected to close on'        , // TODO: Review
-	'LBL_RELATED_CONTACTS'         => 'Related Contacts'            , // TODO: Review
-	'LBL_RELATED_PRODUCTS'         => 'Related Products'            , // TODO: Review
+	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Ожидается, будет завершена на'        , 
+	'LBL_RELATED_CONTACTS'         => 'Связанные Контакты'            , 
+	'LBL_RELATED_PRODUCTS'         => 'Похожие продукты'            , 
+    'Related To'                   => 'Название организации',
+    'Type'                         => 'Тип'                      , 
+    
+    //Convert Potentials
+    'LBL_CONVERT_POTENTIAL' => 'Преобразование возможности',
+    'LBL_POTENTIALS_FIELD_MAPPING' => 'Возможности Поле Mapping',
+    'LBL_CONVERT_POTENTIALS_ERROR' => 'Вы должны включить проект для преобразования возможность',
+    'LBL_POTENTIALS_FIELD_MAPPING_INCOMPLETE' => 'Возможности Поле Mapping является неполной (Настройки> Менеджер модулей> Возможности> Возможности Поле Mapping)',
+	'LBL_CREATE_PROJECT' => 'Создать проект',
+    
+    //Potentials Custom Field Mapping
+	'LBL_CUSTOM_FIELD_MAPPING'=> 'Возможность картографический проект',
+
+  'Contact Name' => 'Имя Контакта',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SELECT_PROJECT_TO_CONVERT_LEAD' => 'Преобразование требует выбора проекта',
 );

@@ -123,6 +123,7 @@ Vtiger_Detail_Js("Leads_Detail_Js",{
 					instance.checkingModuleSelection(element);
 				});
 				instance.registerForReferenceField();
+				instance.registerForDisableCheckEvent();
 				instance.registerConvertLeadEvents();
 				instance.getConvertLeadForm().validationEngine(app.validationEngineOptions);
 				instance.registerConvertLeadSubmit();
@@ -159,7 +160,35 @@ Vtiger_Detail_Js("Leads_Detail_Js",{
 			jQuery('#AccountsModule').attr('readonly', 'readonly');
 		}
 	},
-	
+	registerForDisableCheckEvent : function() {
+		var instance = this;
+		var container = this.getConvertLeadContainer();
+		var referenceField = jQuery('.reference', container);
+		var oppAccMandatory = jQuery('#oppAccMandatory').val();
+		var oppConMandatory = jQuery('#oppConMandatory').val();
+		var conAccMandatory = jQuery('#conAccMandatory').val();
+		
+		jQuery('#PotentialsModule').on('click',function(){
+			if((jQuery('#PotentialsModule').is(':checked')) && oppAccMandatory) {
+				jQuery('#AccountsModule').attr({'disabled':'disabled','checked':'checked'});
+			}else if(!conAccMandatory || !jQuery('#ContactsModule').is(':checked')) {
+				jQuery('#AccountsModule').removeAttr('disabled');
+			}
+			if((jQuery('#PotentialsModule').is(':checked')) && oppConMandatory) {
+				jQuery('#ContactsModule').attr({'disabled':'disabled','checked':'checked'});
+			}else {
+				jQuery('#ContactsModule').removeAttr('disabled');
+			} 
+		});
+		jQuery('#ContactsModule').on('click',function(){
+			if((jQuery('#ContactsModule').is(':checked')) && conAccMandatory) {
+				jQuery('#AccountsModule').attr({'disabled':'disabled','checked':'checked'});
+			}else if(!oppAccMandatory || !jQuery('#PotentialsModule').is(':checked')) {
+				jQuery('#AccountsModule').removeAttr('disabled');
+			} 
+		});
+	},
+
 	/*
 	 * function to register Convert Lead Events
 	 */
@@ -304,6 +333,41 @@ Vtiger_Detail_Js("Leads_Detail_Js",{
 			this.convertLeadContainer = jQuery('#leadAccordion');
 		}
 		return this.convertLeadContainer;
-	}
+	} ,
+    
+    updateConvertLeadvalue : function() {
+		var thisInstance = Vtiger_Detail_Js.getInstance();
+		var detailContentsHolder = thisInstance.getContentHolder();
+                detailContentsHolder.on(thisInstance.fieldUpdatedEvent,"input,select",function(e, params){
+                        var elem = jQuery(e.currentTarget);
+                        var fieldName = elem.attr("name");
+                        var ajaxnewValue = params.new;
+                        
+                        if(!(jQuery.isEmptyObject(Leads_Detail_Js.cache))){
+                            var sampleCache = jQuery(Leads_Detail_Js.cache);
+                            var contextElem = sampleCache.find('[name="'+fieldName+'"]');
+                           
+                                            if(elem.is("select")) {
+                                             var oldvalue= contextElem.val();
+                                             contextElem.find('option[value="'+oldvalue+'"]').removeAttr("selected");
+                                             contextElem.find('option[value="'+ ajaxnewValue +'"]').attr("selected","selected");
+
+                                             contextElem.trigger("liszt:updated");
+
+                                            }
+                                          else{
+                                              contextElem.attr("value",ajaxnewValue);
+                                              }
+                           
+                            Leads_Detail_Js.cache = sampleCache;
+                     }
+		});
+                        
+	},
+    
+    registerEvents : function(){
+        this._super();
+        this.updateConvertLeadvalue();
+    }
 	
 });

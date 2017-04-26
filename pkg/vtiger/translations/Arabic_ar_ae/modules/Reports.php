@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -31,7 +31,8 @@ $languageStrings = array(
 	'LBL_DUPLICATES_EXIST' => 'اسم التقرير موجود مسبقا',
 	'LBL_FOLDERS_LIST' => 'قائمة المجلدات',
 	'LBL_DENIED_REPORTS' => 'التقارير المرفوضة',
-	'LBL_NO_OF_RECORDS' => 'عدد السجلات',
+	'LBL_NO_OF_RECORDS' => 'مجموع السجلات',
+	'LBL_MORE_RECORDS_TXT' => 'وتظهر السجلات فقط 500 أدناه. يرجى تصدير لمعرفة جميع السجلات',
 	//ListView Actions
 	'LBL_ADD_RECORD' => 'اضافة تقرير',
 	'LBL_ADD_FOLDER' => 'اضافة مجلد',
@@ -68,7 +69,7 @@ $languageStrings = array(
 	'LBL_HIGHEST_VALUE' => 'اعلى قيمة',
 
 	//Step3 Strings
-	'LBL_GENERATE_REPORT' => 'توليد تقرير',
+	'LBL_GENERATE_REPORT' => 'حفظ وإنشاء تقرير',
 
 	//DetailView
 	'LBL_SUM' => 'مجموع',
@@ -143,9 +144,107 @@ $languageStrings = array(
 	'LBL_LIMIT_EXCEEDED' => 'فقط ١٠٠٠ تسجيل يظهر‫.‬ استخدم تصدير csv او Ecxel حتى تتمكن من مشاهدة التقارير',
 	'LBL_TOP' => 'اعلى',
 	'LBL_ALL_REPORTS' => 'كل التقارير',
-	'LBL_CALCULATION_CONVERSION_MESSAGE' => 'العمليات الحسابية تعتمد على العملة المختارة CRM',
+	'LBL_CALCULATION_CONVERSION_MESSAGE' => 'وتستند حساب على العملة الأساسية لإدارة علاقات العملاء الخاص',
+
+    //Schedule Reports
+    'LBL_CREATING_REPORT'	=>	"إنشاء تقرير",
+	'LBL_EDITING_REPORT'	=>	"تحرير تقرير",
+	'LBL_SCHEDULE_REPORTS'	=>	"تقارير الجدول الزمني",
+	'LBL_AT_TIME'	=>	"في وقت",
+	'LBL_DAILY'	=>	"يوميا",
+	'LBL_WEEKLY'	=>	"الأسبوعية",
+	'LBL_MONTHLY_BY_DATE'	=>	"شهرية حسب التاريخ",
+	'LBL_YEARLY'	=>	"سنويا",
+	'LBL_SPECIFIC_DATE'	=>	"على تاريخ محدد",
+	'LBL_CHOOSE_DATE'	=>	"اختيار التاريخ",
+	'LBL_ON_THESE_DAYS'	=>	"على هذه الأيام",
+	'LBL_SELECT_MONTH_AND_DAY'	=>	"حدد الشهر والتسجيل",
+	'LBL_SELECTED_DATES'	=>	"تواريخ مختارة",
+	'LBL_EXCEEDING_MAXIMUM_LIMIT'	=>	"تجاوز الحد الأقصى",
+	'LBL_NEXT_TRIGGER_TIME'	=>	"في المرة القادمة الزناد على",
+	'LBL_RUN_REPORT'	=>	"تشغيل التقرير",
+	'LBL_SELECT_RECIEPIENTS'	=>	"تحديد المستلمين",
+	'LBL_SPECIFIC_EMAIL_ADDRESS'	=>	"ترسل إلى البريد الإلكتروني معينة",
+
+    //Summary/Pivot Reports
+    'LBL_CREATING_PIVOT_REPORT' => 'إنشاء تقرير المحورية',
+    'LBL_EDITING_PIVOT_REPORT' => 'تحرير تقرير المحورية',
+    'LBL_SELECT_PIVOT_FIELDS' => 'حدد الحقول المحورية',
+    'LBL_SELECT_ROWS' => 'حدد الصفوف',
+    'LBL_SELECT_DATA_FIELDS' => 'حدد حقول البيانات',
+    'LBL_ADD_ROWS' => 'إضافة الصفوف',
+    'LBL_ADD_COLUMNS' => 'إضافة أعمدة',
+    'LBL_ADD_DATA_FIELDS' => 'إضافة حقول البيانات',
+    'LBL_PIVOT_FIELDS' => 'اختيار الحقول المحورية',
+    'LBL_RECORD_COUNT' => 'عدد قياسي',
+
+    'LBL_SELECT_PIVOT_FIELDS_WARNING' => 'تحذير: الرجاء تحديد حقل صف واحد على الأقل، حقل عمود وحقل البيانات',
+    'LBL_PIVOT_DATA_FIELDS_WARNING' => 'تحذير: في العمود البيانات - وظائف التجميع (خلاصة القول، متوسط، دقيقة والحد الأقصى) لا ينبغي تكرار.',
+    'LBL_MODIFY_CONDITIONS' => 'تعديل الشروط',
+    'LBL_PIVOT_PREVIEW_EX' => 'محور تقرير معاينة (مثال)',
+
+	// charts labels
+	'LBL_SELECT_CHART_TYPE'=> 'حدد نوع المخطط',
+	'LBL_CLICK_THROUGH_NOT_AVAILABLE'=> 'من خلال النقر غير متوفرة كما كنت قد اخترت وحدة أكثر من واحد',
+	'LBL_TOTAL_SUM_OF'=> 'مجموع الكلي لل',
+	'LBL_AVG_OF'=> 'المتوسط',
+	'LBL_MIN_OF'=> 'الحد الأدنى من',
+	'LBL_MAX_OF'=>  'الحد الأقصى ل',
+	'LBL_RECORD_COUNT'=> 'عدد قياسي',
+	'LBL_PIE_CHART'=> 'فطيرة الرسم البياني',
+	'LBL_VERTICAL_BAR_CHART'=> 'الرأسية بار الرسم البياني',
+	'LBL_HORIZONTAL_BAR_CHART'=> 'الأفقي بار الرسم البياني',
+	'LBL_LINE_CHART'=> 'خط الرسم البياني',
+	'LBL_SELECT_CHART'=> 'حدد الرسم البياني',
+	'LBL_CREATING_CHART_REPORT'=> 'تقرير خلق الرسم البياني',
+	'LBL_EDITING_CHART_REPORT'=> 'تحرير تقرير الرسم البياني',
+	'LBL_GENERATE_CHART'=> 'توليد الرسم البياني',
+	'LBL_SELECT_GROUP_BY_FIELD'=> 'تحديد المجموعة حسب الحقل',
+	'LBL_SELECT_DATA_FIELD'=> 'حدد حقول البيانات',
+	'LBL_MODIFY_CONDITION'=> 'تعديل الشروط',
+	'LBL_PLEASE_SELECT_ATLEAST_ONE_GROUP_FIELD_AND_DATA_FIELD'=> 'الرجاء اختيار حقل واحد على الأقل Groupby وحقل بيانات واحدة.',
+	'LBL_FOR_BAR_GRAPH_AND_LINE_GRAPH_SELECT_3_MAX_DATA_FIELDS'=> 'لبار والخط البياني، يمكنك تحديد الحد الأقصى من 3 حقول البيانات.',
+	'LBL_DETAIL_REPORT' =>'تقرير التفاصيل',
+	'LBL_PIVOT_REPORT' =>'تقرير المحوري',
+	'LBL_CHARTS' => 'الرسوم البيانية',
+    //Schedule Reports - Mail Content
+    'LBL_AUTO_GENERATED_REPORT_EMAIL' => 'هذا هو البريد الإلكتروني الذي تم إنشاؤه تلقائيا أرسلت نيابة عن تقرير المقرر.',
+    'LBL_PIN_CHART_TO_DASHBOARD' => 'دبوس الرسم البياني لوحة القيادة',
+    'LBL_FILE_FORMAT' => 'تنسيق الملف',
+    
+    'Report Type' => 'تقرير نوع',
+    'tabular' => 'التفاصيل',
+    'summary' => 'التفاصيل',
+    'pivot' => 'محور',
+    'chart' => 'جدول',
+    'LBL_REPORTS_MOVED_SUCCESSFULLY'=>'تقارير منقول بنجاح.',
+    'LBL_SAME_SOURCE_AND_TARGET_FOLDER'=>'المجلد الهدف هو نفس المجلد المصدر',
+	'LBL_SEARCH_FOR_FOLDERS' => 'البحث عن المجلدات',
+	'LBL_CHART_REPORT' => 'تقرير الرسم البياني',
+	'LBL_UNPIN_CHART_FROM_DASHBOARD' => 'الرسم البياني بفصل من لوحة أجهزة القياس',
+
+  'LBL_SAME_LEVEL_ROLES' => 'نفس المستوى الأدوار',
+  'LBL_SUBORDINATE_ROLES' => 'أدوار تابعة',
+  'LBL_SHARE_REPORT' => 'حصة التقرير',
+  'LBL_SHARED_REPORTS' => 'تقاسمها مع لي',
+  'LBL_PINNED' => 'مثبت',
+  'LBL_UNPINNED' => 'غير المثبتة',
+
+
+  'LBL_REPORTS_DELETED_SUCCESSFULLY' => 'تقارير حذف بنجاح',
+
 );
 $jsLanguageStrings = array(
 	'JS_DUPLICATE_RECORD' => 'كرر التقرير',
 	'JS_CALCULATION_LINE_ITEM_FIELDS_SELECTION_LIMITATION' => 'Limitation: Line Item fields(List Price, Discount & Quantity) can only be used when other calculation fields are not selected.',
+    'JS_CHART_PINNED_TO_DASHBOARD' => 'الرسم البياني يشبك إلى لوحة التحكم',
+    'JS_CHART_ALREADY_PINNED_TO_DASHBOARD' => 'الرسم البياني مثبت بالفعل إلى لوحة التحكم',
+	'JS_MOVE_REPORTS'=>'نقل تقارير',
+    'JS_SCHEDULED_DATE_TIME_ERROR' => 'وينبغي أن يكون الموعد المحدد ووقت أكبر من التاريخ والوقت الحالي',
+	'JSLBL_PIN_CHART_TO_DASHBOARD' => 'دبوس الرسم البياني لوحة القيادة',
+	'JSLBL_UNPIN_CHART_FROM_DASHBOARD' => 'الرسم البياني بفصل من لوحة أجهزة القياس',
+	'JS_CHART_REMOVED_FROM_DASHBOARD' => 'الرسم البياني إزالتها من لوحة أجهزة القياس',
+
+  'JS_NO_CHART_DATA_AVAILABLE' => 'البيانات غير متوفرة يرجى التحقق من الحقول المحددة',
+
 );

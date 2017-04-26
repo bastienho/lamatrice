@@ -57,11 +57,13 @@ class Vtiger_Base_UIType extends Vtiger_Base_Model {
 		$moduleSpecificUiTypeClassName = $moduleName.'_'.$uiTypeClassSuffix.'_UIType';
 		$uiTypeClassName = 'Vtiger_'.$uiTypeClassSuffix.'_UIType';
 		$fallBackClassName = 'Vtiger_Base_UIType';
+
 		$moduleSpecificFileName = 'modules.'. $moduleName .'.uitypes.'.$uiTypeClassSuffix;
 		$uiTypeClassFileName = 'modules.Vtiger.uitypes.'.$uiTypeClassSuffix;
 
 		$moduleSpecificFilePath = Vtiger_Loader::resolveNameToPath($moduleSpecificFileName);
 		$completeFilePath = Vtiger_Loader::resolveNameToPath($uiTypeClassFileName);
+
 		if(file_exists($moduleSpecificFilePath)) {
 			$instance = new $moduleSpecificUiTypeClassName();
 		}
@@ -70,7 +72,6 @@ class Vtiger_Base_UIType extends Vtiger_Base_Model {
 		} else {
 			$instance = new $fallBackClassName();
 		}
-
 		$instance->set('field', $fieldModel);
 		return $instance;
 	}
@@ -84,7 +85,7 @@ class Vtiger_Base_UIType extends Vtiger_Base_Model {
 		return $value;
 	}
 
-	/**
+    /**
 	 * Function to get the Detailview template name for the current UI Type Object
 	 * @return <String> - Template Name
 	 */
@@ -100,20 +101,8 @@ class Vtiger_Base_UIType extends Vtiger_Base_Model {
 	public function getRelatedListDisplayValue($value) {
 		return $this->getDisplayValue($value);
 	}
-
-	/** ED150413
-	 * Function to get the header filter input template name for the current UI Type Object
-	 * @return <String> - Template Name
-	 */
-	public function getHeaderFilterTemplateName() {
-		return 'uitypes/StringHeaderFilter.tpl';
-	}
-
-	/** ED150903
-	 * Function to get the "alphabet" filter input template name for the current UI Type Object
-	 * @return <String> - Template Name
-	 */
-	public function getAlphabetTemplateName() {
-		return 'uitypes/StringAlphabet.tpl';
-	}
+    
+    public function getListSearchTemplateName() {
+        return 'uitypes/FieldSearchView.tpl';
+    }
 }

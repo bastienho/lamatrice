@@ -28,6 +28,11 @@ class Leads_ConvertLead_View extends Vtiger_Index_View {
 		$moduleName = $request->getModule();
 
 		$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+        $imageDetails = $recordModel->getImageDetails();
+        if(count($imageDetails)) {
+            $imageAttachmentId = $imageDetails[0]['id'];
+            $viewer->assign('IMAGE_ATTACHMENT_ID', $imageAttachmentId);
+        }
 		$moduleModel = $recordModel->getModule();
 		
 		$viewer->assign('MODULE', $moduleName);
@@ -45,7 +50,11 @@ class Leads_ConvertLead_View extends Vtiger_Index_View {
 		$contactField = Vtiger_Field_Model::getInstance('contact_id', $potentialModuleModel);
 		$viewer->assign('ACCOUNT_FIELD_MODEL', $accountField);
 		$viewer->assign('CONTACT_FIELD_MODEL', $contactField);
-
+		
+		$contactsModuleModel = Vtiger_Module_Model::getInstance('Contacts');
+		$accountField = Vtiger_Field_Model::getInstance('account_id', $contactsModuleModel);
+		$viewer->assign('CONTACT_ACCOUNT_FIELD_MODEL', $accountField);
+		
 		$viewer->view('ConvertLead.tpl', $moduleName);
 	}
 }

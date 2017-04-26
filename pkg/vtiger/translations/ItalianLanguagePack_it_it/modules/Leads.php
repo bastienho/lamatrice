@@ -40,14 +40,17 @@ $languageStrings = array(
 	'LBL_CONVERT_LEAD'             => 'Converti Lead:'              , 
 	'LBL_TRANSFER_RELATED_RECORD'  => 'Transfer related record to'  , 
 	'LBL_CONVERT_LEAD_ERROR'       => 'You have to enable either Organization or Contact to convert the Lead', 
-	'LBL_CONVERT_LEAD_ERROR_TITLE' => 'Modules Disabled'            , 
-	'CANNOT_CONVERT'               => 'Non può essere convertito'  , 
-	'LBL_FOLLOWING_ARE_POSSIBLE_REASONS' => 'Possible reasons include:'   , 
 	'LBL_LEADS_FIELD_MAPPING_INCOMPLETE' => 'Leads Field Mapping is incomplete(Settings > Module Manager > Leads > Leads Field Mapping)', 
-	'LBL_MANDATORY_FIELDS_ARE_EMPTY' => 'Mandatory fields are empty'  , 
 	'LBL_LEADS_FIELD_MAPPING'      => 'Leads Field Mapping'         , 
-	'LBL_CUSTOM_FIELD_MAPPING'     => 'Edit Field Mapping'          , 
-	'LBL_WEBFORMS'                 => 'Setup Webfroms'              , 
+	'LBL_CUSTOM_FIELD_MAPPING'     => 'Piombo Mappatura conversione dati'          , 
+    'LBL_IMAGE_INFORMATION' => 'Foto di profilo',
+    'Lead Image' => 'Immagine di piombo',
+	
+
+  'Phone' => 'Telefono Principale',
+  'Secondary Email' => 'E-Mail Secondaria',
+  'Email' => 'Email Principale',
+
 );
 $jsLanguageStrings = array(
 	'JS_SELECT_CONTACTS'           => 'Select Contacts to proceed'  , 

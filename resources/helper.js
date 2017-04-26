@@ -50,21 +50,31 @@ jQuery.Class("Vtiger_Helper_Js",{
 	 * @return date object
 	 */
 
-	getDateInstance : function(dateTime,dateFormat){
+	getDateInstance : function(dateTime,dateFormat, fieldType){
 		var dateTimeComponents = dateTime.split(" ");
 		var dateComponent = dateTimeComponents[0];
 		var timeComponent = dateTimeComponents[1];
         var seconds = '00';
 
 		var splittedDate = dateComponent.split("-");
+		if (splittedDate.length > 3) {
+            var errorMsg = app.vtranslate("JS_INVALID_DATE");
+            throw errorMsg;
+        }
 		var splittedDateFormat = dateFormat.split("-");
 		var year = splittedDate[splittedDateFormat.indexOf("yyyy")];
 		var month = splittedDate[splittedDateFormat.indexOf("mm")];
 		var date = splittedDate[splittedDateFormat.indexOf("dd")];
-		if((year.length > 4) || (month.length > 2) || (date.length > 2)){
-				var errorMsg = app.vtranslate("JS_INVALID_DATE");
-				throw errorMsg;
+        var dateInstance = Date.parse(year+"-"+month+"-"+date);
+		if((dateInstance == null) || (year.length != 4) || (month.length > 2) || (date.length > 2)){
+			var errorMsg = app.vtranslate("JS_INVALID_DATE");
+			throw errorMsg;
 		}
+                
+		if (fieldType == 'date' && typeof timeComponent != 'undefined') {
+            var errorMsg = app.vtranslate("JS_INVALID_DATE");
+            throw errorMsg;
+        }
 
 		//Before creating date object time is set to 00
 		//because as while calculating date object it depends system timezone
@@ -93,15 +103,16 @@ jQuery.Class("Vtiger_Helper_Js",{
 		var dateInstance = new Date(year,month,date,timeSections[0],timeSections[1],seconds);
         return dateInstance;
 	},
-	requestToShowComposeEmailForm : function(selectedId,fieldname){
+	requestToShowComposeEmailForm : function(selectedId,fieldname,fieldmodule){
 		var selectedFields = new Array();
 		selectedFields.push(fieldname);
 		var selectedIds =  new Array();
 		selectedIds.push(selectedId);
 		var params = {
 			'module' : 'Emails',
-			'selectedFields' : selectedFields,
-			'selected_ids' : selectedIds,
+            'fieldModule' : fieldmodule,
+			'selectedFields[]' : selectedFields,
+			'selected_ids[]' : selectedIds,
 			'view' : 'ComposeEmail'
 		}
 		var emailsMassEditInstance = Vtiger_Helper_Js.getEmailMassEditInstance();
@@ -111,12 +122,12 @@ jQuery.Class("Vtiger_Helper_Js",{
 	/*
 	 * Function to get the compose email popup
 	 */
-	getInternalMailer  : function(selectedId,fieldname){
+	getInternalMailer  : function(selectedId,fieldname,fieldmodule){
 		var module = 'Emails';
 		var cacheResponse = Vtiger_Helper_Js.checkServerConfigResponseCache;
 		var  checkServerConfigPostOperations = function (data) {
 			if(data == true){
-				Vtiger_Helper_Js.requestToShowComposeEmailForm(selectedId,fieldname);
+				Vtiger_Helper_Js.requestToShowComposeEmailForm(selectedId,fieldname,fieldmodule);
 			} else {
 				alert(app.vtranslate('JS_EMAIL_SERVER_CONFIGURATION'));
 			}
@@ -155,6 +166,14 @@ jQuery.Class("Vtiger_Helper_Js",{
         })
 		return aDeferred.promise();
 	},
+    
+    /*
+	 * Function to show the custom dialogs
+	 */
+	showCustomDialogBox: function (data) {
+        //options are array of objects with label,button class and callback properties
+		bootbox.dialog(data['message'], data['options']);
+    },
 
 	/*
 	 * Function to check Duplication of Account Name
@@ -193,20 +212,11 @@ jQuery.Class("Vtiger_Helper_Js",{
 	},
 
 	showMessage : function(params){
-		
-		//ED150911
-		if(typeof params == 'string')
-			params = {
-				'text' : params
-				, 'type' : 'info'
-			};
-			
 		if(typeof params.type == "undefined"){
 			params.type = 'info';
 		}
 		params.animation = "show";
-		if (!params.title)//ED50911
-			params.title = app.vtranslate('JS_MESSAGE');
+		params.title = app.vtranslate('JS_MESSAGE'),
 		Vtiger_Helper_Js.showPnotify(params);
 	},
 
@@ -217,9 +227,7 @@ jQuery.Class("Vtiger_Helper_Js",{
 
 		var userParams = customParams;
 		if(typeof customParams == 'string') {
-			var userParams = {
-				type: customParams.substring(0,2) == 'Ok' ? 'info' : 'error'
-			};
+			var userParams = {};
 			userParams.text = customParams;
 		}
 
@@ -254,6 +262,7 @@ jQuery.Class("Vtiger_Helper_Js",{
 		var bottomScroll = jQuery('.contents-bottomscroll', container);
 		
 		jQuery('.topscroll-div', container).css('width', jQuery('.bottomscroll-div', container).outerWidth());
+		jQuery('.bottomscroll-div', container).css('width', jQuery('.topscroll-div', container).outerWidth());
 		
 		topScroll.scroll(function(){
 			bottomScroll.scrollLeft(topScroll.scrollLeft());
@@ -264,60 +273,60 @@ jQuery.Class("Vtiger_Helper_Js",{
 		});
 	},
 	
-	/* ED150813
-	 * Function to show faq record as toolbox 
+	/*
+	 * Function to confirmation modal for recurring events updation and deletion 
 	 */
-	showFAQRecord : function(faq_no) {
-		var data = {
-			module : 'Faq',
-			record : faq_no,
-		};
-		this.getRecordDetails(data).then(
-			function(data){
-				var response = data['result'];
-				
-				$('<pre></pre>')
-					.html(response.data.faq_answer)
-					.dialog({
-						width: 'auto',
-						height: 'auto',
-						title: response.data.question,
-					})
-			},
-			function(error, err){
-
-			});
-	},
-
-	/** ED150813 copied from Edit.js
-	 * Function which will give you all details of the selected record
-	 * @params - an Array of values like {'record' : recordId, 'source_module' : searchModule, 'selectedName' : selectedRecordName}
-	 */
-	getRecordDetails : function(params) {
-		if (!(typeof params === 'object')) 
-			params = { 'record' : params };
-		
-		var aDeferred = jQuery.Deferred()
-		, moduleName = params['module'] ? params['module'] : app.getModuleName()
-		, sourceModule = params['source_module'] ? params['source_module'] : moduleName;
-		var url = "index.php?module="+moduleName
-			+ "&action=GetData&record="+params['record']
-			+ "&source_module="+sourceModule
-			+ (params['related_data'] ? "&related_data="+params['related_data'] : '')
-			;
-		AppConnector.request(url).then(
-			function(data){
-				if(data['success']) {
-					aDeferred.resolve(data);
-				} else {
-					aDeferred.reject(data['message']);
-				}
-			},
-			function(error){
-				aDeferred.reject();
+	showConfirmationForRepeatEvents: function (customParams) {
+		var aDeferred = jQuery.Deferred();
+		var params = {
+			module: 'Calendar',
+			view: 'RecurringDeleteCheck'
+		}
+		jQuery.extend(params, customParams);
+		var postData = {};
+		AppConnector.request(params).then(function (data) {
+			var callBackFunction = function (modalContainer) {
+				modalContainer.on('click', '.onlyThisEvent', function () {
+					postData['recurringEditMode'] = 'current';
+					app.hideModalWindow();
+					aDeferred.resolve(postData);
+				});
+				modalContainer.on('click', '.futureEvents', function () {
+					postData['recurringEditMode'] = 'future';
+					app.hideModalWindow();
+					aDeferred.resolve(postData);
+				});
+				modalContainer.on('click', '.allEvents', function () {
+					postData['recurringEditMode'] = 'all';
+					app.hideModalWindow();
+					aDeferred.resolve(postData);
+				});
 			}
-		)
+			app.showModalWindow(data, function (data) {
+				if (typeof callBackFunction == 'function') {
+					callBackFunction(data);
+				}
+			})	
+		});
 		return aDeferred.promise();
 	},
+    
+	rand: function () {
+        return Math.floor((Math.random() * 1000) + 1);
+	},
+
+	mergeObjects: function (arrayOfObjs) {
+		var mergedObj = {};
+		jQuery.each(arrayOfObjs, function (i, kv) {
+			if (mergedObj.hasOwnProperty(kv.name)) {
+				mergedObj[kv.name] = jQuery.makeArray(mergedObj[kv.name]);
+				mergedObj[kv.name].push(kv.value);
+			}
+			else {
+				mergedObj[kv.name] = kv.value;
+			}
+		});
+		return mergedObj;
+	}
 
 },{});

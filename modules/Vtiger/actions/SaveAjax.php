@@ -10,62 +10,37 @@
 
 class Vtiger_SaveAjax_Action extends Vtiger_Save_Action {
 
-	/*
-	 */
 	public function process(Vtiger_Request $request) {
-		//save
+		vglobal('VTIGER_TIMESTAMP_NO_CHANGE_MODE', $request->get('_timeStampNoChangeMode',false));
 		$recordModel = $this->saveRecord($request);
+		vglobal('VTIGER_TIMESTAMP_NO_CHANGE_MODE', false);
 
 		$fieldModelList = $recordModel->getModule()->getFields();
 		$result = array();
+		$picklistColorMap = array();
 		foreach ($fieldModelList as $fieldName => $fieldModel) {
 			$recordFieldValue = $recordModel->get($fieldName);
-			if(is_array($recordFieldValue)){
-				if($fieldModel->getFieldDataType() == 'multipicklist') {
-					$recordFieldValue = implode(' |##| ', $recordFieldValue);
-					$fieldValue = $displayValue = Vtiger_Util_Helper::toSafeHTML($recordFieldValue);
+			if(is_array($recordFieldValue) && $fieldModel->getFieldDataType() == 'multipicklist') {
+				foreach ($recordFieldValue as $picklistValue) {
+					$picklistColorMap[$picklistValue] = Settings_Picklist_Module_Model::getPicklistColorByValue($fieldName, $picklistValue);
 				}
-				else {
-					$recordFieldValue = json_encode($recordFieldValue);
-					$fieldValue = html_entity_decode($recordFieldValue);
-					$displayValue = ($recordFieldValue);
-				}
-			
+				$recordFieldValue = implode(' |##| ', $recordFieldValue);     
 			}
-			else
-				$fieldValue = $displayValue = Vtiger_Util_Helper::toSafeHTML($recordFieldValue);
-			switch ($fieldModel->getFieldDataType()){
-			 case 'currency':
-			 case 'datetime':
-			 case 'date':
-				break;
-			 case 'uicolor':
-				$displayValue = sprintf('<div class="" style="background-color:%s">&nsbp;</div>',
-							$fieldModel->getDisplayValue($fieldValue, $recordModel->getId()));
-				break;
-			 case 'buttonSet':
-				$values = $recordModel->getPicklistValuesDetails($fieldName);
-				$displayValue = isset($values[$fieldValue])
-					? sprintf('<div class="buttonset  ui-buttonset">'.
-						  '<label class="ui-button ui-widget ui-state-default ui-corner-left ui-corner-right ui-state-active" aria-pressed="true" role="button" aria-disabled="false">'.
-						  '<span class="ui-button-text"><span class="%s"></span>&nbsp;%s</span></label></div>',
-						      $values[$fieldValue]['icon'],
-						      $values[$fieldValue]['label']
-					)
-					: $fieldValue;
-				break;
-			 default:
-				/* ED141005
-				 * les types 56, 15, 16, 33 et 402 ont une chance de voir leur valeur d'affichage adaptée par le Record_Model
-				 */
-				if(in_array( $fieldModel->get('uitype'), array(56,15,16,33,402))){
-					$displayValue = $recordModel->getDisplayValue($fieldName, $recordModel->getId());
-				}
-				else
-					$displayValue = $fieldModel->getDisplayValue($fieldValue, $recordModel->getId());
-				break;
+			if($fieldModel->getFieldDataType() == 'picklist') {
+				$picklistColorMap[$recordFieldValue] = Settings_Picklist_Module_Model::getPicklistColorByValue($fieldName, $recordFieldValue);
 			}
-			$result[$fieldName] = array('value' => $fieldValue, 'display_value' => $displayValue);
+			$fieldValue = $displayValue = Vtiger_Util_Helper::toSafeHTML($recordFieldValue);
+			if ($fieldModel->getFieldDataType() !== 'currency' && $fieldModel->getFieldDataType() !== 'datetime' && $fieldModel->getFieldDataType() !== 'date' && $fieldModel->getFieldDataType() !== 'double') { 
+				$displayValue = $fieldModel->getDisplayValue($fieldValue, $recordModel->getId()); 
+			}
+			if ($fieldModel->getFieldDataType() == 'currency') {
+				$displayValue = Vtiger_Currency_UIType::transformDisplayValue($fieldValue);
+			}
+			if(!empty($picklistColorMap)) {
+				$result[$fieldName] = array('value' => $fieldValue, 'display_value' => $displayValue, 'colormap' => $picklistColorMap);
+			} else {
+				$result[$fieldName] = array('value' => $fieldValue, 'display_value' => $displayValue);
+			}
 		}
 
 		//Handling salutation type
@@ -76,49 +51,25 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action {
 			if ($salutationType != '--None--') $result['firstname'] = $firstNameDetails;
 		}
 
-		$result['_recordLabel'] = $recordModel->getName();
+		// removed decode_html to eliminate XSS vulnerability
+		$result['_recordLabel'] = decode_html($recordModel->getName());
 		$result['_recordId'] = $recordModel->getId();
-
 		$response = new Vtiger_Response();
 		$response->setEmitType(Vtiger_Response::$EMIT_JSON);
 		$response->setResult($result);
 		$response->emit();
 	}
 
-	/* ED150125
-	 * Classiquement, les appels AJax passent une valeur de field avec un champ $request->get('field') et un champ $request->get('value').
-	 *  un champ $request->get('fields') peut remplacer cela pour fournir plusieurs champs.
-	 *  Les classes héritières préexistantes ne prennent pas en compte 'fields', d'où cette function générale.
-	 * Les valeurs de plusieurs champs sont passés par fields
-	 * Attention, un autre mode (FORM ?) passe tous les champs directement dans la $request, $request->get($fieldName)
-	*/
-	public function getRequestFieldsValues(Vtiger_Request $request) {
-
-		$fieldsValues = $request->get('fields');
-		if($fieldsValues)
-			return $fieldsValues;
-		if($request->get('field'))
-			return array($request->get('field') => $request->get('value'));
-		return array(); //TODO liste des propriétés de $request mais exclure 'record', 'module', 'mode', ...
-	}
-	
 	/**
 	 * Function to get the record model based on the request parameters
 	 * @param Vtiger_Request $request
 	 * @return Vtiger_Record_Model or Module specific Record Model instance
-	 *
-	 * mode d'origine
-	 * 	$request->get('field') et $request->get('value')
-	 * mode multiple
-	 * 	$request->get('fields') === array( <fieldName> => <fieldValue>, <fieldName> => <fieldValue>, ...)
 	 */
 	public function getRecordModelFromRequest(Vtiger_Request $request) {
-
-		/* ED150125
-		 * Les valeurs de plusieurs champs sont passés par fields
-		 */
-		$fieldsValues = $this->getRequestFieldsValues($request);
 		$moduleName = $request->getModule();
+		if($moduleName == 'Calendar') {
+			$moduleName = $request->get('calendarModule');
+		}
 		$recordId = $request->get('record');
 
 		if(!empty($recordId)) {
@@ -128,12 +79,20 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action {
 
 			$fieldModelList = $recordModel->getModule()->getFields();
 			foreach ($fieldModelList as $fieldName => $fieldModel) {
-				
-				/* ED150125 */
-				if(isset($fieldsValues[$fieldName]))
-					$fieldValue = $fieldsValues[$fieldName];
-				else
+				//For not converting createdtime and modified time to user format
+				$uiType = $fieldModel->get('uitype');
+				if ($uiType == 70) {
+					$fieldValue = $recordModel->get($fieldName);
+				} else {
 					$fieldValue = $fieldModel->getUITypeModel()->getUserRequestValue($recordModel->get($fieldName));
+				}
+
+				// To support Inline Edit in Vtiger7
+				if($request->has($fieldName)){
+					$fieldValue = $request->get($fieldName,null);
+				}else if($fieldName === $request->get('field')){
+					$fieldValue = $request->get('value');
+				}
 
 				$fieldDataType = $fieldModel->getFieldDataType();
 				if ($fieldDataType == 'time') {
@@ -145,7 +104,11 @@ class Vtiger_SaveAjax_Action extends Vtiger_Save_Action {
 					}
 					$recordModel->set($fieldName, $fieldValue);
 				}
-				//$recordModel->set($fieldName, $fieldValue);
+				$recordModel->set($fieldName, $fieldValue);
+				if($fieldName === 'contact_id' && isRecordExists($fieldValue)) {
+					$contactRecord = Vtiger_Record_Model::getInstanceById($fieldValue, 'Contacts');
+					$recordModel->set("relatedContact",$contactRecord);
+				}
 			}
 		} else {
 			$moduleModel = Vtiger_Module_Model::getInstance($moduleName);

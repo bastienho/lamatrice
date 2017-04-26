@@ -17,32 +17,38 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 	var $listFields = array('organizationname');
 	var $nameFields = array('organizationname');
 	var $logoPath = 'test/logo/';
-	
-	/*ED151104*/
-	var $subTable = 'vtiger_organizationsubdetails';
 
-	/*ED151104	Note : $fields are extended in getInstance()*/
-	
 	var $fields = array(
-			'organizationname' => 'text',
-			'logoname' => 'text',
-			'logo' => 'file',
-			'print_logoname' => 'text',
-			'print_logo' => 'file',
-			'address' => 'textarea',
-			'city' => 'text',
-			'state' => 'text',
-			'code'  => 'text',
-			'country' => 'text',
-			'phone' => 'text',
-			//'rsnprelevements_phone' => 'text',
-			'fax' => 'text',
-			'website' => 'text',
-			/*'lettertoaccount_header_text' => 'text',
-			'rsnprelevements_header_text' => 'text',
-			'lettertoaccount_lastpage_footer_text' => 'text',
-			'inventory_header_text' => 'text',
-			'inventory_lastpage_footer_text' => 'text',*/
+		'organizationname' => 'text',
+		'logoname' => 'text',
+		'logo' => 'file',
+		'address' => 'textarea',
+		'city' => 'text',
+		'state' => 'text',
+		'code'  => 'text',
+		'country' => 'text',
+		'phone' => 'text',
+		'fax' => 'text',
+		'website' => 'text',
+		'vatid' => 'text' 
+	);
+
+	var $companyBasicFields = array(
+		'organizationname' => 'text',
+		'logoname' => 'text',
+		'logo' => 'file',
+		'address' => 'textarea',
+		'city' => 'text',
+		'state' => 'text',
+		'code'  => 'text',
+		'country' => 'text',
+		'phone' => 'text',
+		'fax' => 'text',
+		'vatid' => 'text'
+	);
+
+	var $companySocialLinks = array(
+		'website' => 'text',
 	);
 
 	/**
@@ -52,7 +58,7 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 	public function getEditViewUrl() {
 		return 'index.php?module=Vtiger&parent=Settings&view=CompanyDetailsEdit';
 	}
-	
+
 	/**
 	 * Function to get CompanyDetails Menu item
 	 * @return menu item Model
@@ -61,7 +67,7 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 		$menuItem = Settings_Vtiger_MenuItem_Model::getInstance('LBL_COMPANY_DETAILS');
 		return $menuItem;
 	}
-	
+
 	/**
 	 * Function to get Index view Url
 	 * @return <String> URL
@@ -83,10 +89,10 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 	 * Function to get Logo path to display
 	 * @return <String> path
 	 */
-	public function getLogoPath($logoPrefix = '') {
+	public function getLogoPath() {
 		$logoPath = $this->logoPath;
 		$handler = @opendir($logoPath);
-		$logoName = $this->get($logoPrefix.'logoname');
+		$logoName = decode_html($this->get('logoname'));
 		if ($logoName && $handler) {
 			while ($file = readdir($handler)) {
 				if($logoName === $file && in_array(str_replace('.', '', strtolower(substr($file, -4))), self::$logoSupportedFormats) && $file != "." && $file!= "..") {
@@ -101,10 +107,10 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 	/**
 	 * Function to save the logoinfo
 	 */
-	public function saveLogo($logoPrefix = '') {
+	public function saveLogo() {
 		$uploadDir = vglobal('root_directory'). '/' .$this->logoPath;
-		$logoName = $uploadDir.$_FILES[$logoPrefix."logo"]["name"];
-		move_uploaded_file($_FILES[$logoPrefix."logo"]["tmp_name"], $logoName);
+		$logoName = $uploadDir.$_FILES["logo"]["name"];
+		move_uploaded_file($_FILES["logo"]["tmp_name"], $logoName);
 		copy($logoName, $uploadDir.'application.ico');
 	}
 
@@ -116,59 +122,42 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 		$id = $this->get('id');
 		$fieldsList = $this->getFields();
 		unset($fieldsList['logo']);
-		unset($fieldsList['print_logo']);
 		$tableName = $this->baseTable;
-			
+
 		if ($id) {
 			$params = array();
 
 			$query = "UPDATE $tableName SET ";
-			foreach ($fieldsList as $fieldName => $fieldType){
-				if(strpos($fieldName, '::') === false){
-					$query .= " $fieldName = ?, ";
-					array_push($params, $this->get($fieldName));
-				}
+			foreach ($fieldsList as $fieldName => $fieldType) {
+				$query .= " $fieldName = ?, ";
+				array_push($params, $this->get($fieldName));
 			}
 			$query .= " logo = NULL WHERE organization_id = ?";
+
 			array_push($params, $id);
-			
 		} else {
-			$allParams = $this->getData();
-			$params = array();
+			$params = $this->getData();
+
 			$query = "INSERT INTO $tableName (";
-			foreach ($fieldsList as $fieldName => $fieldType){
-				if(strpos($fieldName, '::') === false){
-					$query .= " $fieldName,";
-					array_push($params, $this->get($fieldName));
-				}
+			foreach ($fieldsList as $fieldName => $fieldType) {
+				$query .= " $fieldName,";
 			}
-			$query .= " organization_id)";
-			$id = $db->getUniqueID($this->baseTable);
-			array_push($params, $id);
-			$query .= " VALUES (". generateQuestionMarks($params). ", ?)";
+			$query .= " organization_id) VALUES (". generateQuestionMarks($params). ", ?)";
+
+			array_push($params, $db->getUniqueID($this->baseTable));
 		}
 		$db->pquery($query, $params);
-		
-		/* ED151104*/
-		$tableName = $this->subTable;
-		$params = array();
-		$query = "UPDATE $tableName SET value = CASE ";
-		foreach ($fieldsList as $fieldName => $fieldType){
-			if(strpos($fieldName, '::') !== false){
-				$parts = explode('::', $fieldName);
-				$query .= "\r\n WHEN context = ? AND parameter = ? THEN ?";
-				array_push($params, $parts[0], $parts[1], $this->get($fieldName));
-			}
-		}
-		$query .= " END WHERE organization_id = ?";
-		array_push($params, $id);
-		$result = $db->pquery($query, $params);
-		if(!$result){
-			echo "<pre>$query</pre>";
-			var_dump($params);
-			$db->echoError();
-			die();
-		}
+
+		$companyName = $this->get('organizationname');
+		$companyName = preg_replace(array("/>/", "/</", "/&/", "/'/", '/""/', '/gt;/', '/lt;/', '/;/'), '', $companyName);
+		$fileContent = file_get_contents('portal/config.inc.php');
+		$pattern = '/\$companyName[\s]+=([^;]+);/';
+		$replacedValue = sprintf("\$%s = '%s';", 'companyName', $companyName);
+		$fileContent = preg_replace($pattern, $replacedValue, $fileContent);
+		$fp = fopen('portal/config.inc.php', 'w');
+		fwrite($fp, $fileContent);
+		fclose($fp);
+		// End
 	}
 
 	/**
@@ -179,36 +168,13 @@ class Settings_Vtiger_CompanyDetails_Model extends Settings_Vtiger_Module_Model 
 		$moduleModel = new self();
 		$db = PearDatabase::getInstance();
 
-		$result = $db->pquery("SELECT * FROM ".$moduleModel->baseTable, array());
+		$result = $db->pquery("SELECT * FROM vtiger_organizationdetails", array());
 		if ($db->num_rows($result) == 1) {
 			$moduleModel->setData($db->query_result_rowdata($result));
-			$moduleModel->set('id', $moduleModel->get($moduleModel->baseIndex));
-		}
-		
-		/* ED151104 */
-		$result = $db->pquery("SELECT * FROM ".$moduleModel->subTable."
-							  WHERE ".$moduleModel->baseIndex." = ?
-							  ORDER BY sequence, context"
-							  , array($moduleModel->get('id')));
-		if(!$result)
-			$db->echoError();
-		$nbRows = $db->num_rows($result);
-		for($nRow = 0; $nRow < $nbRows; $nRow++) {
-			$param = $db->query_result_rowdata($result, $nRow);
-			$fieldName = $param['context'] . '::' . $param['parameter'];
-			$moduleModel->set($fieldName, $param['value']);
-			if($param['visible'])
-				$moduleModel->fields[$fieldName] = self::getUITypeName($param['uitype']);
+			$moduleModel->set('id', $moduleModel->get('organization_id'));
 		}
 
+		$moduleModel->getFields();
 		return $moduleModel;
-	}
-	private static function getUITypeName($uitype){
-		switch($uitype){
-		case 19:
-			return 'textarea';
-		default:
-			return 'text';
-		}
 	}
 }

@@ -9,17 +9,22 @@
  *************************************************************************************/
 $languageStrings = array(
 	// Home Page Components
-	'ALVT' => 'Najlepszi kontrahenci',
-	'PLVT' => 'Najlepsze szanse sprzedaży',
-	'QLTQ' => 'Najlepsze oferty',
+	'ALVT' => 'Najważniejsi Kontrahenci',
+	'PLVT' => 'Najważniejsze szanse sprzedaży',
+	'QLTQ' => 'Najważniejsze oferty',
 	'CVLVT' => 'Tablica',
-	'HLT' => 'Najważniejsze zgłoszenia serwisowe',
+	'HLT' => 'Najważniejsze zgłoszenia',
 	'GRT' => 'Przydzielone do mojej grupy',
-	'OLTSO' => 'Najlepsze zamówienia',
-	'ILTI' => 'Najlepsze faktury',
-	'HDB' => 'Wykresy strony startowej',
-	'OLTPO' => 'Najlepsze zamówienia do dostawców',
+	'OLTSO' => 'Najważniejsze zamówienia od Klientów',
+	'ILTI' => 'Najważniejsze faktury',
+	'HDB' => 'Wykres podsumowujący',
+	'OLTPO' => 'Najważniejsze zamówienia do dostawców',
 	'LTFAQ' => 'Moje ostatnie instrukcje',
-	'UA' => 'Nadchodzące zdarzenia',
-	'PA' => 'Oczekujące zdarzenia',
+	'UA' => 'Nadchodzące wydarzenia',
+	'PA' => 'Oczekujące wydarzenia',
+	'Home' => 'Dashboard',
+
+  'LBL_SAVE_ORDER' => 'Zapisz Kolejność',
+  'LBL_ADD_NEW_DASHBOARD' => 'Dodaj nową deskę rozdzielczą',
+	'LBL_MAX_CHARACTERS_ALLOWED_DASHBOARD' => 'Maksymalnie 30 znaków nazwy są dozwolone na desce rozdzielczej.',
 );

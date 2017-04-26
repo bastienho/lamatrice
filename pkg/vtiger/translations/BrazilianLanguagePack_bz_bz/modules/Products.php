@@ -72,4 +72,19 @@ $languageStrings = array(
 	'Spiral Binder'                => ''                            , 
 	'Sq Ft'                        => ''                            , 
 	'LBL_CONVERSION_RATE'          => 'Conversion Rate'             , // TODO: Review
+    'LBL_PRODUCTSMOD_DISABLED' => 'Ativar Produtos Módulo para ver os produtos',
+	'LBL_SHOW_BUNDLE_IN_INVENTORY' => 'Mostrar itens dos pacotes em Factura/Cotações/Pedidos de Vendas/Ordem de Compra',
+	'LBL_BUNDLE_TOTAL_COST' => 'Custo total da Bundle',
+	'LBL_UPDATE_BUNDLE_PRICE' => 'Atualização Bundle Preço',
+
+  'LBL_PRODUCT_NAME' => 'Nome Do Produto',
+  'LBL_PRICE_QUANTITY' => 'Preço x Quantidade',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SUB_PRODUCTS_WILL_BE_SHOWN_IN_INVENTORY' => 'Subprodutos será mostrado no Inventário',
+	'JS_SUB_PRODUCTS_WILL_NOT_BE_SHOWN_IN_INVENTORY' => 'Subprodutos não será mostrado no Inventário',
+	'JS_SUCCESSFULLY_CHANGED_BUNDLE_COST' => 'Custo total alterada com êxito de pacote',
+	'JS_DELETION_OR_IN_ACTIVATION_CHILD_PRODUCT_MESSAGE' => 'Este produto faz parte de um pacote de produtos. O preço do pacote permanecem inalteradas quando um item de pacote é excluído ou inativado. Tem certeza de que deseja continuar?',
 );

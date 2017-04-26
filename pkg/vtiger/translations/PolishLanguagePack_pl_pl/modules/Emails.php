@@ -8,34 +8,47 @@
  * All Rights Reserved.
  *************************************************************************************/
 $languageStrings = array(
-	'SINGLE_Emails' => 'Mail',
-	'Emails' => 'Maile',
 	'LBL_SELECT_EMAIL_IDS' => 'Zaznacz adresy mailowe',
 	'LBL_SUBJECT' => 'Temat',
 	'LBL_ATTACHMENT' => 'Załącznik',
-	'LBL_BROWSE_CRM' => 'Przeglądaj CRM',
-	'LBL_SEND' => 'Wysłane',
+	'LBL_BROWSE_CRM' => 'Przeglądaj dokumenty w CRM',
+	'LBL_SEND' => 'Wyślij',
 	'LBL_SAVE_AS_DRAFT' => 'Zapisz jako kopia robocza',
-	'LBL_GO_TO_PREVIEW' => 'Przejdź do podglądu',
-	'LBL_SELECT_EMAIL_TEMPLATE' => 'Zaznacz szablon mailowy',
-	'LBL_COMPOSE_EMAIL' => 'Napisz maila',
-	'LBL_TO' => 'Do',
+	'LBL_SELECT_EMAIL_TEMPLATE' => 'Wybierz ',
+	'LBL_COMPOSE_EMAIL' => 'Utwórz wiadomość',
  	'LBL_CC' => 'DW',
    	'LBL_BCC' => 'UDW',
    	'LBL_ADD_CC' => 'Dodaj do DW',
    	'LBL_ADD_BCC' => 'Dodaj do UDW',
-	'LBL_MAX_UPLOAD_SIZE' => 'Maksymalny rozmiar pliku wynosi',
-	'LBL_EXCEEDED' => 'Przekroczono',
+	'LBL_MAX_UPLOAD_SIZE' => 'Maksymalny rozmiar załącznika ',
+	'LBL_EXCEEDED' => 'przekroczony',
+    'LBL_EMAIL_INFORMATION' => 'Informacje o e-mail',
+
+    'LBL_EMAILTEMPLATE_WARNING'    => 'Czy twoje seryjnej-tags poprawić',
+    'LBL_EMAILTEMPLATE_WARNING_CONTENT' => 'Upewnij się, że szablon ma scalić wybrane znaczniki odpowiednie do rekordu odbiorcy. 
+                                            Jeśli wysyłasz wiadomość e-mail do bramki, jednak scalanie-tags należą do Kontakt moduł (np.: $contacts-lastname$), 
+                                            wówczas wartości nie zostaną połączone.',
+	'Draft'=>'Szkic',
+    'Parent ID' => 'Rekord rodzic',
 	
-	//Button Names translation
-	'LBL_FORWARD' => 'Prześlij',
-	'LBL_PRINT' => 'Drukuj',
-	'LBL_DESCRIPTION' => 'Opis',
-	'LBL_FROM' => 'Od',
-	'LBL_INFO' => 'Info',
-	'LBL_DRAFTED_ON' => 'Sporządzono o',
-	'LBL_SENT_ON' => 'Wysłano o',
-	'LBL_OWNER' => 'Właściciel',
-	
-	'Date & Time Sent' => 'Data wysłania',
+
+  'SINGLE_Emails' => 'E-mail',
+  'Emails' => 'E-maile',
+  'LBL_GO_TO_PREVIEW' => 'Wejść w podgląd',
+  'LBL_TO' => 'Do',
+  'LBL_FORWARD' => 'Do przodu',
+  'LBL_PRINT' => 'Drukowanie',
+  'LBL_DESCRIPTION' => 'Opis',
+  'LBL_FROM' => 'Od',
+  'LBL_INFO' => 'Info',
+  'LBL_DRAFTED_ON' => 'Sporządzony na',
+  'LBL_SENT_ON' => 'Wysłał na',
+  'LBL_OWNER' => 'Właściciel',
+  'Date & Time Sent' => 'Data Wysłania',
+  'Time Start' => 'Raz Wysłał',
+
 );
+
+$jsLanguageStrings = array(
+    'JS_WARNING' => 'ostrzeżenie',
+);   

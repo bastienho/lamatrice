@@ -19,7 +19,7 @@ $languageStrings = array(
 	'Sales Stage'                  => 'Fase de Venta'               , 
 	'Probability'                  => 'Probabilidad'                , 
 	'Campaign Source'              => 'Campaña Origen'             , 
-	'Forecast Amount'              => 'Importe del presupuesto'     , 
+	'Forecast Amount'              => 'Ingresos ponderado'     , 
 	'Funnel'                       => 'Embudo de ventas'            , 
 	'Potentials by Stage'          => 'Oportunidades por fase'      , 
 	'Total Revenue'                => 'Ingresos por Vendedor'       , 
@@ -41,4 +41,23 @@ $languageStrings = array(
 	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Fecha esperada de cierre'    , 
 	'LBL_RELATED_CONTACTS'         => 'Related Contacts'            , // TODO: Review
 	'LBL_RELATED_PRODUCTS'         => 'Related Products'            , // TODO: Review
+    'Related To'                   => 'Nombre de la organización'   ,
+    'Type'                         => 'Tipo'                        , 
+    
+    //Convert Potentials
+    'LBL_CONVERT_POTENTIAL' => 'Convertir Oportunidades',
+    'LBL_POTENTIALS_FIELD_MAPPING' => 'Oportunidades de asignación de campos',
+    'LBL_CONVERT_POTENTIALS_ERROR' => 'Debe permitir que su proyecto para convertir la Oportunidad',
+    'LBL_POTENTIALS_FIELD_MAPPING_INCOMPLETE' => 'Oportunidades de asignación de campos es incompleta (Ajustes> Gestor de módulos> Oportunidades> Oportunidades Asignación de campos)',
+	'LBL_CREATE_PROJECT'           => 'Crear proyecto'              , 
+    
+    //Potentials Custom Field Mapping
+	'LBL_CUSTOM_FIELD_MAPPING'=> 'Oportunidad de proyecto de mapeo',
+
+  'Contact Name' => 'Nombre De Contacto',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SELECT_PROJECT_TO_CONVERT_LEAD' => 'La conversión exige la selección de Proyectos',
 );

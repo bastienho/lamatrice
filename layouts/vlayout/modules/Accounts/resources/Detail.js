@@ -52,18 +52,18 @@ Vtiger_Detail_Js("Accounts_Detail_Js",{
 	displayAccountHierarchyResponseData : function(data) {
         var callbackFunction = function(data) {
             app.showScrollBar(jQuery('#hierarchyScroll'), {
-                height: '200px',
+                height: '300px',
                 railVisible: true,
-                alwaysVisible: true,
                 size: '6px'
             });
         }
         app.showModalWindow(data, function(data){
-            if(typeof callbackFunction == 'function'){
+            
+            if(typeof callbackFunction == 'function' && jQuery('#hierarchyScroll').height() > 300){
                 callbackFunction(data);
             }
         });
-	}
+        }
 },{
 	//Cache which will store account name and whether it is duplicate or not
 	accountDuplicationCheckCache : {},
@@ -138,48 +138,38 @@ Vtiger_Detail_Js("Accounts_Detail_Js",{
 		)
 		return aDeferred.promise();
 	},
-	
-	
-	/**
-	 * Function to register Event for Sorting
+        
+        /**
+	 * Function to register event for adding related record for module
 	 */
-	registerEventForRelatedList : function(){
-		this._super();
-		
+	registerEventForAddingRelatedRecord : function(){
 		var thisInstance = this;
 		var detailContentsHolder = this.getContentHolder();
-	
-		/* ED50312
-		 * Contact -> ContactAddresses related list -> Delete (see layouts\vlayout\modules\Contacts\RelatedListContactAddresses.tpl)
-		*/
-		detailContentsHolder.on('click', 'a.relatedRecordDelete', function(e){
-			e.stopImmediatePropagation();
-			
+		detailContentsHolder.on('click','[name="addButton"]',function(e){
 			var element = jQuery(e.currentTarget);
-			var row = element.closest('tr');
-			var relatedRecordid = row.data('id');
+			var selectedTabElement = thisInstance.getSelectedTab();
 			var relatedModuleName = thisInstance.getRelatedModuleName();
-			var deleteRecordActionUrl = "index.php?module="+relatedModuleName+"&action=Delete&record="+relatedRecordid;
-			
-			var message = app.vtranslate('LBL_RELATED_RECORD_DELETE_CONFIRMATION');
-			Vtiger_Helper_Js.showConfirmationBox({'message' : message}).then(function(data) {
-					AppConnector.request(deleteRecordActionUrl+'&ajaxDelete=true').then(
-					function(data){
-						if(data.success == true){
-							var selectedTabElement = thisInstance.getSelectedTab();
-							var relatedController = new Vtiger_RelatedList_Js(thisInstance.getRecordId(), app.getModuleName(), selectedTabElement, relatedModuleName);
-							relatedController.deleteRelation([relatedRecordid]).then(function(response){
-								relatedController.loadRelatedList();
-							});
-						}else{
-							Vtiger_Helper_Js.showPnotify(data.error.message);
-						}
-					});
-				},
-				function(error, err){
-				}
-			);
-		});
-	},
+            var quickCreateNode = jQuery('#quickCreateModules').find('[data-name="'+ relatedModuleName +'"]');
+            if(quickCreateNode.length <= 0) {
+                window.location.href = element.data('url');
+                return;
+            }
+
+			var relatedController = new Vtiger_RelatedList_Js(thisInstance.getRecordId(), app.getModuleName(), selectedTabElement, relatedModuleName);
+                        var postPopupViewController = function() {
+                            var instance = new Contacts_Edit_Js();
+                            var data = new Object;
+                            var container = jQuery("[name='QuickCreate']");
+                            data.source_module = app.getModuleName();
+                            data.record = thisInstance.getRecordId();
+                            data.selectedName = container.find("[name='account_id_display']").val();
+                            instance.referenceSelectionEventHandler(data,container);
+                        }
+                        if(relatedModuleName == 'Contacts')
+                            relatedController.addRelatedRecord(element , postPopupViewController);
+                        else
+                            relatedController.addRelatedRecord(element);
+		})
+	}
 
 });

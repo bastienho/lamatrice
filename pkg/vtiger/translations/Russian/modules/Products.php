@@ -11,7 +11,7 @@ $languageStrings = array(
 	'Products'                     => 'Товары'                , 
 	'SINGLE_Products'              => 'Товар'                  , 
 	'LBL_ADD_RECORD'               => 'Добавить Товар' , // KEY 5.x: LBL_ADD_PRODUCT
-	'LBL_RECORDS_LIST'             => 'Products List'               , // TODO: Review
+	'LBL_RECORDS_LIST'             => 'Продукция список'               , 
 	'LBL_PRODUCT_INFORMATION'      => 'Описание Товара', 
 	'LBL_IMAGE_INFORMATION'        => 'Изображение:'     , 
 	'LBL_STOCK_INFORMATION'        => 'Информация Склада:', 
@@ -20,7 +20,7 @@ $languageStrings = array(
 	'LBL_PRICE'                    => 'Цена'                    , 
 	'LBL_RESET_PRICE'              => 'Сбросить Цену'   , 
 	'LBL_RESET'                    => 'Сбросить'            , 
-	'LBL_ADD_TO_PRICEBOOKS'        => 'Add to PriceBooks'           , // TODO: Review
+	'LBL_ADD_TO_PRICEBOOKS'        => 'Добавить в PriceBooks'           , 
 	'Product No'                   => 'Товар №'              , 
 	'Part Number'                  => 'Код товара'         , 
 	'Product Active'               => 'Активен'              , 
@@ -72,4 +72,19 @@ $languageStrings = array(
 	'Spiral Binder'                => 'Переплет'            , 
 	'Sq Ft'                        => 'м2'                         , 
 	'LBL_CONVERSION_RATE'          => 'Обменный курс'   , 
+    'LBL_PRODUCTSMOD_DISABLED'     => 'Включить Продукты модуль для просмотра продуктов',
+	'LBL_SHOW_BUNDLE_IN_INVENTORY' => 'Показать элементы комплектации в Invoice/Котировки/Sales Order/Заказа',
+	'LBL_BUNDLE_TOTAL_COST' => 'Общая стоимость комплекта',
+	'LBL_UPDATE_BUNDLE_PRICE' => 'Обновление Bundle Цена',
+
+  'LBL_PRODUCT_NAME' => 'Наименование Товара',
+  'LBL_PRICE_QUANTITY' => 'Цена х Количество',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SUB_PRODUCTS_WILL_BE_SHOWN_IN_INVENTORY' => 'Вспомогательные изделия будут показаны в инвентаризации',
+	'JS_SUB_PRODUCTS_WILL_NOT_BE_SHOWN_IN_INVENTORY' => 'Вспомогательные изделия не будут отображаться в инвентаризации',
+	'JS_SUCCESSFULLY_CHANGED_BUNDLE_COST' => 'Успешно изменил Общая стоимость пучка',
+	'JS_DELETION_OR_IN_ACTIVATION_CHILD_PRODUCT_MESSAGE' => 'Этот продукт является частью прямого произведения. Цена пачки остаются неизменными, когда пункт пучок удалены или инактивируется. Вы уверены, что хотите продолжить?',
 );

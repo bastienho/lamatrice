@@ -67,22 +67,23 @@ class Install_Utils_Model {
 			$directiveValues['register_globals'] = 'On';
 		if (ini_get(('output_buffering') < '4096' && ini_get('output_buffering') != '0') || stripos(ini_get('output_buffering'), 'Off') > -1)
 			$directiveValues['output_buffering'] = 'Off';
-		if (ini_get('max_execution_time') < 600)
+		if (ini_get('max_execution_time') != 0)
 			$directiveValues['max_execution_time'] = ini_get('max_execution_time');
 		if (ini_get('memory_limit') < 32)
 			$directiveValues['memory_limit'] = ini_get('memory_limit');
-		$errorReportingValue = E_WARNING & ~E_NOTICE;
-		if(version_compare(PHP_VERSION, '5.3.0') >= 0) {
+			$errorReportingValue = E_WARNING & ~E_NOTICE;
+                if(version_compare(PHP_VERSION, '5.5.0') >= 0){
+                    $errorReportingValue = E_WARNING & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT;
+                }
+                else if(version_compare(PHP_VERSION, '5.3.0') >= 0) {
 			$errorReportingValue = E_WARNING & ~E_NOTICE & ~E_DEPRECATED;
 		}
 		if (ini_get('error_reporting') != $errorReportingValue)
 			$directiveValues['error_reporting'] = 'NOT RECOMMENDED';
-		if (ini_get('allow_call_time_pass_reference') != '1' || stripos(ini_get('allow_call_time_pass_reference'), 'Off') > -1)
-			$directiveValues['allow_call_time_pass_reference'] = 'Off';
 		if (ini_get('log_errors') == '1' || stripos(ini_get('log_errors'), 'On') > -1)
 			$directiveValues['log_errors'] = 'On';
-		if (ini_get('short_open_tag') != '1' || stripos(ini_get('short_open_tag'), 'Off') > -1)
-			$directiveValues['short_open_tag'] = 'Off';
+		if (ini_get('short_open_tag') == '1' || stripos(ini_get('short_open_tag'), 'On') > -1)
+			$directiveValues['short_open_tag'] = 'On';
 
 		return $directiveValues;
 	}
@@ -97,10 +98,9 @@ class Install_Utils_Model {
 		'file_uploads' => 'On',
 		'register_globals' => 'On',
 		'output_buffering' => 'On',
-		'max_execution_time' => '600',
+		'max_execution_time' => '0',
 		'memory_limit' => '32',
 		'error_reporting' => 'E_WARNING & ~E_NOTICE',
-		'allow_call_time_pass_reference' => 'On',
 		'log_errors' => 'Off',
 		'short_open_tag' => 'On'
 	);
@@ -109,8 +109,11 @@ class Install_Utils_Model {
 	 * Returns the recommended php settings for vtigerCRM
 	 * @return type
 	 */
-	function getRecommendedDirectives() {
-		if(version_compare(PHP_VERSION, '5.3.0') >= 0) {
+	public static function getRecommendedDirectives(){
+            if(version_compare(PHP_VERSION, '5.5.0') >= 0){
+                self::$recommendedDirectives['error_reporting'] = 'E_WARNING & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT';
+            }
+	    else if(version_compare(PHP_VERSION, '5.3.0') >= 0) {
 			self::$recommendedDirectives['error_reporting'] = 'E_WARNING & ~E_NOTICE & ~E_DEPRECATED';
 		}
 		return self::$recommendedDirectives;
@@ -120,14 +123,18 @@ class Install_Utils_Model {
 	 * Function checks for vtigerCRM installation prerequisites
 	 * @return <Array>
 	 */
-	function getSystemPreInstallParameters() {
+	public static function getSystemPreInstallParameters() {
 		$preInstallConfig = array();
 		// Name => array( System Value, Recommended value, supported or not(true/false) );
-		$preInstallConfig['LBL_PHP_VERSION']	= array(phpversion(), '5.3.0', (version_compare(phpversion(), '5.3.0', '>=')));
+		$preInstallConfig['LBL_PHP_VERSION']	= array(phpversion(), '5.4.0', (version_compare(phpversion(), '5.4.0', '>=')));
 		$preInstallConfig['LBL_IMAP_SUPPORT']	= array(function_exists('imap_open'), true, (function_exists('imap_open') == true));
 		$preInstallConfig['LBL_ZLIB_SUPPORT']	= array(function_exists('gzinflate'), true, (function_exists('gzinflate') == true));
-
-		$gnInstalled = false;
+                if ($preInstallConfig['LBL_PHP_VERSION'] >= '5.5.0') {
+                    $preInstallConfig['LBL_MYSQLI_CONNECT_SUPPORT'] = array(extension_loaded('mysqli'), true, extension_loaded('mysqli'));
+                }
+                $preInstallConfig['LBL_OPEN_SSL'] = array(extension_loaded('openssl'), true, extension_loaded('openssl'));
+                $preInstallConfig['LBL_CURL'] = array(extension_loaded('curl'), true, extension_loaded('curl'));
+                $gnInstalled = false;
 		if(!function_exists('gd_info')) {
 			eval(self::$gdInfoAlternate);
 		}
@@ -145,7 +152,7 @@ class Install_Utils_Model {
 	 * Function that provides default configuration based on installer setup
 	 * @return <Array>
 	 */
-	function getDefaultPreInstallParameters() {
+	public static function getDefaultPreInstallParameters() {
 		include 'config.db.php';
 		
 		$parameters = array(
@@ -266,6 +273,33 @@ class Install_Utils_Model {
 		return $currencies;
 	}
 
+
+	/**
+	 * Returns an array with the list of languages which are available in source
+	 * Note: the DB has not been initialized at this point, so we have to look at
+	 * the contents of the `languages/` directory.
+	 * @return <Array>
+	 */
+	public static function getLanguageList() {
+		$languageFolder = 'languages/';
+		$handle = opendir($languageFolder);
+		$language_list = array();
+		while ($prefix = readdir($handle)) {
+			if (substr($prefix, 0, 1) === '.' || $prefix === 'Settings') {
+				continue;
+			}
+			if (is_dir('languages/' . $prefix) && is_file('languages/' . $prefix . '/Install.php')) {
+				$language_list[$prefix] = $prefix;
+			}
+		}
+
+		ksort($language_list);
+
+		return $language_list;
+	}
+
+
+
 	/**
 	 * Function checks if its mysql type
 	 * @param type $dbType
@@ -314,7 +348,7 @@ class Install_Utils_Model {
 
 		//Checking for database connection parameters
 		if($db_type) {
-			$conn = &NewADOConnection($db_type);
+			$conn = NewADOConnection($db_type);
 			$db_type_status = true;
 			if(@$conn->Connect($db_hostname,$db_username,$db_password)) {
 				$db_server_status = true;
@@ -324,7 +358,7 @@ class Install_Utils_Model {
 				}
 				if($create_db) {
 					// drop the current database if it exists
-					$dropdb_conn = &NewADOConnection($db_type);
+					$dropdb_conn = NewADOConnection($db_type);
 					if(@$dropdb_conn->Connect($db_hostname, $root_user, $root_password, $db_name)) {
 						$query = "DROP DATABASE ".$db_name;
 						$dropdb_conn->Execute($query);
@@ -333,7 +367,7 @@ class Install_Utils_Model {
 
 					// create the new database
 					$db_creation_failed = true;
-					$createdb_conn = &NewADOConnection($db_type);
+					$createdb_conn = NewADOConnection($db_type);
 					if(@$createdb_conn->Connect($db_hostname, $root_user, $root_password)) {
 						$query = "CREATE DATABASE ".$db_name;
 						if($create_utf8_db == 'true') {
@@ -367,7 +401,7 @@ class Install_Utils_Model {
 			$error_msg_info = getTranslatedString('MSG_LIST_REASONS', 'Install').':<br>
 					-  '.getTranslatedString('MSG_DB_PARAMETERS_INVALID', 'Install').'
 					-  '.getTranslatedString('MSG_DB_USER_NOT_AUTHORIZED', 'Install');
-		} elseif(self::isMySQL($db_type) && $mysql_server_version < '4.1') {
+		} elseif(self::isMySQL($db_type) && $mysql_server_version < 4.1) {
 			$error_msg = $mysql_server_version.' -> '.getTranslatedString('ERR_INVALID_MYSQL_VERSION', 'Install');
 		} elseif($db_creation_failed) {
 			$error_msg = getTranslatedString('ERR_UNABLE_CREATE_DATABASE', 'Install').' '.$db_name;

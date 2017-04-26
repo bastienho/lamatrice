@@ -19,7 +19,7 @@ $languageStrings = array(
 	'Sales Stage'                  => 'Verkoop stadium'             , 
 	'Probability'                  => 'Waarschijnlijkheid (%)'      , 
 	'Campaign Source'              => 'Bron campagne'               , 
-	'Forecast Amount'              => 'Verwachting bedrag'          , 
+	'Forecast Amount'              => 'Gewogen Revenue'          , 
 	'Funnel'                       => 'Sales Funnel'                , 
 	'Potentials by Stage'          => 'Verkoopkansen per stadium'   , 
 	'Total Revenue'                => 'Omzet per Verkoper'          , 
@@ -41,4 +41,23 @@ $languageStrings = array(
 	'LBL_EXPECTED_CLOSE_DATE_ON'   => 'Verwachte sluiting op'       , 
 	'LBL_RELATED_CONTACTS'         => 'Related Contacts'            , // TODO: Review
 	'LBL_RELATED_PRODUCTS'         => 'Related Products'            , // TODO: Review
+    'Related To'                   => 'Naam van de Organisatie'     ,
+    'Type'                         => 'Type'                        , 
+    
+    //Convert Potentials
+    'LBL_CONVERT_POTENTIAL' => 'converteren kansen',
+    'LBL_POTENTIALS_FIELD_MAPPING' => 'Kansen Veldmapping',
+    'LBL_CONVERT_POTENTIALS_ERROR' => 'Je moet het project in staat te stellen de kansen om te zetten',
+    'LBL_POTENTIALS_FIELD_MAPPING_INCOMPLETE' => 'Kansen Veldmapping onvolledig (Instellingen> Module Manager> Opportunities> Opportunities Field Mapping)',
+	'LBL_CREATE_PROJECT' => 'Maak Project',
+    
+    //Potentials Custom Field Mapping
+	'LBL_CUSTOM_FIELD_MAPPING'=> 'Gelegenheid om mapping project',
+
+  'Contact Name' => 'Contact Naam',
+
+);
+
+$jsLanguageStrings = array(
+	'JS_SELECT_PROJECT_TO_CONVERT_LEAD' => 'Conversie selectie van Project vereist',
 );

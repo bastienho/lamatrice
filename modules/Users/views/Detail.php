@@ -16,6 +16,7 @@ class Users_Detail_View extends Users_PreferenceDetail_View {
 	}
 
 	public function preProcessSettings(Vtiger_Request $request) {
+		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		$viewer = $this->getViewer($request);
 		$moduleName = $request->getModule();
 		$qualifiedModuleName = $request->getModule(false);
@@ -42,13 +43,33 @@ class Users_Detail_View extends Users_PreferenceDetail_View {
 			$firstKey = key($menuModels);
 			$selectedMenu = $menuModels[$firstKey];
 		}
-
+        
+        //Specific change for Vtiger7
+        $settingsMenItems = array();
+        foreach($menuModels as $menuModel) {
+            $menuItems = $menuModel->getMenuItems();
+            foreach($menuItems as $menuItem) {
+                $settingsMenItems[$menuItem->get('name')] = $menuItem;
+            }
+        }
+        $viewer->assign('SETTINGS_MENU_ITEMS', $settingsMenItems);
+        $moduleModel = Vtiger_Module_Model::getInstance($moduleName);
+        $this->setModuleInfo($request, $moduleModel);
+        $viewer->assign('ACTIVE_BLOCK', array('block' => 'LBL_USER_MANAGEMENT', 
+                                              'menu' => 'LBL_USERS'));
+        
+        $moduleFields = $moduleModel->getFields();
+        foreach($moduleFields as $fieldName => $fieldModel){
+            $fieldsInfo[$fieldName] = $fieldModel->getFieldInfo();
+        }
+        $viewer->assign('FIELDS_INFO', json_encode($fieldsInfo));
+        
 		$viewer->assign('SELECTED_FIELDID',$fieldId);
 		$viewer->assign('SELECTED_MENU', $selectedMenu);
 		$viewer->assign('SETTINGS_MENUS', $menuModels);
 		$viewer->assign('MODULE', $moduleName);
 		$viewer->assign('QUALIFIED_MODULE', $qualifiedModuleName);
-        $viewer->assign('LOAD_OLD', Settings_Vtiger_Index_View::$loadOlderSettingUi);
+		$viewer->assign('CURRENT_USER_MODEL', $currentUserModel);
 		$viewer->view('SettingsMenuStart.tpl', $qualifiedModuleName);
 	}
 
@@ -65,12 +86,12 @@ class Users_Detail_View extends Users_PreferenceDetail_View {
 
 	public function process(Vtiger_Request $request) {
 		$viewer = $this->getViewer($request);
-		
+
 		$viewer->assign('CURRENT_USER_MODEL', Users_Record_Model::getCurrentUserModel());
 		$viewer->view('UserViewHeader.tpl', $request->getModule());
 		parent::process($request);
 	}
-	
+
 	public function getHeaderScripts(Vtiger_Request $request) {
 		$headerScriptInstances = parent::getHeaderScripts($request);
 		$moduleName = $request->getModule();
@@ -83,5 +104,20 @@ class Users_Detail_View extends Users_PreferenceDetail_View {
 		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
 		return $headerScriptInstances;
 	}
-	
+
+	/**
+	 * Function to get Ajax is enabled or not
+	 * @param Vtiger_Record_Model record model
+	 * @return <boolean> true/false
+	 */
+	function isAjaxEnabled($recordModel) {
+		if($recordModel->get('status') != 'Active') {
+			return false;
+		}
+		return $recordModel->isEditable();
+	}
+
+	public function getPageTitle(Vtiger_Request $request) {
+		return vtranslate($request->getModule(), $request->getModule());
+	}
 }

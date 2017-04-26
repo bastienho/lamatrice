@@ -43,6 +43,12 @@ jQuery.Class('Install_Index_Js', {}, {
 			else password.addClass('hide');
 		});
 
+		if(jQuery('input[name="create_db"]').prop('checked'))
+        {
+            jQuery('#root_user').removeClass("hide");
+            jQuery('#root_password').removeClass("hide");
+        }
+
 		function clearPasswordError() {
 			jQuery('#passwordError').html('');
 		}
@@ -51,6 +57,7 @@ jQuery.Class('Install_Index_Js', {}, {
 			jQuery('#passwordError').html('Please re-enter passwords.  The \"Password\" and \"Re-type password\" values do not match.');
 		}
 
+		//This is not an event, we check if create_db is checked
 		jQuery('input[name="retype_password"]').on('blur', function(e){
 			var element = jQuery(e.currentTarget);
 			var password = jQuery('input[name="password"]').val();
@@ -98,13 +105,33 @@ jQuery.Class('Install_Index_Js', {}, {
 			var password = jQuery('#passwordError');
 			if(password.html() != '') error = true;
 
+                        var emailField = jQuery('input[name="admin_email"]'); 
+                        var regex = /^[_/a-zA-Z0-9*]+([!"#$%&'()*+,./:;<=>?\^_`{|}~-]?[a-zA-Z0-9/_/-])*@[a-zA-Z0-9]+([\_\-\.]?[a-zA-Z0-9]+)*\.([\-\_]?[a-zA-Z0-9])+(\.?[a-zA-Z0-9]+)?$/;
+                        if(!regex.test(emailField.val()) && emailField.val()!=''){ 
+                            var invalidEmailAddress=true; 
+                            emailField.addClass('error').focus();  
+                            error = true; 
+                         }else{ 
+                             emailField.removeClass('error'); 
+                         } 
+                         
 			if(error) {
-				var content = '<div class="span12">'+
+                            var content;
+				if(invalidEmailAddress){ 
+                                    content = '<div class="span12">'+ 
+                                                                            '<div class="alert alert-error">'+ 
+                                                                                    '<button class="close" data-dismiss="alert" type="button">x</button>'+ 
+                                                                                    'Warning! Invalid email address.'+ 
+                                                                            '</div>'+ 
+                                                                    '</div>'; 
+                                }else{ 
+                                    content = '<div class="span12">'+ 
 									'<div class="alert alert-error">'+
 										'<button class="close" data-dismiss="alert" type="button">x</button>'+
 										'Warning! Required fields missing values.'+
 									'</div>'+
 								'</div>';
+                                }
 				jQuery('#errorMessage').html(content).show();
 			} else {
 				jQuery('form[name="step4"]').submit();

@@ -15,8 +15,8 @@ $languageStrings = array(
 	'LBL_CONTACT_INFORMATION'      => 'Informação do Contato'     , 
 	'LBL_CUSTOMER_PORTAL_INFORMATION' => 'Informação Portal Cliente' , 
 	'LBL_IMAGE_INFORMATION'        => 'Informação Imagem Contato:', 
-	'LBL_COPY_OTHER_ADDRESS'       => 'Copy Other Address'          , // TODO: Review
-	'LBL_COPY_MAILING_ADDRESS'     => 'Copy Mailing Address'        , // TODO: Review
+	'LBL_COPY_OTHER_ADDRESS'       => 'Copiar Outro Endereço'          , // TODO: Review
+	'LBL_COPY_MAILING_ADDRESS'     => 'Copiar Endereço para correspondência'        , // TODO: Review
 	'Office Phone'                 => 'Telefone Escritório'        , 
 	'Home Phone'                   => 'Telefone Residencial'        , 
 	'Title'                        => 'Cargo'                       , 
@@ -33,13 +33,13 @@ $languageStrings = array(
 	'Mailing State'                => 'Estado Correspondência'     , 
 	'Mailing Zip'                  => 'CEP Correspondência'        , 
 	'Mailing Country'              => 'País Correspondência'      , 
-	'Mailing PO Box'               => 'Mailing P.O. Box'            , 
+	'Mailing Po Box'               => 'Da Mailing Po Box'            , 
 	'Other Street'                 => 'Endereço Alternativo'       , 
 	'Other City'                   => 'Cidade Alternativo'          , 
 	'Other State'                  => 'Estado Alternativo'          , 
 	'Other Zip'                    => 'CEP Alternativo'             , 
 	'Other Country'                => 'País Alternativo'           , 
-	'Other PO Box'                 => 'Other P.O. Box'              , 
+	'Other Po Box'                 => 'Other P.O. Box'              , 
 	'Contact Image'                => 'Imagem Contato'              , 
 	'Mr.'                          => 'Sr.'                         , 
 	'Ms.'                          => 'Sra.'                        , 
@@ -48,10 +48,14 @@ $languageStrings = array(
 	'Prof.'                        => 'Prof.'                       , 
 	'User List'                    => 'Lista Usuário'              , 
 	'Contact Id' => 'Contato Id',
+    'Support Start Date'           => 'Suporte Data de Início',
+    'Support End Date'             => 'Data de Apoio Fim',
+	'LBL_TRANSACTIONS' => 'Transações',
+
+  'Other Phone' => 'Telefone Secundário',
+  'Email' => 'E-Mail Principal',
+  'Secondary Email' => 'E-Mail Secundário',
+
 );
 $jsLanguageStrings = array(
-	'LBL_SYNC_BUTTON'              => 'Synchronize Now'             , // TODO: Review
-	'LBL_SYNCRONIZING'             => 'Synchronizing....'           , // TODO: Review
-	'LBL_NOT_SYNCRONIZED'          => 'You have not synchronized yet', // TODO: Review
-	'LBL_FIELD_MAPPING'            => 'Field Mapping'               , // TODO: Review
 );

@@ -11,6 +11,6 @@
 -->*}
 {strip}
 	<div class="recordDetails">
-		{include file='SummaryViewContents.tpl'|vtemplate_path:$MODULE_NAME}
+		{include file='SummaryViewContents.tpl'|@vtemplate_path}
 	</div>
 {/strip}

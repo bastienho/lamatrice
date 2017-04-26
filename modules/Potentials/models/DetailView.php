@@ -12,18 +12,33 @@ class Potentials_DetailView_Model extends Vtiger_DetailView_Model {
 	/**
 	 * Function to get the detail view links (links and widgets)
 	 * @param <array> $linkParams - parameters which will be used to calicaulate the params
-	 * @param boolean $countRelatedEntity - AV150619
 	 * @return <array> - array of link models in the format as below
 	 *                   array('linktype'=>list of link models);
 	 */
-	public function getDetailViewLinks($linkParams, $countRelatedEntity = false) {
+	public function getDetailViewLinks($linkParams) {
 		$currentUserModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
 
-		$linkModelList = parent::getDetailViewLinks($linkParams, $countRelatedEntity);
+		$linkModelList = parent::getDetailViewLinks($linkParams);
 		$recordModel = $this->getRecord();
 		$invoiceModuleModel = Vtiger_Module_Model::getInstance('Invoice');
+		$quoteModuleModel = Vtiger_Module_Model::getInstance('Quotes');
+		$salesOrderModuleModel = Vtiger_Module_Model::getInstance('SalesOrder');
+		$projectModuleModel = Vtiger_Module_Model::getInstance('Project');
 
-		if($currentUserModel->hasModuleActionPermission($invoiceModuleModel->getId(), 'EditView')) {
+		$emailModuleModel = Vtiger_Module_Model::getInstance('Emails');
+
+		if($currentUserModel->hasModulePermission($emailModuleModel->getId())) {
+			$basicActionLink = array(
+				'linktype' => 'DETAILVIEWBASIC',
+				'linklabel' => 'LBL_SEND_EMAIL',
+				'linkurl' => 'javascript:Vtiger_Detail_Js.triggerSendEmail("index.php?module='.$this->getModule()->getName().
+								'&view=MassActionAjax&mode=showComposeEmailForm&step=step1","Emails");',
+				'linkicon' => ''
+			);
+			$linkModelList['DETAILVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+		}
+
+		if($currentUserModel->hasModuleActionPermission($invoiceModuleModel->getId(), 'CreateView')) {
 			$basicActionLink = array(
 				'linktype' => 'DETAILVIEW',
 				'linklabel' => vtranslate('LBL_CREATE').' '.vtranslate($invoiceModuleModel->getSingularLabelKey(), 'Invoice'),
@@ -32,10 +47,30 @@ class Potentials_DetailView_Model extends Vtiger_DetailView_Model {
 			);
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
 		}
-        
+
+		if($currentUserModel->hasModuleActionPermission($quoteModuleModel->getId(), 'CreateView')) {
+			$basicActionLink = array(
+				'linktype' => 'DETAILVIEW',
+				'linklabel' => vtranslate('LBL_CREATE').' '.vtranslate($quoteModuleModel->getSingularLabelKey(), 'Quotes'),
+				'linkurl' => $recordModel->getCreateQuoteUrl(),
+				'linkicon' => ''
+			);
+			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+		}
+
+		if($currentUserModel->hasModuleActionPermission($salesOrderModuleModel ->getId(), 'CreateView')) {
+			$basicActionLink = array(
+				'linktype'	=> 'DETAILVIEW',
+				'linklabel' => vtranslate('LBL_CREATE').' '.vtranslate($salesOrderModuleModel ->getSingularLabelKey(), 'SalesOrder'),
+				'linkurl'	=> $recordModel->getCreateSalesOrderUrl(),
+				'linkicon'	=> ''
+			);
+			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+		}
+
 		$CalendarActionLinks[] = array();
 		$CalendarModuleModel = Vtiger_Module_Model::getInstance('Calendar');
-		if($currentUserModel->hasModuleActionPermission($CalendarModuleModel->getId(), 'EditView')) {
+		if($currentUserModel->hasModuleActionPermission($CalendarModuleModel->getId(), 'CreateView')) {
 			$CalendarActionLinks[] = array(
 					'linktype' => 'DETAILVIEW',
 					'linklabel' => 'LBL_ADD_EVENT',
@@ -50,14 +85,24 @@ class Potentials_DetailView_Model extends Vtiger_DetailView_Model {
 					'linkicon' => ''
 			);
 		}
+
+		if($currentUserModel->hasModuleActionPermission($projectModuleModel->getId(), 'CreateView') && !$recordModel->isPotentialConverted()) {
+			$basicActionLink = array(
+				'linktype' => 'DETAILVIEWBASIC',
+				'linklabel' => vtranslate('LBL_CREATE_PROJECT', $recordModel->getModuleName()),
+				'linkurl' => 'Javascript:Potentials_Detail_Js.convertPotential("'.$recordModel->getConvertPotentialUrl().'",this);',
+				'linkicon' => ''
+			);
+			$linkModelList['DETAILVIEWBASIC'][] = Vtiger_Link_Model::getInstanceFromValues($basicActionLink);
+		}
 		
-        foreach($CalendarActionLinks as $basicLink) {
+		foreach($CalendarActionLinks as $basicLink) {
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($basicLink);
 		}
 
 		return $linkModelList;
 	}
-	
+
 	/**
 	 * Function to get the detail view widgets
 	 * @return <Array> - List of widgets , where each widget is an Vtiger_Link_Model
@@ -69,45 +114,43 @@ class Potentials_DetailView_Model extends Vtiger_DetailView_Model {
 
 		$documentsInstance = Vtiger_Module_Model::getInstance('Documents');
 		if($userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'DetailView')) {
-			$createPermission = $userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'EditView');
+			$createPermission = $userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'CreateView');
 			$widgets[] = array(
 					'linktype' => 'DETAILVIEWWIDGET',
 					'linklabel' => 'Documents',
 					'linkName'	=> $documentsInstance->getName(),
 					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
 							'&relatedModule=Documents&mode=showRelatedRecords&page=1&limit=5',
-					'action'	=>	($createPermission == true) ? array('Add', 'Select') : array(),
+					'action'	=>	($createPermission == true) ? array('Add') : array(),
 					'actionURL' =>	$documentsInstance->getQuickCreateUrl()
-					'selectURL' =>	$documentsInstance->getListViewUrl(),
 			);
 		}
 
 		$contactsInstance = Vtiger_Module_Model::getInstance('Contacts');
 		if($userPrivilegesModel->hasModuleActionPermission($contactsInstance->getId(), 'DetailView')) {
-			$createPermission = $userPrivilegesModel->hasModuleActionPermission($contactsInstance->getId(), 'EditView');
+			$createPermission = $userPrivilegesModel->hasModuleActionPermission($contactsInstance->getId(), 'CreateView');
 			$widgets[] = array(
 					'linktype' => 'DETAILVIEWWIDGET',
 					'linklabel' => 'LBL_RELATED_CONTACTS',
 					'linkName'	=> $contactsInstance->getName(),
 					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
 							'&relatedModule=Contacts&mode=showRelatedRecords&page=1&limit=5',
-					'action'	=>	($createPermission == true) ? array('Add', 'Select') : array(),
-					'actionURL' =>	$contactsInstance->getQuickCreateUrl(),
-					'selectURL' =>	$contactsInstance->getListViewUrl(),
+					'action'	=>	($createPermission == true) ? array('Add') : array(),
+					'actionURL' =>	$contactsInstance->getQuickCreateUrl()
 			);
 		}
 
 		$productsInstance = Vtiger_Module_Model::getInstance('Products');
 		if($userPrivilegesModel->hasModuleActionPermission($productsInstance->getId(), 'DetailView')) {
-			$createPermission = $userPrivilegesModel->hasModuleActionPermission($productsInstance->getId(), 'EditView');
+			$createPermission = $userPrivilegesModel->hasModuleActionPermission($productsInstance->getId(), 'CreateView');
 			$widgets[] = array(
 					'linktype' => 'DETAILVIEWWIDGET',
 					'linklabel' => 'LBL_RELATED_PRODUCTS',
 					'linkName'	=> $productsInstance->getName(),
 					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
 							'&relatedModule=Products&mode=showRelatedRecords&page=1&limit=5',
-					'action'	=>	($createPermission == true) ? array('Select') : array(),
-					'actionURL' =>	$productsInstance->getListViewUrl()
+					'action'	=>	($createPermission == true) ? array('Add') : array(),
+					'actionURL' =>	$productsInstance->getQuickCreateUrl()
 			);
 		}
 

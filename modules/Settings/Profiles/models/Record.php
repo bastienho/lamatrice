@@ -190,6 +190,7 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
 		if(!$this->hasModuleFieldPermission($module, $field)) {
 			return self::PROFILE_FIELD_INACTIVE;
 		} elseif($this->hasModuleFieldWritePermission($module, $field)) {
+			// for line item fields as well, we should send read write 
 			return self::PROFILE_FIELD_READWRITE;
 		} else {
 			return self::PROFILE_FIELD_READONLY;
@@ -199,7 +200,7 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
 	public function isModuleFieldLocked($module, $field) {
 		$fieldModel = $this->getProfileTabFieldModel($module, $field);
         if(!$fieldModel->isEditable() || $fieldModel->isMandatory()
-				|| in_array($fieldModel->get('uitype'),self::$fieldLockedUiTypes)) {
+				|| in_array($fieldModel->get('uitype'),self::$fieldLockedUiTypes) || $fieldModel->hasCustomLock()) {
 			return true;
 		}
 		return false;
@@ -439,7 +440,7 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
 			$db->pquery('DELETE FROM vtiger_profile2globalpermissions WHERE profileid=?', array($profileId));
 		}
 		$db->pquery($sql, $params);
-		
+
 		$sql = 'INSERT INTO vtiger_profile2globalpermissions(profileid, globalactionid, globalactionpermission) VALUES (?,?,?)';
 		$params = array($profileId, Settings_Profiles_Module_Model::GLOBAL_ACTION_VIEW, $this->tranformInputPermissionValue($this->get('viewall')));
 		$db->pquery($sql, $params);
@@ -477,7 +478,6 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
 							}
 						}
 					}
-					//var_dump($moduleModel->getId(), $permissions);
 					$this->saveModulePermissions($moduleModel, $permissions);
 				}
 			}
@@ -490,25 +490,8 @@ class Settings_Profiles_Record_Model extends Settings_Vtiger_Record_Model {
         return $profileId;
 	}
 
-/*	nettoyage de la table des profils (des fields ne sont pas relatifs aux bonnes tables)
-SELECT `profileid`, `vtiger_profile2field`.tabid, tab_of_profil.name as profil_module_name, vtiger_field.tabid as field_tabid, tab_of_field.name as field_module_name, vtiger_field.tablename, `vtiger_profile2field`.`fieldid`, vtiger_field.fieldname, vtiger_field.columnname
- FROM `vtiger_profile2field`
-JOIN vtiger_field
-ON `vtiger_profile2field`.fieldid = vtiger_field.fieldid
-AND `vtiger_profile2field`.tabid <> vtiger_field.tabid
-JOIN vtiger_tab tab_of_profil
-ON `vtiger_profile2field`.tabid = tab_of_profil.tabid
-JOIN vtiger_tab tab_of_field
-ON `vtiger_field`.tabid = tab_of_field.tabid;
-
-DELETE vtiger_profile2field FROM vtiger_profile2field
-JOIN vtiger_field
-ON vtiger_profile2field.fieldid = vtiger_field.fieldid
-AND vtiger_profile2field.tabid != vtiger_field.tabid;
-*/
 	protected function saveModulePermissions($moduleModel, $permissions) {
 		$db = PearDatabase::getInstance();
-		//$db->setDebug(true);
 		$profileId = $this->getId();
 		$tabId = $moduleModel->getId();
 		$profileActionPermissions = $this->getProfileActionPermissions();
@@ -519,8 +502,8 @@ AND vtiger_profile2field.tabid != vtiger_field.tabid;
 		$actionPermissions = array();
 		$actionPermissions = $permissions['actions'];
 		$actionEnabled = false;
-		if($moduleModel->isEntityModule()) {
-			if($actionPermissions) {
+		if($moduleModel->isEntityModule() || $moduleModel->isUtilityActionEnabled()) {
+			if($actionPermissions || $moduleModel->isUtilityActionEnabled()) {
 				$actionIdsList = Vtiger_Action_Model::$standardActions;
 				unset($actionIdsList[3]);
 				$availableActionIds = array_keys($actionIdsList);
@@ -533,17 +516,28 @@ AND vtiger_profile2field.tabid != vtiger_field.tabid;
 						$actionPermissions[$actionId] = $actionPermissions[$actionId];
 					}
 				}
-
+                
 				//Dividing on actions
 				$actionsIdsList = $utilityIdsList = array();
 				foreach($actionPermissions as $actionId => $permission) {
 					if(isset(Vtiger_Action_Model::$standardActions[$actionId])) {
-						$actionsIdsList[$actionId] = $permission;
+                        if($moduleModel->isUtilityActionEnabled() && !isset($permission)) {
+                            $actionsIdsList[$actionId] = 'on'; // permission for non entity module should be true
+                        } else {
+                            $actionsIdsList[$actionId] = $permission;
+                        }
 					} else {
 						$utilityIdsList[$actionId] = $permission;
 					}
 				}
-					
+                
+                $utilityActions = $moduleModel->getUtilityActions();
+                foreach ($utilityActions as $utilityActionId => $utilityActionName) {
+                    if(!isset($utilityIdsList[$utilityActionId])) {
+                        $utilityIdsList[$utilityActionId] = 'off';
+                    }
+                }
+                
 				//Update process
 				if ($profileActionPermissions) {
 					//Standard permissions
@@ -561,12 +555,7 @@ AND vtiger_profile2field.tabid != vtiger_field.tabid;
 					if ($actionsIdsList) {
 						$db->pquery($actionsUpdateQuery, array($profileId, $tabId));
 					}
-					
-					foreach (Vtiger_Action_Model::$utilityActions as $utilityActionId => $utilityActionName) {
-						if(!isset($utilityIdsList[$utilityActionId])) {
-							$utilityIdsList[$utilityActionId] = 'off';
-						}
-					}
+                    
 					//Utility permissions
 					$utilityUpdateQuery = 'UPDATE vtiger_profile2utility SET permission = CASE ';
 					foreach($utilityIdsList as $actionId => $permission) {
@@ -615,14 +604,9 @@ AND vtiger_profile2field.tabid != vtiger_field.tabid;
 					}
 				}
 			} elseif ($this->isRestrictedModule($moduleModel->getName())) {
-			
-				var_dump('!$actionPermissions + isRestrictedModule : ' .  $moduleModel->getName());
 				//To check the module is restricted or not(Emails, Webmails)
 				$actionEnabled = true;
 			}
-			else
-			
-				var_dump('!$actionPermissions : ' .  $moduleModel->getName());
 		} else {
 			$actionEnabled = true;
 		}
@@ -877,15 +861,16 @@ AND vtiger_profile2field.tabid != vtiger_field.tabid;
 			$moduleFields = $userModuleModel->getFields();
 
 			$userAccessbleFields = array();
-			$skipFields = array(98,115,116,31,32);
+			$skipFields = array(115,116,31,32);
+			$allowedFields = array("roleid","currency_id","reports_to_id");
 			foreach ($moduleFields as $fieldName => $fieldModel) {
-				if($fieldModel->getFieldDataType() == 'string' || $fieldModel->getFieldDataType() == 'email' || $fieldModel->getFieldDataType() == 'phone') {
+				if(in_array($fieldName,$allowedFields) || $fieldModel->getFieldDataType() == 'string' || $fieldModel->getFieldDataType() == 'email' || $fieldModel->getFieldDataType() == 'phone') {
 					if(!in_array($fieldModel->get('uitype'), $skipFields) && $fieldName != 'asterisk_extension'){
 						$userAccessbleFields[$fieldModel->get('id')] .= $fieldName;
 					}
 				}
 			}
-
+            
 			//Added user fields into vtiger_profile2field and vtiger_def_org_field
 			//We are using this field information in Email Templates.
 			foreach ($userAccessbleFields as $fieldId => $fieldName) {

@@ -14,7 +14,13 @@ class Settings_Leads_MappingSave_Action extends Settings_Vtiger_Index_Action {
 		$qualifiedModuleName = $request->getModule(false);
 		$mapping = $request->get('mapping');
 
-		$mappingModel = Settings_Leads_Mapping_Model::getCleanInstance();
+        //removing csrf token from mapping array because it'll cause query failure
+        $csrfKey = '__vtrftk';
+        if (array_key_exists($csrfKey, $mapping)) {
+            unset($mapping[$csrfKey]);
+        }
+        
+        $mappingModel = Settings_Leads_Mapping_Model::getCleanInstance();
 
 		$response = new Vtiger_Response();
 		if ($mapping) {
@@ -25,4 +31,8 @@ class Settings_Leads_MappingSave_Action extends Settings_Vtiger_Index_Action {
 		}
 		$response->emit();
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

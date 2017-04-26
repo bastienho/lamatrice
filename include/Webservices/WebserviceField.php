@@ -7,7 +7,10 @@
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
  ******************************************************************************/
+
 require_once 'includes/runtime/Cache.php';
+require_once 'vtlib/Vtiger/Runtime.php';
+
 class WebserviceField{
 	private $fieldId;
 	private $uitype;
@@ -39,11 +42,11 @@ class WebserviceField{
 	private $referenceList;
 	private $defaultValuePresent;
 	private $explicitDefaultValue;
-	
+
 	private $genericUIType = 10;
 
 	private $readOnly = 0;
-	
+
 	private function __construct($adb,$row){
 		$this->uitype = $row['uitype'];
 		$this->blockId = $row['block'];
@@ -78,66 +81,66 @@ class WebserviceField{
 			$this->setDefault($row['defaultvalue']);
 		}
 	}
-	
+
 	public static function fromQueryResult($adb,$result,$rowNumber){
 		 return new WebserviceField($adb,$adb->query_result_rowdata($result,$rowNumber));
 	}
-	
+
 	public static function fromArray($adb,$row){
 		return new WebserviceField($adb,$row);
 	}
-	
+
 	public function getTableName(){
 		return $this->tableName;
 	}
-	
+
 	public function getFieldName(){
 		return $this->fieldName;
 	}
-	
+
 	public function getFieldLabelKey(){
 		return $this->fieldLabel;
 	}
-	
+
 	public function getFieldType(){
 		return $this->fieldType;
 	}
-	
+
 	public function isMandatory(){
 		return $this->mandatory;
 	}
-	
+
 	public function getTypeOfData(){
 		return $this->typeOfData;
 	}
-	
+
 	public function getDisplayType(){
 		return $this->displayType;
 	}
-	
+
 	public function getMassEditable(){
 		return $this->massEditable;
 	}
-	
+
 	public function getFieldId(){
 		return $this->fieldId;
 	}
-	
+
 	public function getDefault(){
 		if($this->dataFromMeta !== true && $this->explicitDefaultValue !== true){
 			$this->fillColumnMeta();
 		}
 		return $this->default;
 	}
-	
+
 	public function getColumnName(){
 		return $this->columnName;
 	}
-	
+
 	public function getBlockId(){
 		return $this->blockId;
 	}
-	
+
 	public function getBlockName(){
 		if(empty($this->blockName)) {
 			$this->blockName = getBlockName($this->blockId);
@@ -155,14 +158,14 @@ class WebserviceField{
 		}
 		return $this->nullable;
 	}
-	
+
 	public function hasDefault(){
 		if($this->dataFromMeta !== true && $this->explicitDefaultValue !== true){
 			$this->fillColumnMeta();
 		}
 		return $this->defaultValuePresent;
 	}
-	
+
 	public function getUIType(){
 		return $this->uitype;
 	}
@@ -171,34 +174,31 @@ class WebserviceField{
 		if($this->readOnly == 1) return true;
 		return false;
 	}
-	
+
 	private function setNullable($nullable){
 		$this->nullable = $nullable;
 	}
-	
+
 	public function setDefault($value){
 		$this->default = $value;
 		$this->explicitDefaultValue = true;
 		$this->defaultValuePresent = true;
 	}
-	
+
 	public function setFieldDataType($dataType){
 		$this->fieldDataType = $dataType;
 	}
-	
+
 	public function setReferenceList($referenceList){
 		$this->referenceList = $referenceList;
 	}
-	
+
 	public function getTableFields(){
 		$tableFields = null;
 		if(isset(WebserviceField::$tableMeta[$this->getTableName()])){
 			$tableFields = WebserviceField::$tableMeta[$this->getTableName()];
 		}else{
 			$dbMetaColumns = $this->pearDB->database->MetaColumns($this->getTableName());
-			//ED150417
-			if(!is_array($dbMetaColumns))
-				return;
 			$tableFields = array();
 			foreach ($dbMetaColumns as $key => $dbField) {
 				$tableFields[$dbField->name] = $dbField;
@@ -220,7 +220,7 @@ class WebserviceField{
 		}
 		$this->dataFromMeta = true;
 	}
-	
+
 	public function getFieldDataType(){
 		if($this->fieldDataType === null){
 			$fieldDataType = $this->getFieldTypeFromUIType();
@@ -237,8 +237,8 @@ class WebserviceField{
 		}
 		return $this->fieldDataType;
 	}
-	
-	public function getReferenceList(){
+
+	public function getReferenceList($hideDisabledModules = true){
 		static $referenceList = array();
 		if($this->referenceList === null){
 			if(isset($referenceList[$this->getFieldId()])){
@@ -251,10 +251,10 @@ class WebserviceField{
 			$fieldTypeData = WebserviceField::$fieldTypeMapping[$this->getUIType()];
 			$referenceTypes = array();
 			if($this->getUIType() != $this->genericUIType){
-				$sql = "select * from vtiger_ws_referencetype where fieldtypeid=?";
+				$sql = "select type from vtiger_ws_referencetype where fieldtypeid=?";
 				$params = array($fieldTypeData['fieldtypeid']);
 			}else{
-				$sql = 'select relmodule as type from vtiger_fieldmodulerel where fieldid=?';
+				$sql = 'SELECT relmodule AS type FROM vtiger_fieldmodulerel WHERE fieldid=? ORDER BY sequence ASC';
 				$params = array($this->getFieldId());
 			}
 			$result = $this->pearDB->pquery($sql,$params);
@@ -262,36 +262,26 @@ class WebserviceField{
 			for($i=0;$i<$numRows;++$i){
 				array_push($referenceTypes,$this->pearDB->query_result($result,$i,"type"));
 			}
-			
-			//to handle hardcoding done for Calendar module todo activities.
-			if(($this->tabid == 9 || $this->tabid == 16) && $this->fieldName =='parent_id'){
-				$referenceTypes[] = 'Invoice';
-				$referenceTypes[] = 'Quotes';
-				$referenceTypes[] = 'PurchaseOrder';
-				$referenceTypes[] = 'SalesOrder';
-				$referenceTypes[] = 'Campaigns';
-			}
-			
-			global $current_user;
-			$types = vtws_listtypes(null, $current_user);
-			$accessibleTypes = $types['types'];
-			if(!is_admin($current_user)) {
-				array_push($accessibleTypes, 'Users');
-			}
-			//var_dump($this->tabid, $this->fieldName, $accessibleTypes,$referenceTypes, array_intersect($accessibleTypes,$referenceTypes));
-			$referenceTypes = array_values(array_intersect($accessibleTypes,$referenceTypes));
+            if($hideDisabledModules) {
+				global $current_user;
+				$types = vtws_listtypes(null, $current_user);
+				$accessibleTypes = $types['types'];
+	            //If it is non admin user or the edit and view is there for profile then users module will be accessible
+				if(!is_admin($current_user)&& !in_array("Users",$accessibleTypes)) {
+					array_push($accessibleTypes, 'Users');
+				}
+
+				$referenceTypes = array_values(array_intersect($referenceTypes, $accessibleTypes));
+            }
 			$referenceList[$this->getFieldId()] = $referenceTypes;
 			$this->referenceList = $referenceTypes;
 			return $referenceTypes;
 		}
 		return $this->referenceList;
 	}
-	
+
 	private function getFieldTypeFromTable(){
 		$tableFields = $this->getTableFields();
-		//ED150417
-		if(!is_array($tableFields))
-			return;
 		foreach ($tableFields as $fieldName => $dbField) {
 			if(strcmp($fieldName,$this->getColumnName())===0){
 				return $dbField->type;
@@ -300,7 +290,7 @@ class WebserviceField{
 		//This should not be returned if entries in DB are correct.
 		return null;
 	}
-	
+
 	private function getFieldTypeFromTypeOfData(){
 		switch($this->fieldType){
 			case 'T': return "time";
@@ -315,9 +305,9 @@ class WebserviceField{
 			default: return "string";
 		}
 	}
-	
+
 	private function getFieldTypeFromUIType(){
-		
+
 		// Cache all the information for futher re-use
 		if(empty(self::$fieldTypeMapping)) {
 			$result = $this->pearDB->pquery("select * from vtiger_ws_fieldtype", array());
@@ -325,6 +315,7 @@ class WebserviceField{
 				self::$fieldTypeMapping[$resultrow['uitype']] = $resultrow;
 			}
 		}
+
 		if(isset(WebserviceField::$fieldTypeMapping[$this->getUIType()])){
 			if(WebserviceField::$fieldTypeMapping[$this->getUIType()] === false){
 				return null;
@@ -336,28 +327,32 @@ class WebserviceField{
 			return null;
 		}
 	}
-	
+
 	function getPicklistDetails(){
 		$cache = Vtiger_Cache::getInstance();
 		if($cache->getPicklistDetails($this->getTabId(),$this->getFieldName())){
 			return $cache->getPicklistDetails($this->getTabId(),$this->getFieldName());
 		} else {
-		$hardCodedPickListNames = array("hdntaxtype","email_flag");
-		$hardCodedPickListValues = array(
-				"hdntaxtype"=>array(
-					array("label"=>"Individual","value"=>"individual"),
-					array("label"=>"Group","value"=>"group")
-				),
-				"email_flag" => array(
-					array('label'=>'SAVED','value'=>'SAVED'),
-					array('label'=>'SENT','value' => 'SENT'),
-					array('label'=>'MAILSCANNER','value' => 'MAILSCANNER')
-				)
-			);
-		if(in_array(strtolower($this->getFieldName()),$hardCodedPickListNames)){
-			return $hardCodedPickListValues[strtolower($this->getFieldName())];
-		}
-			$picklistDetails = $this->getPickListOptions($this->getFieldName());
+			//Inventory picklist values
+			if ($this->getDisplayType() == 5 && $this->getFieldName() === 'region_id') {
+				$picklistDetails = array();
+				$allRegions = getAllRegions();
+				foreach ($allRegions as $regionId => $regionDetails) {
+					$picklistDetails[] = array('value' => $regionId, 'label' => $regionDetails['name']);
+				}
+			} else {
+				$hardCodedPickListNames = array('hdntaxtype','email_flag');
+				$hardCodedPickListValues = array('hdntaxtype'=> array(	array('label' => 'Individual',	'value' => 'individual'),
+																		array('label' => 'Group',		'value' => 'group')),
+												 'email_flag'=> array(	array('label' => 'SAVED',		'value' => 'SAVED'),
+																		array('label' => 'SENT',		'value' => 'SENT'),
+																		array('label' => 'MAILSCANNER',	'value' => 'MAILSCANNER')));
+
+				if (in_array(strtolower($this->getFieldName()), $hardCodedPickListNames)) {
+					return $hardCodedPickListValues[strtolower($this->getFieldName())];
+				}
+				$picklistDetails = $this->getPickListOptions($this->getFieldName());
+			}
 			$cache->setPicklistDetails($this->getTabId(),$this->getFieldName(),$picklistDetails);
 			return $picklistDetails;
 		}
@@ -365,12 +360,17 @@ class WebserviceField{
 
 	function getPickListOptions(){
 		$fieldName = $this->getFieldName();
-		
+		$language = Vtiger_Language_Handler::getLanguage();
+
 		$default_charset = VTWS_PreserveGlobal::getGlobal('default_charset');
 		$options = array();
 		$sql = "select * from vtiger_picklist where name=?";
 		$result = $this->pearDB->pquery($sql,array($fieldName));
 		$numRows = $this->pearDB->num_rows($result);
+
+		$moduleName = getTabModuleName($this->getTabId());
+		if ($moduleName == 'Events') $moduleName = 'Calendar';
+
 		if($numRows == 0){
 			$sql = "select * from vtiger_$fieldName";
 			$result = $this->pearDB->pquery($sql,array());
@@ -379,9 +379,7 @@ class WebserviceField{
 				$elem = array();
 				$picklistValue = $this->pearDB->query_result($result,$i,$fieldName);
 				$picklistValue = decode_html($picklistValue);
-				$moduleName = getTabModuleName($this->getTabId());
-				if($moduleName == 'Events') $moduleName = 'Calendar';
-				$elem["label"] = getTranslatedString($picklistValue,$moduleName);
+				$elem["label"] = getTranslatedString($picklistValue, $moduleName, $language);
 				$elem["value"] = $picklistValue;
 				array_push($options,$elem);
 			}
@@ -391,9 +389,7 @@ class WebserviceField{
 			for($i=0;$i<sizeof($details);++$i){
 				$elem = array();
 				$picklistValue = decode_html($details[$i]);
-				$moduleName = getTabModuleName($this->getTabId());
-				if($moduleName == 'Events') $moduleName = 'Calendar';
-				$elem["label"] = getTranslatedString($picklistValue,$moduleName);
+				$elem["label"] = getTranslatedString($picklistValue, $moduleName, $language);
 				$elem["value"] = $picklistValue;
 				array_push($options,$elem);
 			}

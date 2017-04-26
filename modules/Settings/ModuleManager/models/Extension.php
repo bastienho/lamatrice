@@ -14,6 +14,7 @@ vimport('~~/vtlib/Vtiger/Package.php');
 class Settings_ModuleManager_Extension_Model extends Vtiger_Base_Model {
 
 	STATIC $EXTENSION_LOOKUP_URL = false;
+	STATIC $EXTENSION_MANAGER_URL= false;
 
 	var $fileName;
 
@@ -26,11 +27,11 @@ class Settings_ModuleManager_Extension_Model extends Vtiger_Base_Model {
 	}
 
 	public static function getExtensionsLookUpUrl() {
-		$extensionLookUpUrl = vglobal('EXTENSION_LOOKUP_URL');
-		if (!self::$EXTENSION_LOOKUP_URL && $extensionLookUpUrl) {
-			self::$EXTENSION_LOOKUP_URL = $extensionLookUpUrl;
-		}
 		return self::$EXTENSION_LOOKUP_URL;
+	}
+
+	public static function getExtensionsManagerUrl() {
+		return self::$EXTENSION_MANAGER_URL;
 	}
 
 	/**
@@ -227,8 +228,10 @@ class Settings_ModuleManager_Extension_Model extends Vtiger_Base_Model {
 
 			if (!$extensionModelsList && $xmlContent && !stripos($xmlContent, "<?xml")) {
 				$extensionsXML = simplexml_load_string($xmlContent);
-				foreach ($extensionsXML->extension as $extensionXMLNode) {
-					$extensionModelsList[(string)($extensionXMLNode->id)] = self::getInstanceFromXMLNodeObject($extensionXMLNode);
+				if ($extensionsXML->extension) {
+					foreach ($extensionsXML->extension as $extensionXMLNode) {
+						$extensionModelsList[(string) ($extensionXMLNode->id)] = self::getInstanceFromXMLNodeObject($extensionXMLNode);
+					}
 				}
 			}
 		}

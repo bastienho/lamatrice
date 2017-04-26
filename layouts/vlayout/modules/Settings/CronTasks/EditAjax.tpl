@@ -63,46 +63,7 @@
 					</select>
 				</div>	
 			</div>
-			<div class="control-group">
-				<div class="control-label">
-					{vtranslate('Start hour',$QUALIFIED_MODULE)}
-				</div>
-				<div class="controls row-fluid">
-					{assign var=FIELD_VALUE value=$RECORD_MODEL->getDisplayValue('start_hour')}
-					<input type="text" class="span2" value="{$FIELD_VALUE}" id="start_hourValue" name="start_hour"/>
-					<i>&nbsp;{vtranslate('LBL_START_HOUR_HELP_MSG',$QUALIFIED_MODULE)}</i>
-				</div>	
-			</div>
-			<div class="control-group">
-				<div class="control-label">
-					{vtranslate('Exclude week-end',$QUALIFIED_MODULE)}
-				</div>
-				<div class="controls row-fluid">
-					{assign var=FIELD_VALUE value=$RECORD_MODEL->getDisplayValue('excludeweekend')}
-					<input type="checkbox" class="span2" {if $FIELD_VALUE} checked="checked"{/if} id="excludeweekendValue" name="excludeweekend"
-						title="{vtranslate('LBL_EXCLUDE_WEEKEND_HELP_MSG',$QUALIFIED_MODULE)}"/>
-				</div>	
-			</div>
-			{*<div class="alert alert-info">{vtranslate($RECORD_MODEL->get('description'),$QUALIFIED_MODULE)}</div>*}
-			<div class="control-group">
-				<div class="control-label">
-					{vtranslate('LBL_DESCRIPTION',$QUALIFIED_MODULE)}
-				</div>
-				<div class="controls row-fluid">
-					{assign var=FIELD_VALUE value=vtranslate($RECORD_MODEL->get('description'),$QUALIFIED_MODULE)}
-					<textarea name="description" rows="4">{$FIELD_VALUE}</textarea>
-				</div>	
-			</div>
-			
-			<div class="control-group">
-				<div class="control-label">
-					{vtranslate('Last Start',$QUALIFIED_MODULE)}
-				</div>
-				<div class="controls row-fluid">
-					{assign var=FIELD_VALUE value=$RECORD_MODEL->getDisplayValue('laststart')}
-					<label title="Cochez pour une réexécution dans les 5 minutes"><input type="checkbox" name="reset_laststart">Réinitialiser la date de dernière exécution ({$FIELD_VALUE})</label>
-				</div>	
-			</div>
+			<div class="alert alert-info">{vtranslate($RECORD_MODEL->get('description'),$QUALIFIED_MODULE)}</div>
 		</div>
 		{include file='ModalFooter.tpl'|@vtemplate_path:$MODULE}
 	</form>

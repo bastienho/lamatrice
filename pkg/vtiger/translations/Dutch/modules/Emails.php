@@ -35,4 +35,16 @@ $languageStrings = array(
 	'LBL_SENT_ON'                  => 'Sent on'                     , // TODO: Review
 	'LBL_OWNER'                    => 'Owner'                       , // TODO: Review
 	'Date & Time Sent'             => 'Date Sent'                   , // TODO: Review
+    'Time Start'                    => 'Zeit gesendet'               ,
+    'LBL_EMAIL_INFORMATION' => 'E-mail Informatie',
+    'LBL_EMAILTEMPLATE_WARNING'    => 'Zijn uw merge-tags te corrigeren',
+    'LBL_EMAILTEMPLATE_WARNING_CONTENT' => 'Zorg ervoor dat de door u geselecteerde sjabloon heeft samenvoegen-tags om de ontvanger opname relevant. 
+                                            Als u het verzenden van een e-mail om te leiden, maar de merge-labels behoren tot Contacteer module (ex: $contacts-lastname$), 
+                                            zullen deze waarden niet worden samengevoegd.',
+	'Draft'                        => 'Tijdelijk'                   ,
+    'Parent ID'                    => 'Bovenliggende record',
 );
+
+$jsLanguageStrings = array(
+    'JS_WARNING' => 'waarschuwing',
+); 

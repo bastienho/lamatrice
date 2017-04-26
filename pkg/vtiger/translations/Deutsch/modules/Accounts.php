@@ -35,11 +35,23 @@ $languageStrings = array(
 	'LBL_START_DATE'               => 'Startdatum'                  , 
 	'LBL_END_DATE'                 => 'Endedatum'                   , 
 	'LBL_DUPLICATES_EXIST'         => 'Organization Name already exists', 
-	'LBL_COPY_SHIPPING_ADDRESS'    => 'Copy Shipping Address'       , 
-	'LBL_COPY_BILLING_ADDRESS'     => 'Copy Billing Address'        , 
+	'LBL_COPY_SHIPPING_ADDRESS'    => 'Kopieren Versandadresse'       , 
+	'LBL_COPY_BILLING_ADDRESS'     => 'Kopieren Rechnungsadresse'        , 
+    'LBL_IMAGE_INFORMATION' => 'Profil Bild',
+    'Organization Image' => 'Organisation Bild',
+    'Type'                         => 'Typ'                         , 
+
+
+  'Other Phone' => 'Sekundäre Telefon',
+  'Phone' => 'Primäre Telefon',
+  'Email' => 'Primäre E-Mail',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Are you sure you want to delete?', 
 	'LBL_DELETE_CONFIRMATION'      => 'Deleting this Organization will remove its related Opportunities & Quotes. Are you sure you want to delete this Organization?', 
 	'LBL_MASS_DELETE_CONFIRMATION' => 'Deleting this Organization will remove its related Opportunities & Quotes. Are you sure you want to delete this Organization?', 
+
+  'JS_DUPLICATE_CREATION_CONFIRMATION' => 'Name der Organisation bereits Vorhanden ist.Wollen Sie einen doppelten Datensatz erstellen?',
+
 );

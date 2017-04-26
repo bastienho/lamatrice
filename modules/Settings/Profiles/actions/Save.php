@@ -13,13 +13,10 @@ class Settings_Profiles_Save_Action extends Vtiger_Action_Controller {
 	public function checkPermission(Vtiger_Request $request) {
 		$currentUser = Users_Record_Model::getCurrentUserModel();
 		if(!$currentUser->isAdminUser()) {
-			throw new AppException('LBL_PERMISSION_DENIED');
+			throw new AppException(vtranslate('LBL_PERMISSION_DENIED'));
 		}
 	}
 
-	/* ED160114 : attention to php var in php.ini : max_input_vars = default is 1000, not enough */
-
-	
 	public function process(Vtiger_Request $request) {
 		$recordId = $request->get('record');
 
@@ -40,4 +37,8 @@ class Settings_Profiles_Save_Action extends Vtiger_Action_Controller {
 		$redirectUrl = $recordModel->getDetailViewUrl();
 		header("Location: $redirectUrl");
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

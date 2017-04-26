@@ -13,25 +13,29 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<link rel="stylesheet" media="print" href="print.css" type="text/css">
 		<title>{'LBL_PRINT_REPORT'|@vtranslate:$MODULE}</title>
-		
-		{*ED150511*}
-		<style>
-			body {
-				font-family: arial;
-			}
-			table.rsn {
-				 width: 95%;
-			}
-			table.rsn td {
-				border-bottom: 1px dashed gray; 
-				font-size: 13px;
-			}
-		</style>
+        <style>
+            {literal}
+            .printReport{
+                width:100%;
+                border:1px solid #000000;
+                border-collapse:collapse;
+            }
+            .printReport tr td{
+                border:1px dotted #000000;
+                text-align:left;
+            }
+            .printReport tr th{
+                border-bottom:2px solid #000000;
+                border-left:1px solid #000000;
+                border-top:1px solid #000000;
+                border-right:1px solid #000000;
+            }
+            {/literal}
+        </style>
 	</head>
 	<body marginheight="0" marginwidth="0" leftmargin="0" topmargin="0" style="text-align:center;" onLoad="JavaScript:window.print()">
-		<table class="rsn" border="0" cellpadding="5" cellspacing="0" align="center">
+		<table width="80%" border="0" cellpadding="5" cellspacing="0" align="center">
 			<tr>
 				<td align="left" valign="top" style="border:0px solid #000000;">
 					<h2>{$REPORT_NAME}</h2>

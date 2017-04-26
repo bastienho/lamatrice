@@ -9,7 +9,15 @@
  ************************************************************************************/
 
 class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
-	
+
+	function checkPermission(Vtiger_Request $request) {
+		$moduleName = $request->getModule();
+		if($moduleName == 'Users') {
+			return true;
+		}
+		return parent::checkPermission($request);
+	}
+
 	function process (Vtiger_Request $request) {
 		$viewer = $this->getViewer ($request);
 		$moduleName = $request->getModule();
@@ -39,18 +47,15 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 		$sourceRecord = $request->get('src_record');
 		$searchKey = $request->get('search_key');
 		$searchValue = $request->get('search_value');
-		$searchInput = $request->get('search_input');
 		$currencyId = $request->get('currency_id');
 		$view = $request->get('view');
+                $searchParams=$request->get('search_params');
 
 		//To handle special operation when selecting record from Popup
 		$getUrl = $request->get('get_url');
 
-		//Check whether the request is in multi select mode
-		$multiSelectMode = $request->get('multi_select');
-		if(empty($multiSelectMode)) {
-			$multiSelectMode = false;
-		}
+		//Enable multiselect mode for email related popup
+		$multiSelectMode = true;
 
 		if(empty($cvId)) {
 			$cvId = '0';
@@ -66,12 +71,14 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 		$listViewModel = Vtiger_ListView_Model::getInstanceForPopup($moduleName);
 		$recordStructureInstance = Vtiger_RecordStructure_Model::getInstanceForModule($moduleModel);
 
-		$primaryEmailFieldName = 'email';
-		if ($moduleName == 'Accounts' || $moduleName == 'Users') {
-			$primaryEmailFieldName = 'email1';
+		$emailFields = array();
+		$emailFieldInstances = $moduleModel->getFieldsByType('email');
+		foreach($emailFieldInstances as $fieldName => $fieldInstance) {
+			$emailFields[$fieldName] = $fieldName;
 		}
-		
-		$listViewModel->extendPopupFields(array($primaryEmailFieldName=>$primaryEmailFieldName));
+		if(count($emailFields) > 0) {
+			$listViewModel->extendPopupFields($emailFields);
+		}
 		
 		if(!empty($orderBy)) {
 			$listViewModel->set('orderby', $orderBy);
@@ -85,8 +92,11 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 		if((!empty($searchKey)) && (!empty($searchValue)))  {
 			$listViewModel->set('search_key', $searchKey);
 			$listViewModel->set('search_value', $searchValue);
-			$listViewModel->set('searchInput', $search_input);
 		}
+                if(!empty($searchParams)) {
+                    $transformedSearchParams = $this->transferListSearchParamsToFilterCondition($searchParams, $listViewModel->getModule());
+                    $listViewModel->set('search_params',$transformedSearchParams);
+                }
 
 		if(!$this->listViewHeaders){
 			$this->listViewHeaders = $listViewModel->getListViewHeaders();
@@ -95,7 +105,19 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 			$this->listViewEntries = $listViewModel->getListViewEntries($pagingModel);
 		}
 		$noOfEntries = count($this->listViewEntries);
-
+                
+                if(empty($searchParams)) {
+                    $searchParams = array();
+                }
+               //To make smarty to get the details easily accesible
+                foreach($searchParams as $fieldListGroup){
+                    foreach($fieldListGroup as $fieldSearchInfo){
+                        $fieldSearchInfo['searchValue'] = $fieldSearchInfo[2];
+                        $fieldSearchInfo['fieldName'] = $fieldName = $fieldSearchInfo[0];
+                        $fieldSearchInfo['comparator'] = $fieldSearchInfo[1];
+                        $searchParams[$fieldName] = $fieldSearchInfo;
+                    }
+		}
 		if(empty($sortOrder)){
 			$sortOrder = "ASC";
 		}
@@ -129,9 +151,11 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 		$viewer->assign('PAGING_MODEL', $pagingModel);
 		$viewer->assign('PAGE_NUMBER',$pageNumber);
 
-		$viewer->assign('LISTVIEW_ENTIRES_COUNT',$noOfEntries);
+		$viewer->assign('LISTVIEW_ENTRIES_COUNT',$noOfEntries);
 		$viewer->assign('LISTVIEW_HEADERS', $this->listViewHeaders);
 		$viewer->assign('LISTVIEW_ENTRIES', $this->listViewEntries);
+                $viewer->assign('SEARCH_DETAILS', $searchParams);
+                $viewer->assign('MODULE_MODEL', $moduleModel);
 		
 		if (PerformancePrefs::getBoolean('LISTVIEW_COMPUTE_PAGE_COUNT', false)) {
 			if(!$this->listViewCount){
@@ -170,4 +194,7 @@ class Vtiger_EmailsRelatedModulePopup_View extends Vtiger_Popup_View {
 		$headerScriptInstances = array_merge($headerScriptInstances, $jsScriptInstances);
 		return $headerScriptInstances;
 	}
+    public function transferListSearchParamsToFilterCondition($listSearchParams, $moduleModel) {
+        return Vtiger_Util_Helper::transferListSearchParamsToFilterCondition($listSearchParams, $moduleModel);
+    }
 }

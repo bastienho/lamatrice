@@ -22,9 +22,8 @@ class Inventory_ExportPDF_Action extends Vtiger_Action_Controller {
 	public function process(Vtiger_Request $request) {
 		$moduleName = $request->getModule();
 		$recordId = $request->get('record');
-		$type = $request->get("type");
 
 		$recordModel = Vtiger_Record_Model::getInstanceById($recordId, $moduleName);
-		$recordModel->getPDF($type);
+		$recordModel->getPDF();
 	}
 }

@@ -11,73 +11,47 @@
 abstract class Vtiger_Mass_Action extends Vtiger_Action_Controller {
 
 	protected function getRecordsListFromRequest(Vtiger_Request $request) {
+		$cvId = $request->get('viewname');
+		$module = $request->get('module');
+		if(!empty($cvId) && $cvId=="undefined"){
+			$sourceModule = $request->get('sourceModule');
+			$cvId = CustomView_Record_Model::getAllFilterByModule($sourceModule)->getId();
+		}
 		$selectedIds = $request->get('selected_ids');
+		$excludedIds = $request->get('excluded_ids');
+
 		if(!empty($selectedIds) && $selectedIds != 'all') {
 			if(!empty($selectedIds) && count($selectedIds) > 0) {
 				return $selectedIds;
 			}
 		}
-		
-		$customViewModel = $this->getCustomViewToGetRecordsListFromRequest($request);
-		if($customViewModel) {
-			$excludedIds = $request->get('excluded_ids');
-			return $customViewModel->getRecordIds($excludedIds,$module);
-		}
-	}
-
-	//ED150628
-	public function getRecordsQueryFromRequest(Vtiger_Request $request, &$asColumnName = FALSE) {
-		$selectedIds = $request->get('selected_ids');
-		$moduleName = $request->get('module');
-
-		if(!empty($selectedIds) && $selectedIds != 'all') {
-			if(!empty($selectedIds) && count($selectedIds) > 0) {
-				
-				if(!$asColumnName){
-					$moduleModel = Vtiger_Module_Model::getInstance($moduleName);
-					$asColumnName = $moduleModel->get('basetableid');
-				}
-				$query = '';
-				for($i = 0; $i < count($selectedIds); $i++){
-					if($i) $query .= ' UNION SELECT ' . $selectedIds[$i];
-					else $query = 'SELECT ' . $selectedIds[$i] . ' AS ' . $asColumnName;
-				}
-				
-				return $query;
-			}
-		}
-		$customViewModel = $this->getCustomViewToGetRecordsListFromRequest($request);
-		if($customViewModel) {
-			$excludedIds = $request->get('excluded_ids');
-			return $customViewModel->getRecordIdsQuery($excludedIds, $moduleName, false, $asColumnName);
-		}
-	}
-	
-	//ED150628
-	private function getCustomViewToGetRecordsListFromRequest(Vtiger_Request $request) {
-		$cvId = $request->get('viewname');
-		$module = $request->get('module');
-		if(!empty($cvId) && $cvId=="undefined"){
-			$sourceModule = $request->get('sourceModule');
-			$cvRecord = CustomView_Record_Model::getAllFilterByModule($sourceModule);
-			if(!$cvRecord){
-				var_dump("Impossible de trouver la vue par défaut, nommé 'All' pour le module $sourceModule.");
-				return;
-			}
-			$cvId = $cvRecord->getId();
-		}
 
 		$customViewModel = CustomView_Record_Model::getInstanceById($cvId);
 		if($customViewModel) {
-			$searchKey = $request->get('search_key');
-			$searchValue = $request->get('search_value');
-			$operator = $request->get('operator');
-			if(!empty($operator)) {
-			    $customViewModel->set('operator', $operator);
-			    $customViewModel->set('search_key', $searchKey);
-			    $customViewModel->set('search_value', $searchValue);
+            $searchKey = $request->get('search_key');
+            $searchValue = $request->get('search_value');
+            $operator = $request->get('operator');
+            if(!empty($operator)) {
+                $customViewModel->set('operator', $operator);
+                $customViewModel->set('search_key', $searchKey);
+                $customViewModel->set('search_value', $searchValue);
+            }
+
+            /**
+			 *  Mass action on Documents if we select particular folder is applying on all records irrespective of
+			 *  seleted folder
+			 */
+			if ($module == 'Documents') {
+				$customViewModel->set('folder_id', $request->get('folder_id'));
+				$customViewModel->set('folder_value', $request->get('folder_value'));
 			}
-			return $customViewModel;
+
+			$customViewModel->set('search_params',$request->get('search_params'));
+			return $customViewModel->getRecordIds($excludedIds,$module);
 		}
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

@@ -21,7 +21,7 @@ class Vtiger_Base_Model {
 	function  __construct($values=array()) {
 		$this->valueMap = $values;
 	}
-	
+
 	/**
 	 * Function to get the value for a given key
 	 * @param $key
@@ -29,6 +29,15 @@ class Vtiger_Base_Model {
 	 */
 	public function get($key){
 		return $this->valueMap[$key];
+	}
+
+	/**
+	* Function to get the raw value for a given key
+	* @param $key
+	* @return Raw Value for the given key
+	*/
+	public function getRaw($key){
+		return $this->rawData[$key];
 	}
 
 	/**

@@ -20,16 +20,6 @@
  * Contributor(s): ______________________________________..
  ********************************************************************************/
 
-include_once('config.php');
-require_once('include/logging.php');
-require_once('modules/Contacts/Contacts.php');
-require_once('modules/Calendar/Activity.php');
-require_once('modules/Documents/Documents.php');
-require_once('modules/Emails/Emails.php');
-require_once('include/utils/utils.php');
-require_once('user_privileges/default_module_view.php');
-
-// vtiger_potential is used to store customer information.
 class Potentials extends CRMEntity {
 	var $log;
 	var $db;
@@ -95,7 +85,12 @@ class Potentials extends CRMEntity {
 
 	// For Alphabetical search
 	var $def_basicsearch_col = 'potentialname';
-	
+
+	var $related_module_table_index = array(
+		'Contacts' => array('table_name'=>'vtiger_contactdetails','table_index'=>'contactid','rel_index'=>'contactid')
+	);
+
+	var $LBL_POTENTIAL_MAPPING = 'LBL_OPPORTUNITY_MAPPING';
 	//var $groupTable = Array('vtiger_potentialgrouprelation','potentialid');
 	function Potentials() {
 		$this->log = LoggerManager::getLogger('potential');
@@ -106,7 +101,7 @@ class Potentials extends CRMEntity {
 	function save_module($module)
 	{
 	}
-		
+
 	/** Function to create list query
 	* @param reference variable - where condition is passed when the query is executed
 	* Returns Query.
@@ -237,8 +232,8 @@ class Potentials extends CRMEntity {
 					vtiger_contactdetails.lastname, vtiger_contactdetails.firstname, vtiger_contactdetails.title, vtiger_contactdetails.department,
 					vtiger_contactdetails.email, vtiger_contactdetails.phone, vtiger_crmentity.crmid, vtiger_crmentity.smownerid,
 					vtiger_crmentity.modifiedtime , vtiger_account.accountname from vtiger_potential
-					inner join vtiger_contpotentialrel on vtiger_contpotentialrel.potentialid = vtiger_potential.potentialid
-					inner join vtiger_contactdetails on vtiger_contpotentialrel.contactid = vtiger_contactdetails.contactid
+					left join vtiger_contpotentialrel on vtiger_contpotentialrel.potentialid = vtiger_potential.potentialid
+					inner join vtiger_contactdetails on ((vtiger_contactdetails.contactid = vtiger_contpotentialrel.contactid) or (vtiger_contactdetails.contactid = vtiger_potential.contact_id))
 					INNER JOIN vtiger_contactaddress ON vtiger_contactdetails.contactid = vtiger_contactaddress.contactaddressid
 					INNER JOIN vtiger_contactsubdetails ON vtiger_contactdetails.contactid = vtiger_contactsubdetails.contactsubscriptionid
 					INNER JOIN vtiger_customerdetails ON vtiger_contactdetails.contactid = vtiger_customerdetails.customerid
@@ -371,7 +366,7 @@ class Potentials extends CRMEntity {
 				FROM vtiger_products
 				INNER JOIN vtiger_seproductsrel ON vtiger_products.productid = vtiger_seproductsrel.productid and vtiger_seproductsrel.setype = 'Potentials'
 				INNER JOIN vtiger_productcf
-				ON vtiger_products.productid = vtiger_productcf.productid 
+				ON vtiger_products.productid = vtiger_productcf.productid
 				INNER JOIN vtiger_crmentity ON vtiger_crmentity.crmid = vtiger_products.productid
 				INNER JOIN vtiger_potential ON vtiger_potential.potentialid = vtiger_seproductsrel.crmid
 				LEFT JOIN vtiger_users
@@ -523,8 +518,11 @@ class Potentials extends CRMEntity {
 					inner join vtiger_crmentity on vtiger_crmentity.crmid=vtiger_quotes.quoteid
 					left outer join vtiger_potential on vtiger_potential.potentialid=vtiger_quotes.potentialid
 					left join vtiger_groups on vtiger_groups.groupid=vtiger_crmentity.smownerid
+                    LEFT JOIN vtiger_quotescf ON vtiger_quotescf.quoteid = vtiger_quotes.quoteid
+					LEFT JOIN vtiger_quotesbillads ON vtiger_quotesbillads.quotebilladdressid = vtiger_quotes.quoteid
+					LEFT JOIN vtiger_quotesshipads ON vtiger_quotesshipads.quoteshipaddressid = vtiger_quotes.quoteid
 					left join vtiger_users on vtiger_users.id=vtiger_crmentity.smownerid
-					inner join vtiger_account on vtiger_account.accountid=vtiger_quotes.accountid
+					LEFT join vtiger_account on vtiger_account.accountid=vtiger_quotes.accountid
 					where vtiger_crmentity.deleted=0 and vtiger_potential.potentialid=".$id;
 
 		$return_value = GetRelatedList($this_module, $related_module, $other, $query, $button, $returnset);
@@ -584,6 +582,10 @@ class Potentials extends CRMEntity {
 			left outer join vtiger_account on vtiger_account.accountid=vtiger_salesorder.accountid
 			left outer join vtiger_potential on vtiger_potential.potentialid=vtiger_salesorder.potentialid
 			left join vtiger_groups on vtiger_groups.groupid=vtiger_crmentity.smownerid
+            LEFT JOIN vtiger_salesordercf ON vtiger_salesordercf.salesorderid = vtiger_salesorder.salesorderid
+            LEFT JOIN vtiger_invoice_recurring_info ON vtiger_invoice_recurring_info.start_period = vtiger_salesorder.salesorderid
+			LEFT JOIN vtiger_sobillads ON vtiger_sobillads.sobilladdressid = vtiger_salesorder.salesorderid
+			LEFT JOIN vtiger_soshipads ON vtiger_soshipads.soshipaddressid = vtiger_salesorder.salesorderid
 			left join vtiger_users on vtiger_users.id=vtiger_crmentity.smownerid
 			 where vtiger_crmentity.deleted=0 and vtiger_potential.potentialid = ".$id;
 
@@ -649,16 +651,15 @@ class Potentials extends CRMEntity {
 	function generateReportsSecQuery($module,$secmodule,$queryplanner){
 		$matrix = $queryplanner->newDependencyMatrix();
 		$matrix->setDependency('vtiger_crmentityPotentials',array('vtiger_groupsPotentials','vtiger_usersPotentials','vtiger_lastModifiedByPotentials'));
-		$matrix->setDependency('vtiger_potential', array('vtiger_crmentityPotentials','vtiger_accountPotentials',
-											'vtiger_contactdetailsPotentials','vtiger_campaignPotentials','vtiger_potentialscf'));
-				
-				
+
 		if (!$queryplanner->requireTable("vtiger_potential",$matrix)){
 			return '';
 		}
-		
+        $matrix->setDependency('vtiger_potential', array('vtiger_crmentityPotentials','vtiger_accountPotentials',
+											'vtiger_contactdetailsPotentials','vtiger_campaignPotentials','vtiger_potentialscf'));
+
 		$query = $this->getRelationQuery($module,$secmodule,"vtiger_potential","potentialid", $queryplanner);
-			
+
 		if ($queryplanner->requireTable("vtiger_crmentityPotentials",$matrix)){
 			$query .= " left join vtiger_crmentity as vtiger_crmentityPotentials on vtiger_crmentityPotentials.crmid=vtiger_potential.potentialid and vtiger_crmentityPotentials.deleted=0";
 		}
@@ -683,6 +684,9 @@ class Potentials extends CRMEntity {
 		if ($queryplanner->requireTable("vtiger_lastModifiedByPotentials")){
 			$query .= " left join vtiger_users as vtiger_lastModifiedByPotentials on vtiger_lastModifiedByPotentials.id = vtiger_crmentityPotentials.modifiedby ";
 		}
+        if ($queryplanner->requireTable("vtiger_createdbyPotentials")){
+			$query .= " left join vtiger_users as vtiger_createdbyPotentials on vtiger_createdbyPotentials.id = vtiger_crmentityPotentials.smcreatorid ";
+		}
 		return $query;
 	}
 
@@ -700,6 +704,7 @@ class Potentials extends CRMEntity {
 			"Documents" => array("vtiger_senotesrel"=>array("crmid","notesid"),"vtiger_potential"=>"potentialid"),
 			"Accounts" => array("vtiger_potential"=>array("potentialid","related_to")),
 			"Contacts" => array("vtiger_potential"=>array("potentialid","contact_id")),
+            "Emails" => array("vtiger_seactivityrel"=>array("crmid","activityid"),"vtiger_potential"=>"potentialid"),
 		);
 		return $rel_tables[$secmodule];
 	}
@@ -740,21 +745,26 @@ class Potentials extends CRMEntity {
 		} elseif($return_module == 'Contacts') {
 			$sql = 'DELETE FROM vtiger_contpotentialrel WHERE potentialid=? AND contactid=?';
 			$this->db->pquery($sql, array($id, $return_id));
+			
+			//If contact related to potential through edit of record,that entry will be present in
+			//vtiger_potential contact_id column,which should be set to zero
+			$sql = 'UPDATE vtiger_potential SET contact_id = ? WHERE potentialid=? AND contact_id=?';
+			$this->db->pquery($sql, array(0,$id, $return_id));
 
 			// Potential directly linked with Contact (not through Account - vtiger_contpotentialrel)
 			$directRelCheck = $this->db->pquery('SELECT related_to FROM vtiger_potential WHERE potentialid=? AND contact_id=?', array($id, $return_id));
 			if($this->db->num_rows($directRelCheck)) {
 				$this->trash($this->module_name, $id);
 			}
-
-		} else {
-			$sql = 'DELETE FROM vtiger_crmentityrel WHERE (crmid=? AND relmodule=? AND relcrmid=?) OR (relcrmid=? AND module=? AND crmid=?)';
-			$params = array($id, $return_module, $return_id, $id, $return_module, $return_id);
-			$this->db->pquery($sql, $params);
+		} elseif($return_module == 'Documents') {
+            $sql = 'DELETE FROM vtiger_senotesrel WHERE crmid=? AND notesid=?';
+            $this->db->pquery($sql, array($id, $return_id));
+        } else {
+			parent::unlinkRelationship($id, $return_module, $return_id);
 		}
 	}
 
-	function save_related_module($module, $crmid, $with_module, $with_crmids) {
+	function save_related_module($module, $crmid, $with_module, $with_crmids, $otherParams = array()) {
 		$adb = PearDatabase::getInstance();
 
 		if(!is_array($with_crmids)) $with_crmids = Array($with_crmids);
@@ -764,14 +774,60 @@ class Potentials extends CRMEntity {
 				$adb->pquery($sql, array($with_crmid, $crmid));
 
 			} elseif($with_module == 'Products') {//when we select product from potential related list
-				$sql = "insert into vtiger_seproductsrel values (?,?,?)";
-				$adb->pquery($sql, array($crmid, $with_crmid,'Potentials'));
+				$sql = 'INSERT INTO vtiger_seproductsrel VALUES(?,?,?,?)';
+				$adb->pquery($sql, array($crmid, $with_crmid,'Potentials', 1));
 
 			} else {
 				parent::save_related_module($module, $crmid, $with_module, $with_crmid);
 			}
 		}
 	}
+    
+    function get_emails($id, $cur_tab_id, $rel_tab_id, $actions=false) {
+		global $currentModule;
+        $related_module = vtlib_getModuleNameById($rel_tab_id);
+		require_once("modules/$related_module/$related_module.php");
+		$other = new $related_module();
+        vtlib_setup_modulevars($related_module, $other);
 
+        $returnset = '&return_module='.$currentModule.'&return_action=CallRelatedList&return_id='.$id;
+
+		$button = '<input type="hidden" name="email_directing_module"><input type="hidden" name="record">';
+
+		$userNameSql = getSqlForNameInDisplayFormat(array('first_name'=>'vtiger_users.first_name', 'last_name' => 'vtiger_users.last_name'), 'Users');
+		$query = "SELECT CASE WHEN (vtiger_users.user_name NOT LIKE '') THEN $userNameSql ELSE vtiger_groups.groupname END AS user_name,
+                vtiger_activity.activityid, vtiger_activity.subject, vtiger_activity.activitytype, vtiger_crmentity.modifiedtime,
+                vtiger_crmentity.crmid, vtiger_crmentity.smownerid, vtiger_activity.date_start, vtiger_activity.time_start,
+                vtiger_seactivityrel.crmid as parent_id FROM vtiger_activity, vtiger_seactivityrel, vtiger_potential, vtiger_users,
+                vtiger_crmentity LEFT JOIN vtiger_groups ON vtiger_groups.groupid = vtiger_crmentity.smownerid WHERE 
+                vtiger_seactivityrel.activityid = vtiger_activity.activityid AND 
+                vtiger_potential.potentialid = vtiger_seactivityrel.crmid AND vtiger_users.id = vtiger_crmentity.smownerid
+                AND vtiger_crmentity.crmid = vtiger_activity.activityid  AND vtiger_potential.potentialid = $id AND
+                vtiger_activity.activitytype = 'Emails' AND vtiger_crmentity.deleted = 0";
+
+		$return_value = GetRelatedList($currentModule, $related_module, $other, $query, $button, $returnset);
+
+		if($return_value == null) $return_value = Array();
+		$return_value['CUSTOM_BUTTON'] = $button;
+
+		return $return_value;
+	}
+
+	/**
+	 * Invoked when special actions are to be performed on the module.
+	 * @param String Module name
+	 * @param String Event Type
+	 */
+	function vtlib_handler($moduleName, $eventType) {
+		if ($moduleName == 'Potentials') {
+			$db = PearDatabase::getInstance();
+			if ($eventType == 'module.disabled') {
+				$db->pquery('UPDATE vtiger_settings_field SET active=1 WHERE name=?', array($this->LBL_POTENTIAL_MAPPING));
+			} else if ($eventType == 'module.enabled') {
+				$db->pquery('UPDATE vtiger_settings_field SET active=0 WHERE name=?', array($this->LBL_POTENTIAL_MAPPING));
+			}
+		}
+	}
 }
+
 ?>

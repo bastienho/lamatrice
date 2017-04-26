@@ -8,96 +8,89 @@
  * All Rights Reserved.
  *************************************************************************************/
 
- /* ED 140921 relation Critere D
-  * Un widget apparait en résumé de contact car l'enregistrement correspondant existe dans la table vtiger_link
-  *  renvoyant à l'url <code>module=Contacts&relatedModule=Critere4D&view=Detail&mode=showRelatedList&widget_inside=1&page=1&limit=5</code>
-  *
-  */
 class Vtiger_RelatedList_View extends Vtiger_Index_View {
 	function process(Vtiger_Request $request) {
 		$moduleName = $request->getModule();
 		$relatedModuleName = $request->get('relatedModule');
 		$parentId = $request->get('record');
 		$label = $request->get('tab_label');
+
+		$relatedModuleModel = Vtiger_Module_Model::getInstance($relatedModuleName);
+		$moduleFields = $relatedModuleModel->getFields();
+
+        $searchParams = $request->get('search_params');
+        
+        if(empty($searchParams)) {
+            $searchParams = array();
+        }
+        
+        $whereCondition = array();
+        
+        foreach($searchParams as $fieldListGroup){
+            foreach($fieldListGroup as $fieldSearchInfo){
+                $fieldModel = $moduleFields[$fieldSearchInfo[0]];
+                $tableName = $fieldModel->get('table');
+                $column = $fieldModel->get('column');
+                $whereCondition[$fieldSearchInfo[0]] = array($tableName.'.'.$column, $fieldSearchInfo[1],  $fieldSearchInfo[2], $fieldSearchInfo[3]);
+                
+                $fieldSearchInfoTemp= array();
+                $fieldSearchInfoTemp['searchValue'] = $fieldSearchInfo[2];
+                $fieldSearchInfoTemp['fieldName'] = $fieldName = $fieldSearchInfo[0];
+                $fieldSearchInfoTemp['comparator'] = $fieldSearchInfo[1];
+                $searchParams[$fieldName] = $fieldSearchInfoTemp;
+            }
+       }
+       
 		$requestedPage = $request->get('page');
 		if(empty($requestedPage)) {
 			$requestedPage = 1;
 		}
+
 		$pagingModel = new Vtiger_Paging_Model();
 		$pagingModel->set('page',$requestedPage);
-		if($request->get('limit')) /* ED140921 */
-			$pagingModel->set('limit',$request->get('limit'));
-		
+
 		$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentId, $moduleName);
 		$relationListView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $relatedModuleName, $label);
-
-		$viewer = $this->getViewer($request);
-		
+        
+        if(!empty($whereCondition))
+            $relationListView->set('whereCondition', $whereCondition);
 		$orderBy = $request->get('orderby');
 		$sortOrder = $request->get('sortorder');
 		if($sortOrder == 'ASC') {
 			$nextSortOrder = 'DESC';
 			$sortImage = 'icon-chevron-down';
+            $faSortImage = "fa-sort-desc";
 		} else {
 			$nextSortOrder = 'ASC';
 			$sortImage = 'icon-chevron-up';
+            $faSortImage = "fa-sort-asc";
 		}
 		if(!empty($orderBy)) {
 			$relationListView->set('orderby', $orderBy);
 			$relationListView->set('sortorder',$sortOrder);
 		}
-		
-		//ED150701
-		$searchKey = $request->get('search_key');
-		$searchValue = $request->get('search_value');
-		$searchInput = $request->get('search_input');
-		$operator = $request->get('operator');
-			
-		if(!empty($operator)) {
-			$relationListView->set('operator', $operator);
-			$viewer->assign('OPERATOR',is_array($operator) ? htmlspecialchars(json_encode($operator)) : $operator);
-			$viewer->assign('ALPHABET_VALUE',is_array($searchValue) ? htmlspecialchars(json_encode($searchValue)) : $searchValue);
-		}
-		//ED150414 $searchValue == 0 is acceptable
-		if(!empty($searchKey) && (!empty($searchValue) || ($searchValue == '0'))) {
-			$relationListView->set('search_key', $searchKey);
-			$relationListView->set('search_value', $searchValue);
-			$relationListView->set('search_input', $searchInput);
-		}
-		
+		$relationListView->tab_label = $request->get('tab_label');
 		$models = $relationListView->getEntries($pagingModel);
-		
 		$links = $relationListView->getLinks();
 		$header = $relationListView->getHeaders();
-		$noOfEntries = count($models);
-		
-		/*ED140907*/
-		$unknown_field_returns_value = true; //$relatedModuleName == "Critere4D" || $relatedModuleName == "Contacts";
-
+		$noOfEntries = $pagingModel->get('_relatedlistcount');
+		if(!$noOfEntries) {
+			$noOfEntries = count($models);
+		}
 		$relationModel = $relationListView->getRelationModel();
 		$relatedModuleModel = $relationModel->getRelationModuleModel();
 		$relationField = $relationModel->getRelationField();
-		
-		//ED150812
-		switch($relatedModuleName){
-		  case "Services":
-		  case "Products":
-			
-			switch($moduleName){
-			  case "PurchaseOrder":
-			  case "Invoice":
-			  case "SalesOrder":
-				$parentRecordModel->setSoldPrice_to_UnitPrice($models, $header);
-				break;
-			  default:
-				$relatedModuleModel->addVAT_to_UnitPrice($models);
-				break;
-			}
-			break;
-		  default:
-			break;
-		}
+        
+        
+        $moduleFields = $relatedModuleModel->getFields();
+        $fieldsInfo = array();
+        foreach($moduleFields as $fieldName => $fieldModel){
+            $fieldsInfo[$fieldName] = $fieldModel->getFieldInfo();
+        }
 
+		$viewer = $this->getViewer($request);
+        $viewer->assign('RELATED_FIELDS_INFO', json_encode($fieldsInfo));
+		$viewer->assign('IS_CREATE_PERMITTED', isPermitted($relatedModuleName, 'CreateView'));
 		$viewer->assign('RELATED_RECORDS' , $models);
 		$viewer->assign('PARENT_RECORD', $parentRecordModel);
 		$viewer->assign('RELATED_LIST_LINKS', $links);
@@ -105,11 +98,10 @@ class Vtiger_RelatedList_View extends Vtiger_Index_View {
 		$viewer->assign('RELATED_MODULE', $relatedModuleModel);
 		$viewer->assign('RELATED_ENTIRES_COUNT', $noOfEntries);
 		$viewer->assign('RELATION_FIELD', $relationField);
-		
-		/*ED140926*/
-		$viewer->assign('FROM_TAB_LABEL', $label);
-		
-		$viewer->assign('UNKNOWN_FIELD_RETURNS_VALUE', $unknown_field_returns_value); /*ED140907*/
+		$selectedMenuCategory = $request->get('app');
+		if(!empty($selectedMenuCategory)) {
+			$viewer->assign('SELECTED_MENU_CATEGORY', $selectedMenuCategory);
+		}
 
 		if (PerformancePrefs::getBoolean('LISTVIEW_COMPUTE_PAGE_COUNT', false)) {
 			$totalCount = $relationListView->getRelatedEntriesCount();
@@ -131,100 +123,16 @@ class Vtiger_RelatedList_View extends Vtiger_Index_View {
 		$viewer->assign('SORT_ORDER',$sortOrder);
 		$viewer->assign('NEXT_SORT_ORDER',$nextSortOrder);
 		$viewer->assign('SORT_IMAGE',$sortImage);
+        $viewer->assign('FASORT_IMAGE',$faSortImage);
 		$viewer->assign('COLUMN_NAME',$orderBy);
 
 		$viewer->assign('IS_EDITABLE', $relationModel->isEditable());
 		$viewer->assign('IS_DELETABLE', $relationModel->isDeletable());
 		$viewer->assign('USER_MODEL', Users_Record_Model::getCurrentUserModel());
 		$viewer->assign('VIEW', $request->get('view'));
-
-		/*ED140907*/
-		$viewer->assign('WIDGET_INSIDE', $request->get('widget_inside'));
-		
-		switch($moduleName){
-		case "Contacts" :
-			switch($relatedModuleName){
-			  case "Critere4D":
-			  case "Documents":
-				$tpl = "RelatedListMultiDates.tpl";
-				break;
-			  case "Contacts" :
-				$tpl = "RelatedListContacts.tpl";
-				break;
-			  case "ContactAddresses" :
-				$tpl = "RelatedListContactAddresses.tpl";
-				break;
-			  case "ContactEmails" :
-				$tpl = "RelatedListContactEmails.tpl";
-				break;
-			  case "Services" :
-				$tpl = "RelatedListServices.tpl";
-				break;
-			  default:
-				$tpl = 'RelatedList.tpl';
-				break;
-			}
-			break;
-		
-		case "Accounts" :
-			switch($relatedModuleName){
-			  case "Critere4D":
-			  case "Documents":
-				$tpl = "RelatedListMultiDates.tpl";
-				break;
-			  case "ContactAddresses" :
-				$tpl = "RelatedListContactAddresses.tpl";
-				break;
-			  case "ContactEmails" :
-				$tpl = "RelatedListContactEmails.tpl";
-				break;
-			  default:
-				$tpl = 'RelatedList.tpl';
-				break;
-			}
-			break;
-		
-		case "RSNMediaContacts" :
-		case "RSNMedias" :
-			switch($relatedModuleName){
-			  case "RSNMediaRelations":
-				$tpl = "RelatedListRSNMediaRelations.tpl";
-				break;
-			  default:
-				$tpl = 'RelatedList.tpl';
-				break;
-			}
-			break;
-		
-		case "Documents" :
-			switch($relatedModuleName){
-			  case "Invoice":
-			  case "Campaigns":
-				$tpl = 'RelatedList.tpl';
-				break;
-			  default:
-				$tpl = "RelatedListMultiDates.tpl";
-				break;
-			}
-			break;
-		
-		case "Services" :
-		case "Products" :
-			switch($relatedModuleName){
-			  case "PriceBooks":
-				$tpl = 'RelatedPriceBooks.tpl';
-				break;
-			  default:
-				$tpl = "RelatedList.tpl";
-				break;
-			}
-			break;
-		
-		default:
-			$tpl = 'RelatedList.tpl';
-			break;
-		}
-		
-		return $viewer->view($tpl, $moduleName, 'true');
+		$viewer->assign('PARENT_ID', $parentId);
+        $viewer->assign('SEARCH_DETAILS', $searchParams);
+		$viewer->assign('TAB_LABEL', $request->get('tab_label'));
+        return $viewer->view('RelatedList.tpl', $moduleName, 'true');
 	}
 }

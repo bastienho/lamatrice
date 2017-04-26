@@ -65,6 +65,9 @@ class DateTimeField {
 		return $this->getDisplayDate($user) . ' ' . $this->getDisplayTime($user);
 	}
 
+    public function getFullcalenderDateTimevalue ($user = null) {
+		return $this->getDisplayDate($user) . ' ' . $this->getFullcalenderTime($user);
+	}
 	/**
 	 *
 	 * @global Users $current_user
@@ -105,12 +108,7 @@ class DateTimeField {
 		} elseif ($format == 'yyyy-mm-dd') {
 			list($y, $m, $d) = explode('-', $date);
 		}
-		//ED150618 contains time
-		if(strlen($y)>4){
-			list($y, $t) = explode(' ', $y);
-			if($t)
-				$d .= ' ' . $t;
-		}
+
 		if (!$y && !$m && !$d) {
 			$dbDate = '';
 		} else {
@@ -159,14 +157,7 @@ class DateTimeField {
 	public static function __convertToUserFormat($date, $format) {
 		$date = self::convertToInternalFormat($date);
 		list($y, $m, $d) = explode('-', $date[0]);
-		
-		//ED141222 : Si le 3ème champ est en 4 caractères, c'est qu'on est déjà dans un format FR
-		if(strlen($d) == 4){
-			$tmp = $d;
-			$d = $y;
-			$y = $tmp;
-		}
-		
+
 		if ($format == 'dd-mm-yyyy') {
 			$date[0] = $d . '-' . $m . '-' . $y;
 		} elseif ($format == 'mm-dd-yyyy') {
@@ -232,9 +223,9 @@ class DateTimeField {
 			// convert this to target timezone using the DateTimeZone object
 			$targetTimeZone = new DateTimeZone($targetTimeZoneName);
 			$myDateTime->setTimeZone($targetTimeZone);
-		//	self::$cache[$time][$targetTimeZoneName] = $myDateTime;
+			self::$cache[$time][$targetTimeZoneName] = $myDateTime;
 		//}
-		//$myDateTime = self::$cache[$time][$targetTimeZoneName];
+		$myDateTime = self::$cache[$time][$targetTimeZoneName];
 		return $myDateTime;
 	}
 
@@ -278,6 +269,15 @@ class DateTimeField {
 		$time = $date->format("H:i:s");
 		$log->debug("Exiting getDisplayTime method ...");
 		return $time;
+	}
+    
+     function getFullcalenderTime( $user = null ) {
+		global $log;
+		$log->debug("Entering getDisplayTime(" . $this->datetime . ") method ...");
+		$date = self::convertToUserTimeZone($this->datetime, $user);
+		$time = $date->format("H:i:s");
+		$log->debug("Exiting getDisplayTime method ...");
+        return $time;
 	}
 
 	static function getDBTimeZone() {

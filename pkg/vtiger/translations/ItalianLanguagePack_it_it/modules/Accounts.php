@@ -32,14 +32,25 @@ $languageStrings = array(
 	'Press'                        => 'Stampa'                      , 
 	'Prospect'                     => 'Potenziale'                  , 
 	'Reseller'                     => 'Rivenditore'                 , 
+        'Type'                         => 'Tipo'                        , 
 	'LBL_START_DATE'               => 'Data Inizio'                 , 
 	'LBL_END_DATE'                 => 'Data Fine'                   , 
 	'LBL_DUPLICATES_EXIST'         => 'Organization Name already exists', 
-	'LBL_COPY_SHIPPING_ADDRESS'    => 'Copy Shipping Address'       , // TODO: Review
-	'LBL_COPY_BILLING_ADDRESS'     => 'Copy Billing Address'        , // TODO: Review
+	'LBL_COPY_SHIPPING_ADDRESS'    => 'Indirizzo Copy spedizione'       , // TODO: Review
+	'LBL_COPY_BILLING_ADDRESS'     => 'Copia indirizzo di fatturazione'        , // TODO: Review
+    'LBL_IMAGE_INFORMATION' => 'Picture Profile',
+    'Organization Image' => 'Organizzazione Immagine',
+
+  'Other Phone' => 'Telefono Secondario',
+  'Phone' => 'Telefono Principale',
+  'Email' => 'Email Principale',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION' => 'Are you sure you want to Delete?', 
 	'LBL_DELETE_CONFIRMATION'      => 'Deleting this Organization will remove its related Opportunities & Quotes. Are you sure you want to delete this Organization?', 
 	'LBL_MASS_DELETE_CONFIRMATION' => 'Deleting this Organization will remove its related Opportunities & Quotes. Are you sure you want to delete this Organization?', 
+
+  'JS_DUPLICATE_CREATION_CONFIRMATION' => 'Organizzazione Nome Esiste già.Vuoi creare un record duplicato?',
+
 );

@@ -12,7 +12,7 @@
  *  Version      : 6.0.0
  *  Created Date : 2012-10-26
  *  Author       : JPL TSolucio, S. L. Joe Bordes
- *  Last change  : 2013-07-14
+ *  Last change  : 2013-05-03
  *  Author       : JPL TSolucio, S. L. Joe Bordes
  ************************************************************************************/
 $languageStrings = array(
@@ -26,8 +26,6 @@ $languageStrings = array(
 	'Vendor No'                    => 'Número Proveedor',
 	'Website'                      => 'Página Web',
 	'GL Account'                   => 'Cuenta Contable',
-	'Phone' => 'Teléfono',
-	'Email' => 'Email',
 	'300-Sales-Software'           => '300-Ventas-Software',
 	'301-Sales-Hardware'           => '301-Ventas-Hardware',
 	'302-Rental-Income'            => '302-Ingreso-Alquiler',
@@ -37,6 +35,10 @@ $languageStrings = array(
 	'306-Internet Sales'           => '306-Ventas-Internet',
 	'307-Service-Hardware Labor'   => '307-Instalación de Hardware-Ventas',
 	'308-Sales-Books'              => '308-Ventas-Libros',
+
+  'Phone' => 'Teléfono Principal',
+  'Email' => 'De Correo Electrónico Principal',
+
 );
 $jsLanguageStrings = array(
 	'LBL_RELATED_RECORD_DELETE_CONFIRMATION'      => '¿Estás seguro que quieres eliminar?',

@@ -28,60 +28,49 @@ class Products_RelationListView_Model extends Vtiger_RelationListView_Model {
 		}
 	}
 	
-	//ED150630 buttons add for each potype
-	public function getAddRelationLinks() {
-		$parentRecordModel = $this->parentRecordModel;
-		if($parentRecordModel && $parentRecordModel->getGestionError()){
-			echo '<code>'.htmlspecialchars($parentRecordModel->getGestionError()).'</code>';
-			return array();
-		}
-		
-		$addLinkModels = parent::getAddRelationLinks();
-		
-		$relationModel = $this->getRelationModel();
-		if($relationModel->getRelationModuleModel()->getName() === 'PurchaseOrder') {
-			$addUrl = $this->getCreateViewUrl();
-			foreach($addLinkModels as $index => $addLinkModel){
-				if($addLinkModel->get('linkurl') == $addUrl){
-					unset($addLinkModels[$index]);
-					$found = true;
-					break;
-				}
-			}
-			if(isset($found)){
-				foreach(array('order', 'receipt', 'invoice') as $potype){
-					$newLink = clone $addLinkModel;
-					$newLink->set('linklabel', vtranslate('LBL_POTYPE_' . $potype, 'PurchaseOrder'));
-					$newLink->set('linkurl', $addUrl . '&potype=' . $potype);
-					$addLinkModels[] = $newLink;
-				}
-			}
-		}
-		return $addLinkModels;
-	}
-	public function getHeaders(){
-		$relationModel = $this->getRelationModel();
-		$relatedModuleModel = $relationModel->getRelationModuleModel();
-		
-		if($relatedModuleModel->getName() === 'PriceBooks'){
-			$headerFields = parent::getHeaders();
+	public function getHeaders() {
+		$headerFields = parent::getHeaders();
+		if($this->getRelationModel()->getRelationModuleModel()->getName() == 'PriceBooks') {
+			//Added to support Unit Price
+			$unitPriceField = new Vtiger_Field_Model();
+			$unitPriceField->set('name', 'unit_price');
+			$unitPriceField->set('column', 'unit_price');
+			$unitPriceField->set('label', 'Unit Price');
+			
+			$headerFields['unit_price'] = $unitPriceField;
 			
 			//Added to support List Price
 			$field = new Vtiger_Field_Model();
 			$field->set('name', 'listprice');
 			$field->set('column', 'listprice');
-			$field->set('label', 'List Price');	
-			array_push($headerFields, $field);
+			$field->set('label', 'List Price');
 			
-			//Added to support List Price Unit
-			$field = new Vtiger_Field_Model();
-			$field->set('name', 'listpriceunit');
-			$field->set('column', 'listpriceunit');
-			$field->set('label', '');	
-			array_push($headerFields, $field);
-			
-			return $headerFields;
+			$headerFields['listprice'] = $field;
 		}
-		return parent::getHeaders();
+		
+		return $headerFields;
 	}
+	
+	public function getRelationQuery() {
+		$query = parent::getRelationQuery();
+
+		$relationModel = $this->getRelationModel();
+		$parentModule = $relationModel->getParentModuleModel();
+		$parentModuleName = $parentModule->getName();
+		$relatedModuleName = $this->getRelatedModuleModel()->getName();
+		$quantityField = $parentModule->getField('qty_per_unit');
+
+		if ($parentModuleName === $relatedModuleName && $this->tab_label === 'Product Bundles' && $quantityField->isActiveField()) {//Products && Child Products
+			$queryComponents = spliti(' FROM ', $query);
+			$count = count($queryComponents);
+
+			$query = $queryComponents[0]. ', vtiger_seproductsrel.quantity AS qty_per_unit ';
+			for($i=1; $i<$count; $i++) {
+				$query .= ' FROM '.$queryComponents[$i];
+			}
+		}
+
+		return $query;
+	}
+
 }

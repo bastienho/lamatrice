@@ -55,7 +55,7 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 	 * @return <array> - array of link models in the format as below
 	 *                   array('linktype'=>list of link models);
 	 */
-	public function getDetailViewLinks($linkParams, $countRelatedEntity = false) {
+	public function getDetailViewLinks($linkParams) {
 		$linkTypes = array('DETAILVIEWBASIC','DETAILVIEW');
 		$moduleModel = $this->getModule();
 		$recordModel = $this->getRecord();
@@ -64,8 +64,8 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 		$recordId = $recordModel->getId();
 
 		$detailViewLink = array();
-
-		if($recordModel->isEditable()) {//ED150521
+		$linkModelList = array();
+		if(Users_Privileges_Model::isPermitted($moduleName, 'EditView', $recordId)) {
 			$detailViewLinks[] = array(
 					'linktype' => 'DETAILVIEWBASIC',
 					'linklabel' => 'LBL_EDIT',
@@ -78,13 +78,7 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 			}
 		}
 
-		$linkModelListDetails = Vtiger_Link_Model::getAllByType($moduleModel->getId(),$linkTypes,$linkParams);
-		//Mark all detail view basic links as detail view links.
-		//Since ui will be look ugly if you need many basic links
-		$detailViewBasiclinks = $linkModelListDetails['DETAILVIEWBASIC'];
-		unset($linkModelListDetails['DETAILVIEWBASIC']);
-
-		if($recordModel->isDeletable()) {//ED150521
+		if(Users_Privileges_Model::isPermitted($moduleName, 'Delete', $recordId)) {
 			$deletelinkModel = array(
 					'linktype' => 'DETAILVIEW',
 					'linklabel' => sprintf("%s %s", getTranslatedString('LBL_DELETE', $moduleName), vtranslate('SINGLE_'. $moduleName, $moduleName)),
@@ -92,20 +86,9 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 					'linkicon' => ''
 			);
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($deletelinkModel);
-			
-			if($moduleName === 'Contacts'){
-				$deletelinkModel = array(
-						'linktype' => 'DETAILVIEW',
-						'linklabel' => 'LBL_TAG_AS_DELETED',
-						'linkurl' => 'javascript:Vtiger_Detail_Js.deleteRecord("'.$recordModel->getTagAsDeletedUrl().'")',
-						'linkicon' => ''
-				);
-				$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($deletelinkModel);
-					
-			}
 		}
 
-		if($recordModel->isDuplicatable()) {//ED150521
+		if($moduleModel->isDuplicateOptionAllowed('CreateView', $recordId)) {
 			$duplicateLinkModel = array(
 						'linktype' => 'DETAILVIEWBASIC',
 						'linklabel' => 'LBL_DUPLICATE',
@@ -115,17 +98,29 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($duplicateLinkModel);
 		}
 
-		if(!empty($detailViewBasiclinks)) {
-			foreach($detailViewBasiclinks as $linkModel) {
-				// Remove view history, needed in vtiger5 to see history but not in vtiger6
-				if($linkModel->linklabel == 'View History') {
-					continue;
-				}
-				$linkModelList['DETAILVIEW'][] = $linkModel;
-			}
+		if($this->getModule()->isModuleRelated('Emails') && Vtiger_RecipientPreference_Model::getInstance($this->getModuleName())) {
+			$emailRecpLink = array('linktype' => 'DETAILVIEW',
+								'linklabel' => vtranslate('LBL_EMAIL_RECIPIENT_PREFS',  $this->getModuleName()),
+								'linkurl' => 'javascript:Vtiger_Index_Js.showRecipientPreferences("'.$this->getModuleName().'");',
+								'linkicon' => '');
+			$linkModelList['DETAILVIEW'][] = Vtiger_Link_Model::getInstanceFromValues($emailRecpLink);
 		}
 
-		$relatedLinks = $this->getDetailViewRelatedLinks($countRelatedEntity);
+		$linkModelListDetails = Vtiger_Link_Model::getAllByType($moduleModel->getId(),$linkTypes,$linkParams);
+		foreach($linkTypes as $linkType) {
+			if(!empty($linkModelListDetails[$linkType])) {
+				foreach($linkModelListDetails[$linkType] as $linkModel) {
+					// Remove view history, needed in vtiger5 to see history but not in vtiger6
+					if($linkModel->linklabel == 'View History') {
+						continue;
+					}
+					$linkModelList[$linkType][] = $linkModel;
+				}
+			}
+			unset($linkModelListDetails[$linkType]);
+		}
+
+		$relatedLinks = $this->getDetailViewRelatedLinks();
 
 		foreach($relatedLinks as $relatedLinkEntry) {
 			$relatedLink = Vtiger_Link_Model::getInstanceFromValues($relatedLinkEntry);
@@ -136,7 +131,7 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 		foreach($widgets as $widgetLinkModel) {
 			$linkModelList['DETAILVIEWWIDGET'][] = $widgetLinkModel;
 		}
-		
+
 		$currentUserModel = Users_Record_Model::getCurrentUserModel();
 		if($currentUserModel->isAdminUser()) {
 			$settingsLinks = $moduleModel->getSettingLinks();
@@ -152,16 +147,16 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 	 * Function to get the detail view related links
 	 * @return <array> - list of links parameters
 	 */
-	public function getDetailViewRelatedLinks($countRelatedEntity = false) {
+	public function getDetailViewRelatedLinks() {
 		$recordModel = $this->getRecord();
 		$moduleName = $recordModel->getModuleName();
 		$parentModuleModel = $this->getModule();
 		$relatedLinks = array();
-		
+
 		if($parentModuleModel->isSummaryViewSupported()) {
 			$relatedLinks = array(array(
 				'linktype' => 'DETAILVIEWTAB',
-				'linklabel' => vtranslate('SINGLE_' . $moduleName, $moduleName) . ' ' . vtranslate('LBL_SUMMARY', $moduleName),
+				'linklabel' => vtranslate('LBL_SUMMARY', $moduleName),
 				'linkKey' => 'LBL_RECORD_SUMMARY',
 				'linkurl' => $recordModel->getDetailViewUrl() . '&mode=showDetailViewByMode&requestMode=summary',
 				'linkicon' => ''
@@ -170,19 +165,11 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 		//link which shows the summary information(generally detail of record)
 		$relatedLinks[] = array(
 				'linktype' => 'DETAILVIEWTAB',
-				'linklabel' => vtranslate('SINGLE_'.$moduleName, $moduleName).' '. vtranslate('LBL_DETAILS', $moduleName),
+				'linklabel' => vtranslate('LBL_DETAILS', $moduleName),
+				'linkKey' => 'LBL_RECORD_DETAILS',
 				'linkurl' => $recordModel->getDetailViewUrl().'&mode=showDetailViewByMode&requestMode=full',
 				'linkicon' => ''
 		);
-
-		if($parentModuleModel->isCommentEnabled()) {
-			$relatedLinks[] = array(
-					'linktype' => 'DETAILVIEWTAB',
-					'linklabel' => 'ModComments',
-					'linkurl' => $recordModel->getDetailViewUrl().'&mode=showAllComments',
-					'linkicon' => ''
-			);
-		}
 
 		if($parentModuleModel->isTrackingEnabled()) {
 			$relatedLinks[] = array(
@@ -191,11 +178,11 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 					'linkurl' => $recordModel->getDetailViewUrl().'&mode=showRecentActivities&page=1',
 					'linkicon' => ''
 			);
-		}		
+		}
+
 
 		$relationModels = $parentModuleModel->getRelations();
-		//AV150619
-		$quantities = ($countRelatedEntity) ? $this->getRelatedEntitiesNumber($parentModuleModel, $relationModels) : null;
+
 		foreach($relationModels as $relation) {
 			//TODO : Way to get limited information than getting all the information
 			$link = array(
@@ -203,76 +190,13 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 					'linklabel' => $relation->get('label'),
 					'linkurl' => $relation->getListUrl($recordModel),
 					'linkicon' => '',
-					'quantity' => $quantities[$relation->get('modulename')]//AV150619
+					'relatedModuleName' => $relation->get('relatedModuleName'),
+					'linkid' => $relation->getId()
 			);
 			$relatedLinks[] = $link;
-			
 		}
+
 		return $relatedLinks;
-	}
-
-	/**
-	 * Function to get the number of related entity 
-	 * @author AV150619
-	 * @param $parentModuleModel : the parent module controller.
-	 * @param $relationModels
-	 * @return int - the number of related entity.
-	 */
-	public function getRelatedEntitiesNumber($parentModuleModel, $relationModels) {
-		$quantities = array();
-		
-		$db = PearDatabase::getInstance();
-		$first = true;
-		$query = "";
-		foreach($relationModels as $relation) {
-			$relationQuery = $parentModuleModel->getRelationCounterQuery($this->record->getId(), $relation->get('name'), Vtiger_Module_Model::getInstance($relation->get('modulename')));
-			if(!$relationQuery)
-				continue;
-			
-			if(!$first) {
-				$query .= "\r\nUNION\r\n";
-			} else {
-				$first = false;
-			}
-
-			$query .= $relationQuery;
-		}
-		if($query) {
-				$result = $db->pquery($query, array());
-				if(!$result){
-						$db->echoError();
-						echo "<pre>$query</pre>";
-						return $quantities;
-				}
-				
-				for ($i = 0; $i < $db->num_rows($result); ++$i) {
-					$row = $db->query_result_rowdata($result, $i);
-					$quantities[$row['module']] = $row['quantity'];
-				}
-		}
-		return $quantities;
-	}
-
-	/**
-	 * Function to get the number of related entity 
-	 * @author AV150619
-	 * @param $parentModuleModel : the parent module controller.
-	 * @param $functionName : the name of the function in order to get the SQL query.
-	 * @param $relatedModule : the related module controller.
-	 * @return int - the number of related entity.
-	 */
-	public function getRelatedEntityNumber($parentModuleModel, $functionName, $relatedModule) {
-		$db = PearDatabase::getInstance();
-		$query =  $parentModuleModel->getRelationQuery($this->record->getId(), $functionName, $relatedModule);
-		$query = 'SELECT COUNT(*) FROM (' . $query . ') t';
-		$result = $db->pquery($query, array());
-
-		if($db->num_rows($result) > 0) {
-			$row = $db->query_result_rowdata($result, 0);
-			return $row[0];
-		}
-
-		return 0;
 	}
 
 	/**
@@ -281,17 +205,19 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 	 */
 	public function getWidgets() {
 		$moduleModel = $this->getModule();
-		/* ED140921 see /utils/Widget.php*/
-			//$widgets = array();
-			$tabid = getTabid($this->getModuleName());
-	
-			include_once("include/utils/Widget.php");
-			$widget_loader = new cWidget();                
-			$widgets = $widget_loader->GetDetailViewWidget($tabid, "&widget=1&record=".$this->getRecord()->getId());
-		/**/
-		
+		$widgets = array();
+
+		if($moduleModel->isTrackingEnabled()) {
+			$widgets[] = array(
+					'linktype' => 'DETAILVIEWWIDGET',
+					'linklabel' => 'LBL_UPDATES',
+					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
+							'&mode=showRecentActivities&page=1&limit=5',
+			);
+		}
+
 		$modCommentsModel = Vtiger_Module_Model::getInstance('ModComments');
-		if($moduleModel->isCommentEnabled() && $modCommentsModel->isPermitted('EditView')) {
+		if($moduleModel->isCommentEnabled() && $modCommentsModel->isPermitted('DetailView')) {
 			$widgets[] = array(
 					'linktype' => 'DETAILVIEWWIDGET',
 					'linklabel' => 'ModComments',
@@ -299,13 +225,19 @@ class Vtiger_DetailView_Model extends Vtiger_Base_Model {
 							'&mode=showRecentComments&page=1&limit=5'
 			);
 		}
-		
-		if($moduleModel->isTrackingEnabled()) {
+
+		$userPrivilegesModel = Users_Privileges_Model::getCurrentUserPrivilegesModel();
+		$documentsInstance = Vtiger_Module_Model::getInstance('Documents');
+		if($userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'DetailView') && $moduleModel->isModuleRelated('Documents')) {
+			$createPermission = $userPrivilegesModel->hasModuleActionPermission($documentsInstance->getId(), 'CreateView');
 			$widgets[] = array(
 					'linktype' => 'DETAILVIEWWIDGET',
-					'linklabel' => 'LBL_UPDATES',
+					'linklabel' => 'Documents',
+					'linkName'	=> $documentsInstance->getName(),
 					'linkurl' => 'module='.$this->getModuleName().'&view=Detail&record='.$this->getRecord()->getId().
-							'&mode=showRecentActivities&page=1&limit=5',
+							'&relatedModule=Documents&mode=showRelatedRecords&page=1&limit=5',
+					'action'	=>	($createPermission == true) ? array('Add') : array(),
+					'actionURL' =>	$documentsInstance->getQuickCreateUrl()
 			);
 		}
 

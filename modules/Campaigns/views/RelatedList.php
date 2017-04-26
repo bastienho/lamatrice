@@ -15,19 +15,12 @@ class Campaigns_RelatedList_View extends Vtiger_RelatedList_View {
 		$parentId = $request->get('record');
 		$label = $request->get('tab_label');
 		$parentRecordModel = Vtiger_Record_Model::getInstanceById($parentId, $moduleName);
-/*$reflection = new ReflectionClass( get_class( $parentRecordModel));
-$classFile = $reflection->getFileName();
-var_dump('$parentRecordModel = '. $classFile);*/
 		$relationListView = Vtiger_RelationListView_Model::getInstance($parentRecordModel, $relatedModuleName, $label);
 		$relationModel = $relationListView->getRelationModel();
-		
-/*$reflection = new ReflectionClass( get_class( $relationModel));
-$classFile = $reflection->getFileName();
-var_dump('$relationModel = '. $classFile);*/
 
 		$viewer = $this->getViewer($request);
 		if (array_key_exists($relatedModuleName, $relationModel->getEmailEnabledModulesInfoForDetailView())) {
-			$viewer->assign('CUSTOM_VIEWS', CustomView_Record_Model::getAllByGroup($relatedModuleName));
+			$viewer->assign('CUSTOM_VIEWS', CustomView_Record_Model::getAllByGroup($relatedModuleName, false));
 			$viewer->assign('STATUS_VALUES', $relationModel->getCampaignRelationStatusValues());
 			$viewer->assign('SELECTED_IDS', $request->get('selectedIds'));
 			$viewer->assign('EXCLUDED_IDS', $request->get('excludedIds'));

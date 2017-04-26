@@ -700,10 +700,7 @@
                             node.addClass(selectable ? "select2-result-selectable" : "select2-result-unselectable");
                             if (compound) { node.addClass("select2-result-with-children"); }
                             node.addClass(self.opts.formatResultCssClass(result));
-                            
-                            /* ED141011 */
 
-                            
                             label=$("<div></div>");
                             label.addClass("select2-result-label");
 
@@ -1376,7 +1373,7 @@
 
         // single
 
-       createContainer: function () {
+		createContainer: function () {
             var container = $("<div></div>", {
                 "class": "select2-container"
             }).html([
@@ -1394,8 +1391,8 @@
             return container;
         },
 
-       // single
-       opening: function () {
+        // single
+        opening: function () {
             this.search.show();
             this.parent.opening.apply(this, arguments);
             this.dropdown.removeClass("select2-offscreen");
@@ -2367,11 +2364,11 @@
             return data ? data.text : undefined;
         },
         formatResultCssClass: function(data) {return undefined;},
-        formatNoMatches: function () { return "Aucune correspondance"; },
-        formatInputTooShort: function (input, min) { return "Saisissez " + (min - input.length) + " caractère(s) de plus"; },
-        formatSelectionTooBig: function (limit) { return "Vous ne pouvez sélectionner que " + limit + " élément" + (limit == 1 ? "" : "s"); },
-        formatLoadMore: function (pageNumber) { return "Chargement d'autres résultats..."; },
-        formatSearching: function () { return "Recherche en cours..."; },
+        formatNoMatches: function () { return "No matches found"; },
+        formatInputTooShort: function (input, min) { return "Please enter " + (min - input.length) + " more characters"; },
+        formatSelectionTooBig: function (limit) { return "You can only select " + limit + " item" + (limit == 1 ? "" : "s"); },
+        formatLoadMore: function (pageNumber) { return "Loading more results..."; },
+        formatSearching: function () { return "Searching..."; },
         minimumResultsForSearch: 0,
         minimumInputLength: 0,
         maximumSelectionSize: 0,
@@ -2408,4 +2405,3 @@
     };
 
 }(jQuery));
-

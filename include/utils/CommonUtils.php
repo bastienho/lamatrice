@@ -24,6 +24,7 @@ require_once('include/utils/utils.php'); //new
 require_once('include/utils/RecurringType.php');
 require_once('include/utils/EmailTemplate.php');
 require_once 'include/QueryGenerator/QueryGenerator.php';
+require_once 'include/QueryGenerator/EnhancedQueryGenerator.php';
 require_once 'include/ListView/ListViewController.php';
 require_once 'includes/runtime/Cache.php';
 
@@ -57,7 +58,7 @@ function getCurrencyName($currencyid, $show_symbol = true) {
 
 function getTabid($module) {
 	return Vtiger_Functions::getModuleId($module);
-}
+	}
 
 function getFieldid($tabid, $fieldname, $onlyactive = true) {
 	return Vtiger_Functions::getModuleFieldId($tabid, $fieldname, $onlyactive);
@@ -129,7 +130,7 @@ function getUserFullName($userid) {
 
 function getParentName($parent_id) {
 	return Vtiger_Functions::getCRMRecordLabel($parent_id);
-}
+	}
 
 function getValidDisplayDate($cur_date_val) {
 	return Vtiger_Functions::currentUserDisplayDate($cur_date_val);
@@ -150,8 +151,8 @@ function getCurrencySymbolandCRate($id) {
 /** This function returns the terms and condition from the database.
  * Takes no param and the return type is text.
  */
-function getTermsandConditions() {
-	return Vtiger_Functions::getInventoryTermsAndCondition();
+function getTermsAndConditions($moduleName) {
+	return Vtiger_Functions::getInventoryTermsAndCondition($moduleName);
 }
 
 /** This function returns a string with removed new line character, single quote, and back slash double quoute.
@@ -209,45 +210,12 @@ function create_parenttab_data_file() {
 	return Vtiger_Deprecated::createModuleGroupMetaFile();
 }
 
-function getEntityName($module, $ids_list, $compute=false) {
+function getEntityName($module, $ids_list, $compute=true) {
 	if ($compute) {
 		return Vtiger_Functions::computeCRMRecordLabels($module, $ids_list);
 	} else {
 		return Vtiger_Functions::getCRMRecordLabels($module, $ids_list);
 	}
-}
-
-/* ED141128 */
-function getEntityFieldValue($module, $fieldName, $ids_list, $compute=false) {
-	if(is_object($fieldName)){
-		$fieldTableName = $fieldName->get('table');
-		$fieldModel = $fieldName;
-	}
-	else 
-		$fieldModel = Vtiger_Field_Model::getInstance( $fieldName, $module);
-	
-	if(is_string($module))
-		$module = Vtiger_Module_Model::getInstance($module);
-	
-	$moduleName = $module->get('name');
-	$focus = CRMEntity::getInstance($moduleName);
-	$idField = $focus->table_index;
-	if(!isset($fieldTableName))
-		$fieldTableName = $focus->table_name;
-	$sql = "SELECT " . $idField . ", " . $fieldModel->get('column') . "
-		FROM " . $fieldTableName . "
-		WHERE " . $idField . " IN (" . implode(',', $ids_list) . ")";
-	global $adb;
-	$values = array();
-	$result = $adb->pquery($sql);
-	if(!$result){
-		echo_callstack();
-		die('Erreur dans getEntityFieldValue : ' . $sql);
-	}
-	while ($row = $adb->fetch_array($result)) {
-		$values[$row[$idField]] = $row[1];
-	}
-	return $values;
 }
 
 /**
@@ -283,8 +251,8 @@ function getTemplateDetails($templateid) {
  *  @param string $parent_type - module of the entity
  * 	return string $description - Returns description, merged with the input template.
  */
-function getMergedDescription($description, $id, $parent_type) {
-	return Vtiger_Functions::getMergedDescription($description, $id, $parent_type);
+function getMergedDescription($description, $id, $parent_type, $removeTags = false) {
+	return Vtiger_Functions::getMergedDescription($description, $id, $parent_type, $removeTags);
 }
 
 /** 	Function used to retrieve a single field value from database
@@ -314,8 +282,8 @@ function getrecurringObjValue() {
 	return Vtiger_Functions::getRecurringObjValue();
 }
 
-function getTranslatedString($str, $module = 'Vtiger') {
-	return Vtiger_Functions::getTranslatedString($str, $module);
+function getTranslatedString($str, $module = 'Vtiger', $language = '') {
+	return Vtiger_Functions::getTranslatedString($str, $module, $language);
 }
 
 /**
@@ -325,7 +293,7 @@ function getTranslatedString($str, $module = 'Vtiger') {
  */
 function getTranslatedCurrencyString($str) {
 	return Vtiger_Deprecated::getTranslatedCurrencyString($str);
-}
+	}
 
 function getTicketComments($ticketid) {
 	return Vtiger_Functions::getTicketComments($ticketid);
@@ -516,7 +484,7 @@ function getSqlForNameInDisplayFormat($input, $module, $glue = ' ') {
 
 function getModuleSequenceNumber($module, $recordId) {
 	return Vtiger_Deprecated::getModuleSequenceNumber($module, $recordId);
-}
+	}
 
 function getInvoiceStatus($invoiceId) {
 	return Vtiger_Functions::getInvoiceStatus($invoiceId);
@@ -530,74 +498,8 @@ function updateRecordLabel($module,$recordId){
 	return Vtiger_Functions::updateCRMRecordLabel($module, $recordId);
 }
 
-/* ED151001*/	
-function str_to_float($str){
-	if(!is_string($str))
-		return $str;
-	try {
-		if($str[0] === ' ')
-			$str = trim($str);
-		if($str[0] === '.')
-			$str = '0'.$str;
-		elseif($str[0] === ',')
-			$str = '0.'.substr($str, 1);
-		
-		if(!is_numeric($str[0]) && $str[0] !== '-' && $str[0] !== '+')
-			return false;
-		return (float)str_replace(',', '.', $str);
-	}
-	catch(Exception $ex){
-		var_dump($ex, $str);
-		die("str_to_float");
-	}
+function get_group_options() {
+    return Vtiger_Functions::get_group_options();
 }
 
-/* ED151004 */
-if(!function_exists('array_swap_assoc')) {
-    function array_swap_assoc($key1, $key2, $array) {
-        $newArray = array ();
-        foreach ($array as $key => $value) {
-            if ($key == $key1) {
-                $newArray[$key2] = $array[$key2];
-            } elseif ($key == $key2) {
-                $newArray[$key1] = $array[$key1];
-            } else {
-                $newArray[$key] = $value;
-            }
-        }
-        return $newArray;
-    }
-}
-/* Move an item after an other one in an associative array */
-if(!function_exists('array_move_assoc')) {
-    function array_move_assoc($findKey, $keyBefore, $array) {
-        $newArray = array ();
-		$found = false;
-        foreach ($array as $key => $value) {
-            if ($key == $findKey) {
-                continue;
-            } else {
-                $newArray[$key] = $value;
-            }
-			if ($key == $keyBefore) {
-				$found = true;
-				$newArray[$findKey] = $array[$findKey];
-			}
-        }
-		if(!$found && array_key_exists($findKey, $array)) //$keyBefore does not exists
-			$newArray[$findKey] = $array[$findKey];
-        return $newArray;
-    }
-}
-
-/* is_associative
-*/
-if(!function_exists('is_associative')) {
-	function is_associative($array){
-		if(!is_array($array)) return false;
-		foreach($array as $k=>$v)
-			return $k !== null && $k !== 0;
-		return false;
-	}
-}
 ?>

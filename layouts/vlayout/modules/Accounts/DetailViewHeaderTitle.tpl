@@ -11,8 +11,7 @@
 -->*}
 {strip}
 	<span class="span2">
-		<span class="summaryImg rsn-summaryImg"><span class="icon-rsn-large-account"></span></span>
-		{*<img src="{vimage_path('summary_organizations.png')}" class="summaryImg" />*}
+		<img src="{vimage_path('summary_organizations.png')}" class="summaryImg" />
 	</span>
 	<span class="span8 margin0px">
 		<span class="row-fluid">

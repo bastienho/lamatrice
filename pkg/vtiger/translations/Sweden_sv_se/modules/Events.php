@@ -2,7 +2,7 @@
 /*+***********************************************************************************
  * The contents of this file are subject to the vtiger CRM Public License Version 1.0
  * ("License"); You may not use this file except in compliance with the License
- * The Original Code is:  vtiger CRM Open Source
+ * The Original Code is: vtiger CRM Open Source
  * The Initial Developer of the Original Code is vtiger.
  * Portions created by vtiger are Copyright (C) vtiger.
  * All Rights Reserved.
@@ -17,13 +17,15 @@ $languageStrings = array(
 	'LBL_ADD_RECORD' => 'Lägg till Händelse',
 	'LBL_RECORDS_LIST' => 'Händelselista',
 	'LBL_EVENTS' => 'Händelser',
-	'LBL_TODOS' => 'Att göra',
+	'LBL_TODOS' => 'Uppgift',
 	'LBL_HOLD_FOLLOWUP_ON' => 'Håll uppföljning på',
+    'LBL_CREATE_FOLLOWUP_EVENT'    => 'Skapa Följ upp Händelse',
 	
 	// Blocks
 	'LBL_EVENT_INFORMATION' => 'Händelseuppgifter',
 	'LBL_RECURRENCE_INFORMATION' => 'Återkommande uppgifter',
     'LBL_RELATED_TO' => 'Relaterat Till',
+    'Related To' => 'Relaterat till',
 	
 	//Fields
 	'Start Date & Time'=>'Startdatum & Tid',
@@ -32,6 +34,7 @@ $languageStrings = array(
 	'Location'=>'Plats',
 	'Send Reminder' => 'Skicka Påminnelse',
 	'End Date & Time' => 'Slutdatum & Tid',
+    'End Date'       => 'Slutdatum & Tid',
 	'Activity Type'=>'Aktivitetstyp',
 	'Visibility' => 'Synlighet',
 	'Recurrence' => 'Upprepa',
@@ -83,7 +86,7 @@ $languageStrings = array(
 	'Monthly'=>'Månad(s)',
 	'Yearly'=>'År',
 	
-	'LBL_REPEATEVENT' => 'Upprepa en gång i varje',
+	'LBL_REPEATEVENT' => 'En gång i varje',
 	'LBL_UNTIL' => 'tills',
 	'LBL_DAY_OF_THE_MONTH' => 'dagen i månaden',
 	'LBL_ON' => 'på',
@@ -92,6 +95,10 @@ $languageStrings = array(
 	'LBL_CALENDAR_VIEW' => 'Kalendervy',
 
     'LBL_INVITE_USER_BLOCK' => 'Bjud in',
-    'LBL_INVITE_USERS' => 'Bjud in Användare'
+    'LBL_INVITE_USERS' => 'Bjud in Användare',
+    'LBL_INVITE_PEOPLE' => 'Inbjuder folk',
+
+  'INVITATION' => ' Inbjudan ',
+  'Busy' => 'Upptagen',
 
 );

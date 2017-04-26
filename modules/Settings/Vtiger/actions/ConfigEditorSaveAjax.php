@@ -15,8 +15,7 @@ class Settings_Vtiger_ConfigEditorSaveAjax_Action extends Settings_Vtiger_Basic_
 		$response = new Vtiger_Response();
 		$qualifiedModuleName = $request->getModule(false);
 		$updatedFields = $request->get('updatedFields');
-		$configDomain = $request->get('config_domain');
-		$moduleModel = Settings_Vtiger_ConfigModule_Model::getInstance($configDomain);
+		$moduleModel = Settings_Vtiger_ConfigModule_Model::getInstance();
 
 		if ($updatedFields) {
 			$moduleModel->set('updatedFields', $updatedFields);
@@ -32,4 +31,8 @@ class Settings_Vtiger_ConfigEditorSaveAjax_Action extends Settings_Vtiger_Basic_
 		}
 		$response->emit();
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

@@ -11,94 +11,81 @@
 class Inventory_GetTaxes_Action extends Vtiger_Action_Controller {
 
 	function process(Vtiger_Request $request) {
-		$recordId = $request->get('record');
-		$idList = $request->get('idlist');
+		$decimalPlace = getCurrencyDecimalPlaces();
 		$currencyId = $request->get('currency_id');
-		$accountdiscounttype = $request->get('accountdiscounttype');
-
 		$currencies = Inventory_Module_Model::getAllCurrencies();
-		$conversionRate = 1;
+		$conversionRate = $conversionRateForPurchaseCost = 1;
+
+		$idList = $request->get('idlist');
+		if (!$idList) {
+			$recordId = $request->get('record');
+			$idList = array($recordId);
+		}
 
 		$response = new Vtiger_Response();
+		$namesList = $purchaseCostsList = $taxesList = $listPricesList = $listPriceValuesList = array();
+		$descriptionsList = $quantitiesList = $imageSourcesList = $productIdsList = $baseCurrencyIdsList = array();
 
-		if(empty($idList)) {
-			$recordModel = Vtiger_Record_Model::getInstanceById($recordId);
+		foreach($idList as $id) {
+			$recordModel = Vtiger_Record_Model::getInstanceById($id);
 			$taxes = $recordModel->getTaxes();
+			foreach ($taxes as $key => $taxInfo) {
+				$taxInfo['compoundOn'] = json_encode($taxInfo['compoundOn']);
+				$taxes[$key] = $taxInfo;
+			}
+
+			$taxesList[$id]				= $taxes;
+			$namesList[$id]				= decode_html($recordModel->getName());
+			$quantitiesList[$id]		= $recordModel->get('qtyinstock');
+			$descriptionsList[$id]		= decode_html($recordModel->get('description'));
+			$listPriceValuesList[$id]	= $recordModel->getListPriceValues($recordModel->getId());
 
 			$priceDetails = $recordModel->getPriceDetails();
 			foreach ($priceDetails as $currencyDetails) {
 				if ($currencyId == $currencyDetails['curid']) {
 					$conversionRate = $currencyDetails['conversionrate'];
+				}
+			}
+			$listPricesList[$id] = (float)$recordModel->get('unit_price') * (float)$conversionRate;
+
+			foreach ($currencies as $currencyInfo) {
+				if ($currencyId == $currencyInfo['curid']) {
+					$conversionRateForPurchaseCost = $currencyInfo['conversionrate'];
 					break;
 				}
 			}
-			$listPrice = (float)$recordModel->get('unit_price') * (float)$conversionRate;
-			if($recordModel->get('purchaseprice'))
-				$purchasePrice = (float)$recordModel->get('purchaseprice') * (float)$conversionRate;
-			else
-				$purchasePrice = $listPrice;
+			$purchaseCostsList[$id] = round((float)$recordModel->get('purchase_cost') * (float)$conversionRateForPurchaseCost, $decimalPlace);
+			$baseCurrencyIdsList[$id] = getProductBaseCurrency($id, $recordModel->getModuleName());
 
-			$data = array(
-				'id'=>$recordId,
-				'name'=>decode_html($recordModel->getName()),
-				'taxes'=>$taxes,
-				'listprice'=>$listPrice,
-				'purchaseprice'=>$purchasePrice,
-				'description' => decode_html($recordModel->get('description')),
-				'quantityInStock' => $recordModel->get('qtyinstock'),
-				'priceBook' => getPriceBookDetailsForProduct($recordId),
-				'usageunit' => $recordModel->get('usageunit') ? $recordModel->get('usageunit') : $recordModel->get('service_usageunit'),
-				'productcode' => $recordModel->get('productcode'),
-				'gestionerror' => $recordModel->getGestionError(),
-			);
-			//ED150602
-			if($accountdiscounttype
-			&& $recordModel->get('discountpc_' . $accountdiscounttype))
-				$data['discountpc'] = $recordModel->get('discountpc_' . $accountdiscounttype);
-				
-			$response->setResult(array( $recordId => $data ));
-		} else {
-			
-			$priceBookDetails = getPriceBookDetailsForProduct($idList);
-		
-			foreach($idList as $id) {
-				$recordModel = Vtiger_Record_Model::getInstanceById($id);
-				$taxes = $recordModel->getTaxes();
-
-				$priceDetails = $recordModel->getPriceDetails();
-				foreach ($priceDetails as $currencyDetails) {
-					if ($currencyId == $currencyDetails['curid']) {
-						$conversionRate = $currencyDetails['conversionrate'];
-						break;
-					}
-				}
-
-				$listPrice = (float)$recordModel->get('unit_price') * (float)$conversionRate;
-				if($recordModel->get('purchaseprice'))
-					$purchasePrice = (float)$recordModel->get('purchaseprice') * (float)$conversionRate;
-				else
-					$purchasePrice = $listPrice;
-				$data = array(
-					'id'=>$id,
-					'name'=>decode_html($recordModel->getName()),
-					'taxes'=>$taxes,
-					'listprice'=>$listPrice,
-					'purchaseprice'=>$purchasePrice,
-					'description' => $recordModel->get('description'),
-					'quantityInStock' => $recordModel->get('qtyinstock'),
-					'priceBook' => $priceBookDetails[$id],
-					'usageunit' => $recordModel->get('usageunit') ? $recordModel->get('usageunit') : $recordModel->get('service_usageunit'),
-					'productcode' => $recordModel->get('productcode'),
-					'gestionerror' => $recordModel->getGestionError(),
-				);
-				//ED150602
-				if($accountdiscounttype
-				&& $recordModel->get('discountpc_' . $accountdiscounttype))
-					$data['discountpc'] = $recordModel->get('discountpc_' . $accountdiscounttype);
-				$info[] = array($id => $data);
+			if ($recordModel->getModuleName() == 'Products') {
+				$productIdsList[] = $id;
 			}
-			$response->setResult($info);
 		}
+
+		if ($productIdsList) {
+			$imageDetailsList = Products_Record_Model::getProductsImageDetails($productIdsList);
+			foreach ($imageDetailsList as $productId => $imageDetails) {
+				$imageSourcesList[$productId] = $imageDetails[0]['path'].'_'.$imageDetails[0]['orgname'];
+			}
+		}
+
+		foreach($idList as $id) {
+			$resultData = array(
+								'id'					=> $id,
+								'name'					=> $namesList[$id],
+								'taxes'					=> $taxesList[$id],
+								'listprice'				=> $listPricesList[$id],
+								'listpricevalues'		=> $listPriceValuesList[$id],
+								'purchaseCost'			=> $purchaseCostsList[$id],
+								'description'			=> $descriptionsList[$id],
+								'baseCurrencyId'		=> $baseCurrencyIdsList[$id],
+								'quantityInStock'		=> $quantitiesList[$id],
+								'imageSource'			=> $imageSourcesList[$id]
+					);
+
+			$info[] = array($id => $resultData);
+		}
+		$response->setResult($info);
 		$response->emit();
 	}
 }

@@ -8,6 +8,7 @@
  * All Rights Reserved.
  ************************************************************************************/
 $languageStrings = array(
+    'Quotes'                       => 'Cotação'                   , 
 	'SINGLE_Quotes'                => 'Cotação'                   , 
 	'LBL_EXPORT_TO_PDF'            => 'Exportar para PDF'           , 
 	'LBL_SEND_MAIL_PDF'            => 'Send Email with PDF'         , // TODO: Review
@@ -20,4 +21,10 @@ $languageStrings = array(
 	'Inventory Manager'            => 'Almoxarife'                  , 
 	'Accepted'                     => 'Aceita'                      , 
 	'Rejected'                     => 'Rejeitada'                   , 
+    'Related To'                   => 'Relacionado a'               ,
+
+  'LBL_THIS' => 'Este',
+  'LBL_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_OR_REPLACE_THIS_ITEM' => 'é excluído do sistema.por favor, remover ou substituir este item',
+  'LBL_THIS_LINE_ITEM_IS_DELETED_FROM_THE_SYSTEM_PLEASE_REMOVE_THIS_LINE_ITEM' => 'Este item de linha é excluída do sistema,por favor, remova esta linha de itens',
+
 );

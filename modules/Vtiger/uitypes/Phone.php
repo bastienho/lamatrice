@@ -18,4 +18,11 @@ class Vtiger_Phone_UIType extends Vtiger_Base_UIType {
 		return 'uitypes/Phone.tpl';
 	}
 
+    /**
+	 * Function to get the Detailview template name for the current UI Type Object 
+	 * @return <String> - Template Name
+	 */
+	public function getDetailViewTemplateName() {
+		return 'uitypes/PhoneDetailView.tpl';
+	}
 }

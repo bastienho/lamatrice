@@ -14,6 +14,7 @@ $languageStrings = array(
 	'LBL_PROJECT_TASK_INFORMATION' => 'Projekt Feladat adatai'      , 
 	'LBL_PROJECTS_LIST'            => 'Projects List'               , // TODO: Review
 	'LBL_TASKS_LIST'               => 'Tasks List'                  , // TODO: Review
+    'LBL_MILESTONES_LIST'          => 'Mérföldkövek listája'        ,
 	
 	//Field Labels
 	'Project Task Name' => 'Project Task Name',
@@ -26,13 +27,13 @@ $languageStrings = array(
     'Worked Hours'=>'Worked Hours',
     'Start Date'=>'Start Date',
     'End Date'=>'End Date',
-    'Related To' => 'Related To',
-    'administrative' => 'administrative',
-    'operative' => 'operative',
-    'other' => 'other',
-    'low' => 'low',
-    'normal' => 'normal',
-    'high' => 'high',
+    'Related to' => 'Related To',
+    'administrative' => 'Adminisztratív',
+    'operative' => 'Működő',
+    'other' => 'Más',
+    'low' => 'Alacsony',
+    'normal' => 'Normál',
+    'high' => 'Nagy',
     'Created Time' => 'Created Time',
     'Modified Time' => 'Modified Time',
     'description' => 'Description',
@@ -42,4 +43,5 @@ $languageStrings = array(
 	'Completed' => 'Completed',
 	'Deferred' => 'Deferred',
 	'Canceled ' => 'Canceled',
+        'LBL_NO_DATE_VALUE_MSG' => 'vagy Projektfeladatok nincs kezdete és / vagy vége dátum',
 );

@@ -35,14 +35,19 @@ class Documents_Folder_Action extends Vtiger_Action_Controller {
 		$moduleName = $request->getModule();
 		$folderName = $request->get('foldername');
 		$folderDesc = $request->get('folderdesc');
-		$uicolor = $request->get('uicolor');
 		$result = array();
 
 		if (!empty ($folderName)) {
-			$folderModel = Documents_Folder_Model::getInstance();
+            $saveMode = $request->get('savemode');
+            $folderModel = Documents_Folder_Model::getInstance();
+            if($saveMode == 'edit') {
+                $folderId = $request->get('folderid');
+                $folderModel = Documents_Folder_Model::getInstanceById($folderId);
+                $folderModel->set('mode','edit');                
+            }
+			
 			$folderModel->set('foldername', $folderName);
 			$folderModel->set('description', $folderDesc);
-			$folderModel->set('uicolor', $uicolor);
 
 			if ($folderModel->checkDuplicate()) {
 				throw new AppException(vtranslate('LBL_FOLDER_EXISTS', $moduleName));
@@ -78,4 +83,8 @@ class Documents_Folder_Action extends Vtiger_Action_Controller {
 		$response->setResult($result);
 		$response->emit();
 	}
+    
+    public function validateRequest(Vtiger_Request $request) {
+        $request->validateWriteAccess();
+    }
 }

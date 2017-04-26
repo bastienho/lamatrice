@@ -56,6 +56,7 @@ class Vtiger_Loader {
 		}
 
 		$file = self::resolveNameToPath($qualifiedName);
+
 		if (!file_exists($file)) {
 			return false;
 		}
@@ -118,9 +119,10 @@ class Vtiger_Loader {
 			$moduleClassPath = str_replace(':', '_', $moduleName);
 			$actualModule = $moduleHierarchyParts[count($moduleHierarchyParts)-1];
 			$secondFallBackModuleDir= $secondFallBackModuleClassPath =  $actualModule;
+			$modules = array('Users');
 			if($actualModule != 'Users') {
-			$baseModule = $moduleHierarchyParts[0];
-			if($baseModule == 'Settings')  $baseModule = 'Settings:Vtiger';
+				$baseModule = $moduleHierarchyParts[0];
+				if($baseModule == 'Settings')  $baseModule = 'Settings:Vtiger';
 				$firstFallBackDir = str_replace(':', '.', $baseModule);
 				$firstFallBackClassPath = str_replace(':', '_', $baseModule);
 			}
@@ -131,7 +133,8 @@ class Vtiger_Loader {
 		if(file_exists($moduleSpecificComponentFilePath)) {
 			return $moduleSpecificComponentClassName;
 		}
-		
+
+
 		// Build first intermediate fall back file path and class name
 		if(!empty($firstFallBackDir) && !empty($firstFallBackClassPath)) {
 			$fallBackComponentFilePath = Vtiger_Loader::resolveNameToPath('modules.'.$firstFallBackDir.'.'.$componentTypeDirectory.'.'.$componentName);
@@ -158,7 +161,7 @@ class Vtiger_Loader {
 		if(file_exists($fallBackComponentFilePath)) {
 			return $fallBackComponentClassName;
 		}
-		throw new AppException('Handler "'.$moduleSpecificComponentClassName.'" not found.');
+		throw new AppException('Handler not found.');
 	}
 
 	/**
