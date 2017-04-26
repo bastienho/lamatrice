@@ -29,7 +29,7 @@ if(isset($_REQUEST['username']) && isset($_REQUEST['password'])){
 			}
 			if ($zip->extractTo($root_directory)) {
 				$zip->close();
-				
+
 				$userid = $user->retrieve_user_id($userName);
 				$_SESSION['authenticated_user_id'] = $userid;
 
