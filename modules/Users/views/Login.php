@@ -14,11 +14,11 @@ class Users_Login_View extends Vtiger_View_Controller {
 	function loginRequired() {
 		return false;
 	}
-	
+
 	function checkPermission(Vtiger_Request $request) {
 		return true;
 	}
-	
+
 	function preProcess(Vtiger_Request $request, $display = true) {
 		$viewer = $this->getViewer($request);
 		$viewer->assign('PAGETITLE', $this->getPageTitle($request));
@@ -36,7 +36,8 @@ class Users_Login_View extends Vtiger_View_Controller {
 		$finalJsonData = array();
 
 		$modelInstance = Settings_ExtensionStore_Extension_Model::getInstance();
-		$news = $modelInstance->getNews();
+		// Deactivate this feature beacause of mysterious bug
+                $news = false;//$modelInstance->getNews();
 
 		if ($news && $news['result']) {
 			$jsonData = $news['result'];
